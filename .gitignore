@@ -36,9 +36,7 @@ ehthumbs.db
 
 # Editor directories and files
 .vscode/*
-# It's a good practice to share settings for consistent code style.
 !.vscode/settings.json
-# It's also good to share recommended extensions for the project.
 !.vscode/extensions.json
 
 .idea/
