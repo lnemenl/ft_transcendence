@@ -1,0 +1,15 @@
+node_modules
+dist
+build
+services/auth-service/dist
+**/.next/**
+**/.vite/**
+*.log
+.vscode
+/services/auth-service/prisma/prisma
+.env
+**/.env*
+*.yaml
+*.yml
+*.cjs
+.venv
