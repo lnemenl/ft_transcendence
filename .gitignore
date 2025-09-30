@@ -35,7 +35,7 @@ Thumbs.db
 ehthumbs.db
 
 # Editor directories and files
-# Prevents editor-specific settings from cluttering the repository.
+.config/
 .vscode/*
 # It's a good practice to share settings for consistent code style.
 !.vscode/settings.json
@@ -50,6 +50,5 @@ ehthumbs.db
 *.sw?
 
 # Test and coverage reports
-# These are generated when you run tests and should not be committed.
 coverage/
 .nyc_output/
