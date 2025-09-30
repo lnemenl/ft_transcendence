@@ -35,7 +35,6 @@ Thumbs.db
 ehthumbs.db
 
 # Editor directories and files
-.config/
 .vscode/*
 # It's a good practice to share settings for consistent code style.
 !.vscode/settings.json
