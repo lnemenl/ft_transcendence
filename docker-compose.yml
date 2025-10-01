@@ -1,0 +1,19 @@
+volumes:
+  backend_data:
+    name: backend
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./backend
+
+services:
+  backend:
+    container_name: transcendence_backend
+    image: node:bookworm
+    ports:
+      - "3011:3011"
+    working_dir: /home/node/app
+    volumes:
+      - backend_data:/home/node/app
+    command: bash -c "npm install && npm run dev:auth"
