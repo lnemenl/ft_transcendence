@@ -1,11 +1,18 @@
 import bcrypt from "bcrypt";
+import { PrismaBetterSQLite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
+import * as dotenv from "dotenv";
 
-export const prisma = new PrismaClient();
+dotenv.config();
+
+const adapter = new PrismaBetterSQLite3({
+  url: process.env.DATABASE_URL
+})
+export const prisma = new PrismaClient({ adapter });
 
 const SALT_ROUNDS = 10;
 
-export async function registerUser(email, password) {
+export const registerUser = async (email: string, password: string) => {
   // Checking if a user with this email already exists in the database
   const existingUser = await prisma.user.findUnique({
     where: { email },
@@ -16,7 +23,8 @@ export async function registerUser(email, password) {
   }
 
   // Hash the password for security. Never store plain-text passwords
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  // To compare the password with plain text: compareSync(text, hash)
+  const hashedPassword = bcrypt.hashSync(password, SALT_ROUNDS);
 
   // Create a new user in the database
   const user = await prisma.user.create({
@@ -27,6 +35,6 @@ export async function registerUser(email, password) {
   });
 
   // Do not return the hashed password in the response
-  const { password: _, ...userWithoutPassword } = user;
+  const { password: userPasswordHash, ...userWithoutPassword } = user;
   return userWithoutPassword;
 }

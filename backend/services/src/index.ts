@@ -1,5 +1,6 @@
 // Import the Fastify framework
 import Fastify, { FastifyRequest, FastifyReply } from "fastify";
+import { registerUser } from "./services/auth.service";
 
 // Initialize a Fastify server instance
 // The logger option is great for development. It prints out information
@@ -14,9 +15,27 @@ const server = Fastify({
 
 // Define a basic "route". This tells the server what to do when it
 // receives a GET request to the main URL ("/").
-server.get("/", async (_request: FastifyRequest, _reply: FastifyReply) => {
+server.get("/", async (_request, _reply) => {
   //It simply sends back a JSON object.
   return { hello: "auth-service" };
+});
+
+interface IRegisterBody {
+  email: string;
+  password: string;
+}
+
+server.post<{Body: IRegisterBody}>("/api/register", async (_request, _reply) => {
+  try {
+    server.log.info("Registering user");
+    const newUser = await registerUser(_request.body.email, _request.body.password);
+    server.log.info("User registered!")
+    console.log(newUser);
+    _reply.status(200).send(newUser);
+  } catch (err) {
+    server.log.error(err)
+    _reply.status(400).send({ error: "User already exists" });
+  }
 });
 
 // A function to start the server

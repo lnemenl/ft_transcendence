@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json", // Inherit all the base rules
+  "extends": "./tsconfig.base.json", // Inherit all the base rules
   "compilerOptions": {
     "outDir": "./dist", // Specify output dir relative to this service
     "rootDir": "./src"
