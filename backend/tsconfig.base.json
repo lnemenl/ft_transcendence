@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es2021",          // Compile to modern JavaScript
-    "module": "commonjs",         // Use the standard Node.js module system
-    "moduleResolution": "node",
-    "outDir": "./dist",           // Output compiled JS files to a 'dist' folder
+    "target": "ES2022",          // Compile to modern JavaScript
+    "module": "NodeNext",         // Use the standard Node.js module system
+    "moduleResolution": "NodeNext",
     "strict": true,               // Enable all strict type-checking options
     "esModuleInterop": true,      // Allows compatibility with different module types
     "skipLibCheck": true,         // Skip type checking of declaration files
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
   },
-  "exclude": ["node_modules", "dist"] // Don't check these folders
 }

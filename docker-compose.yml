@@ -1,20 +1,38 @@
-volumes:
-  backend_data:
-    name: backend
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./backend
-
+# Defines all the services (containers) for our application.
 services:
+  # The name of our service.
   backend:
-    container_name: transcendence_backend
+    # The base image. 'node:18-alpine' is smaller and more secure than 'slim', making it a professional choice for production.
     image: node:lts-slim
+    container_name: ft_transcendence_backend
+    # This is optional but good practice for cross-platform teams (Apple Silicon, etc.).
     platform: linux/amd64
+
     ports:
       - "3011:3011"
-    working_dir: /home/node/app
+      
+    # The default directory inside the container.
+    working_dir: /app
+
+    # Define how data is mounted into the container. This is a key improvement.
     volumes:
-      - backend_data:/home/node/app
-    command: bash -c "npm install && npm run dev"
+      # This is the standard, elegant way to create a bind mount.
+      # It maps './backend' on your host to '/app' in the container. Your code is now available.
+      - ./backend:/app
+      
+      # This is the professional trick to solve the efficiency problem.
+      # We tell Docker to create a separate, managed volume just for the node_modules directory.
+      # This prevents the `npm install` from running every time and avoids OS-specific file conflicts.
+      - /app/node_modules
+
+    # The single command that orchestrates the entire setup, build, and run process.
+    command: >
+      bash -c "
+        apt-get update -y && 
+        apt-get install -y openssl &&
+        npm install &&
+        npm run check &&
+        npm run lint &&
+        npm run prisma &&
+        npm run dev
+      "
