@@ -19,7 +19,7 @@ export const registerUser = async (email: string, password: string) => {
   });
 
   if (existingUser) {
-    throw new Error("User with this email already exists");
+    throw { message: "User with this email already exists" };
   }
 
   // Hash the password for security. Never store plain-text passwords
