@@ -1,6 +1,7 @@
 // Import the Fastify framework
 import Fastify from "fastify";
 import { registerUser } from "./services/auth.service.ts";
+import { loginUser } from "./services/auth.service.ts";
 
 // Initialize a Fastify server instance
 // The logger option is great for development. It prints out information
@@ -43,6 +44,21 @@ server.post<{ Body: IRegisterBody }>(
     }
   },
 );
+
+interface ILoginBody {
+  email: string;
+  password: string;
+}
+
+server.post<{ Body: ILoginBody }>("/api/login", async (_request, _reply) => {
+  try {
+    const token = await loginUser(_request.body.email, _request.body.password);
+    _reply.status(200).send({ accessToken: token });
+  } catch (err) {
+    server.log.error(err);
+    _reply.status(401).send({ error: "Invalid email or password" });
+  }
+});
 
 // A function to start the server
 const start = async () => {

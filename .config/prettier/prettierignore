@@ -1,15 +1,22 @@
+# Build and dependency folders
 node_modules
 dist
 build
-services/auth-service/dist
-**/.next/**
-**/.vite/**
+
+# Logs and environment variables
 *.log
-.vscode
-/services/auth-service/prisma/prisma
 .env
-**/.env*
+.env.*
+.venv
+
+# Editor and cache folders
+.vscode
+
+# Tool-specific, add back if your frontend needs them
+# **/.next/
+# **/.vite/
+
+# Config files
+*.cjs
 *.yaml
 *.yml
-*.cjs
-.venv

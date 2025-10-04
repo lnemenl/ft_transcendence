@@ -8,10 +8,10 @@
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "check": "prettier --check \"src/**/*.ts\"",
-    "prisma": "npx prisma generate --schema=./prisma/schema.prisma",
+    "prisma": "npx prisma migrate dev --name init",
     "dev": "npx ts-node src/index.ts",
     "build": "tsc --project tsconfig.json",
-    "start": "node dist/src/src/index.js"
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",

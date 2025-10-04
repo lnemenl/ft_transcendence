@@ -25,6 +25,9 @@ services:
       # This prevents the `npm install` from running every time and avoids OS-specific file conflicts.
       - /app/node_modules
 
+      # Saving database file
+      - ./backend/database:/app/database
+
     # The single command that orchestrates the entire setup, build, and run process.
     command: >
       bash -c "

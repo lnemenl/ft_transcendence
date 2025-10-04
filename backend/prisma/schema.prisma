@@ -16,6 +16,10 @@ model User {
   email     String   @unique // The user's email address, which must be unique
   password  String   // Where we will store the securely hashed password
 
+  // Fields for Two-Factor Authentication (2FA)
+  isTwoFactorEnabled Boolean @default(false)
+  twoFactorSecret String? //The '?' makes this field optional
+
   createdAt DateTime @default(now()) // Automatically set the creation timestamp
   updatedAt DateTime @updatedAt    // Automatically update the timestamp on any change
 }

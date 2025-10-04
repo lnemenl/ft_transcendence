@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { PrismaBetterSQLite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
 import * as dotenv from "dotenv";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -37,4 +38,27 @@ export const registerUser = async (email: string, password: string) => {
   // Do not return the hashed password in the response
   const { password: _userPasswordHash, ...userWithoutPassword } = user;
   return userWithoutPassword;
+};
+
+export const loginUser = async (email: string, password: string) => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new Error("Invalid email or password");
+  }
+
+  const isPasswordValid = bcrypt.compareSync(password, user.password);
+  if (!isPasswordValid) {
+    throw new Error("Invalid email or password");
+  }
+
+  const token = jwt.sign(
+    { sub: user.id }, // The playload. 'sub' is standard for 'subject' (the user's ID)
+    process.env.JWT_SECRET!, // The secret key from .env file. The '!' tells TypeScript we are sure this exists.
+    { expiresIn: "1h" }, // The token will expire in 1h
+  );
+
+  return token;
 };
