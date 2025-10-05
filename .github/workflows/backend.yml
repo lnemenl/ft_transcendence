@@ -37,14 +37,17 @@ jobs:
       continue-on-error: true
 
     - name: Run tests
-      run: npm test
+      run: npm run test:coverage
       env:
         NODE_ENV: test
         DATABASE_URL: file:./database/test.db
+
+    - name: Check coverage files
+      run: ls -la coverage/
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       if: matrix.node-version == '20.x'
       with:
-        file: ./coverage/coverage-final.json
+        file: ./backend/coverage/coverage-final.json
         fail_ci_if_error: false
