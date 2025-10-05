@@ -39,7 +39,7 @@ jobs:
       run: npm test
       env:
         NODE_ENV: test
-        DATABASE_PATH: ./database
+        DATABASE_URL: file:./backend/database/test.db
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
