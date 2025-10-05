@@ -41,6 +41,7 @@ jobs:
       env:
         NODE_ENV: test
         DATABASE_URL: file:./database/test.db
+        JWT_SECRET: test_key
 
     - name: Check coverage files
       run: ls -la coverage/

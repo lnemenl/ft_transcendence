@@ -50,5 +50,57 @@ describe('API works', () => {
     const body = JSON.parse(res.body);
     expect(body.error).toBe('User already exists');
   });
+
+  it('User login', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/login',
+      payload: {
+        email: 'test@test.com',
+        password: 'hello123'
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.accessToken).toBeDefined();
+  });
+
+  it('Invalid user email login', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/login',
+      payload: {
+        email: 'invalid@test.com',
+        password: 'hello123'
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    expect(res.statusCode).toBe(401);
+    const body = JSON.parse(res.body);
+    expect(body.error).toBe('Invalid email or password');
+  });
+
+  it('Invalid user password login', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/login',
+      payload: {
+        email: 'test@test.com',
+        password: 'invalid'
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    expect(res.statusCode).toBe(401);
+    const body = JSON.parse(res.body);
+    expect(body.error).toBe('Invalid email or password');
+  });
+
 });
 
