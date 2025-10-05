@@ -27,13 +27,13 @@ Focus is on identity, security, and social features.
 **Issue #1: `feat: Implement User Login with JWT`**
 * **User Story**: As a registered user, I want to log in with my email and password so that I can access my account.
 * **Acceptance Criteria**:
-    * [ ] Create a `POST /api/login` endpoint.
-    * [ ] The endpoint validates the user's email and password against the database.
-    * [ ] It compares the provided password with the stored hash using `bcrypt.compareSync`.
-    * [ ] On successful login, it generates a signed JSON Web Token (JWT) using `jsonwebtoken`.
-    * [ ] The JWT payload must contain the user's ID (`sub: user.id`).
-    * [ ] The JWT is returned to the user in the response body.
-    * [ ] Secrets for signing the JWT are stored in and loaded from the `.env` file.
+    * [x] Create a `POST /api/login` endpoint.
+    * [x] The endpoint validates the user's email and password against the database.
+    * [x] It compares the provided password with the stored hash using `bcrypt.compareSync`.
+    * [x] On successful login, it generates a signed JSON Web Token (JWT) using `jsonwebtoken`.
+    * [x] The JWT payload must contain the user's ID (`sub: user.id`).
+    * [x] The JWT is returned to the user in the response body.
+    * [x] Secrets for signing the JWT are stored in and loaded from the `.env` file.
 
 **Issue #2: `chore: Implement Protected Route Middleware`**
 * **User Story**: As a developer, I want a reusable way to protect certain API endpoints so that only authenticated users can access them.
