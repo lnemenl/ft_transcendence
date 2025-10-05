@@ -19,24 +19,21 @@ interface IRegisterBody {
   password: string;
 }
 
-app.post<{ Body: IRegisterBody }>(
-  "/api/register",
-  async (_request, _reply) => {
-    try {
-      app.log.info("Registering user");
-      const newUser = await registerUser(
-        _request.body.email,
-        _request.body.password,
-      );
-      app.log.info("User registered!");
-      console.log(newUser);
-      _reply.status(200).send(newUser);
-    } catch (err) {
-      app.log.error(err);
-      _reply.status(400).send({ error: "User already exists" });
-    }
-  },
-);
+app.post<{ Body: IRegisterBody }>("/api/register", async (_request, _reply) => {
+  try {
+    app.log.info("Registering user");
+    const newUser = await registerUser(
+      _request.body.email,
+      _request.body.password,
+    );
+    app.log.info("User registered!");
+    console.log(newUser);
+    _reply.status(200).send(newUser);
+  } catch (err) {
+    app.log.error(err);
+    _reply.status(400).send({ error: "User already exists" });
+  }
+});
 
 interface ILoginBody {
   email: string;
@@ -53,4 +50,4 @@ app.post<{ Body: ILoginBody }>("/api/login", async (_request, _reply) => {
   }
 });
 
-export default app
+export default app;
