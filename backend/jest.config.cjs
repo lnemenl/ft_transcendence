@@ -27,6 +27,7 @@ module.exports = {
   // Coverage configuration
   collectCoverageFrom: [
     'src/**/*.ts',
+    '!src/index.ts',
     '!tests/**/*.test.ts',
     '!**/node_modules/**'
   ],

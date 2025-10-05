@@ -15,7 +15,7 @@
     "test:setup": "DATABASE_URL=\"file:../database/test.db\" npx prisma db push --skip-generate",
     "test": "npm run test:clean && npm run test:setup && node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "test:watch": "DATABASE_URL=\"file:../database/test.db\" jest --watch",
-    "test:coverage": "npm run test:setup && DATABASE_URL=\"file:../database/test.db\" jest --coverage"
+    "test:coverage": "npm run test:clean && npm run test:setup && DATABASE_URL=\"file:../database/test.db\" jest --coverage"
   },
   "keywords": [],
   "author": "",
