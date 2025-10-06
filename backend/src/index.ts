@@ -1,4 +1,5 @@
 // Import the Fastify framework
+// Test commit to trigger Codecov workflow
 import Fastify from "fastify";
 import { registerUser } from "./services/auth.service";
 import { loginUser } from "./services/auth.service";
