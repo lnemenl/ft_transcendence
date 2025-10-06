@@ -1,7 +1,7 @@
 // Import the Fastify framework
 import Fastify from "fastify";
-import { registerUser } from "./services/auth.service.ts";
-import { loginUser } from "./services/auth.service.ts";
+import { registerUser } from "./services/auth.service";
+import { loginUser } from "./services/auth.service";
 
 // Initialize a Fastify server instance
 // The logger option is great for development. It prints out information
