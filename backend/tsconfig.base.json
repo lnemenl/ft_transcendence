@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",          // Compile to modern JavaScript
+    "module": "NodeNext",         // Use the standard Node.js module system
+    "moduleResolution": "NodeNext",
+    "strict": true,               // Enable all strict type-checking options
+    "esModuleInterop": true,      // Allows compatibility with different module types
+    "skipLibCheck": true,         // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true,
+  },
+}

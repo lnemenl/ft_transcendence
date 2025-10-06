@@ -7,7 +7,7 @@
     "editor.insertSpaces": true,
     "editor.tabSize": 2,
     "editor.detectIndentation": false,
-    "prettier.configPath": ".config/prettier/prettier.config.cjs",
+    "prettier.configPath": ".config/prettier/prettierrc",
     "prettier.ignorePath": ".config/prettier/.prettierignore",
     "files.eol": "\n",
 }

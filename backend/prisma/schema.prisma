@@ -2,6 +2,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -14,6 +15,10 @@ model User {
   id        Int      @id @default(autoincrement()) // A unique, auto-incrementing number for each user (Primary Key)
   email     String   @unique // The user's email address, which must be unique
   password  String   // Where we will store the securely hashed password
+
+  // Fields for Two-Factor Authentication (2FA)
+  isTwoFactorEnabled Boolean @default(false)
+  twoFactorSecret String? //The '?' makes this field optional
 
   createdAt DateTime @default(now()) // Automatically set the creation timestamp
   updatedAt DateTime @updatedAt    // Automatically update the timestamp on any change
