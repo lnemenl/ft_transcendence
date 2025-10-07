@@ -36,7 +36,7 @@ module.exports = {
         },
       },
 
-  // ✅ Remove setupFilesAfterEnv (you deleted tests/setup.ts)
+  // Remove setupFilesAfterEnv
   setupFilesAfterEnv: [],
 
   clearMocks: true,

@@ -16,14 +16,12 @@ jest.mock("../utils/prisma", () => ({
   }),
 }));
 
-// Now, we can import the mocked instance to use in our setup/teardown
+// Now import the mocked instance to use in our setup/teardown
 import { prisma } from "../utils/prisma";
 
 const testUser = { email: "ci_test@example.com", password: "Password123!" };
 
 beforeAll(async () => {
-  // The console log is no longer needed but is safe to keep
-  console.log("DATABASE_URL in test:", process.env.DATABASE_URL);
 
   // Connect the test-specific prisma client
   await prisma.$connect();
