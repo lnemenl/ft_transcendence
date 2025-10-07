@@ -11,11 +11,10 @@
     "dev": "ts-node src/index.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/index.js",
-    "test:clean": "rm -f database/test.db",
-    "test:setup": "DATABASE_URL=\"file:./database/test.db\" npx prisma migrate reset --force",
-    "test": "npm run test:clean && npm run test:setup && DATABASE_URL=\"file:./database/test.db\" jest --runInBand",
-    "test:watch": "DATABASE_URL=\"file:./database/test.db\" jest --watch",
-    "test:coverage": "npm run test:clean && npm run test:setup && DATABASE_URL=\"file:./database/test.db\" jest --coverage"
+    "test:setup": "DATABASE_URL='file:./database/test.db' npx prisma migrate reset --force && DATABASE_URL='file:./database/test.db' npx prisma generate",
+    "test": "npm run test:setup && DATABASE_URL='file:./database/test.db' jest --runInBand",
+    "test:watch": "DATABASE_URL='file:./database/test.db' jest --watch",
+    "test:coverage": "npm run test:setup && DATABASE_URL='file:./database/test.db' jest --coverage"
   },
   "keywords": [],
   "author": "",

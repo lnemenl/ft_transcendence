@@ -22,7 +22,6 @@ import { prisma } from "../utils/prisma";
 const testUser = { email: "ci_test@example.com", password: "Password123!" };
 
 beforeAll(async () => {
-
   // Connect the test-specific prisma client
   await prisma.$connect();
 
