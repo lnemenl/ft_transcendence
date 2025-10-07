@@ -33,7 +33,7 @@ services:
       bash -c "
         apt-get update -y && 
         apt-get install -y openssl &&
-        npm install &&
+        npm ci &&
         npm run check &&
         npm run lint &&
         npm run prisma &&

@@ -8,14 +8,14 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "check": "prettier --check \"src/**/*.ts\"",
     "prisma": "npx prisma migrate dev --name init",
-    "dev": "npx ts-node src/index.ts",
+    "dev": "ts-node src/index.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/index.js",
     "test:clean": "rm -f database/test.db",
-    "test:setup": "DATABASE_URL=\"file:../database/test.db\" npx prisma db push --skip-generate",
-    "test": "npm run test:clean && npm run test:setup && jest",
-    "test:watch": "DATABASE_URL=\"file:../database/test.db\" jest --watch",
-    "test:coverage": "npm run test:clean && npm run test:setup && DATABASE_URL=\"file:../database/test.db\" jest --coverage"
+    "test:setup": "DATABASE_URL=\"file:./database/test.db\" npx prisma migrate reset --force",
+    "test": "npm run test:clean && npm run test:setup && DATABASE_URL=\"file:./database/test.db\" jest --runInBand",
+    "test:watch": "DATABASE_URL=\"file:./database/test.db\" jest --watch",
+    "test:coverage": "npm run test:clean && npm run test:setup && DATABASE_URL=\"file:./database/test.db\" jest --coverage"
   },
   "keywords": [],
   "author": "",
@@ -45,7 +45,9 @@
     "typescript-eslint": "^8.45.0"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.1.0",
+    "@fastify/jwt": "^10.0.0",
     "@prisma/adapter-better-sqlite3": "^6.16.3",
     "@prisma/client": "^6.16.3",
     "bcrypt": "^6.0.0",

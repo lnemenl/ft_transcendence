@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig.json", // Inherit all the base rules
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "NodeNext",
@@ -8,11 +8,11 @@
     "isolatedModules": true,
     "noEmit": true,
     "types": ["jest", "node"],
-    "outDir": "./dist-test", // Specify output dir relative to this service
+    "outDir": "./dist-test"
   },
   "include": [
     "src/**/*.ts",
-    "tests/**/*.ts"
-    ], // Only compile files within this service's src folder
+    "src/__tests__/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }
