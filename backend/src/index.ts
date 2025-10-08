@@ -4,7 +4,9 @@ import jwtPlugin from "./plugins/jwt";
 import authRoutes from "./routes/auth";
 import profileRoutes from "./routes/profile";
 
-dotenv.config();
+if (process.env.NODE_ENV !== "test") {
+  dotenv.config();
+}
 
 // Initialize a Fastify server instance
 // Send logs through the pino-pretty module
