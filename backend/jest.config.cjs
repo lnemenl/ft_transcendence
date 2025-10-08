@@ -1,8 +1,11 @@
+require('dotenv').config({ path: '.env.test' });
+
 const isCI = process.env.CI === 'true';
 
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  rootDir: ".",
 
   testMatch: [
     '<rootDir>/src/__tests__/**/*.test.ts',

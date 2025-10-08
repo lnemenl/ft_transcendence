@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "The ft_transcendence backend monorepo",
   "private": true,
-
-"scripts": {
+  "scripts": {
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "check": "prettier --check \"src/**/*.ts\"",
@@ -12,12 +11,11 @@
     "dev": "ts-node src/index.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/index.js",
-    "test:setup": "dotenv -e .env.test -- npx prisma migrate reset --force",
-    "test": "dotenv -e .env.test -- npx prisma migrate deploy && jest --runInBand",
-    "test:watch": "dotenv -e .env.test -- jest --watch",
-    "test:coverage": "npm run test:setup && dotenv -e .env.test -- jest --coverage"
+    "clean:all": "rm -rf backend/database/*.db backend/prisma/migrations && npm run prisma",
+    "test": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest'",
+    "test:coverage": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest --coverage'",
+    "test:setup": "npx dotenv-cli -e backend/.env.test -- bash -c 'export DATABASE_URL=\"file:$(pwd)/database/test.db\" && npx prisma migrate reset --force'"
   },
-
   "keywords": [],
   "author": "",
   "license": "ISC",

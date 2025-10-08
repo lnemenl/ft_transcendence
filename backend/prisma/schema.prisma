@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "sqlite" // As required by the project spec
-  url      = env("DATABASE_URL") // We'll get the database location from our .env file
+  url = env("DATABASE_URL") // We'll get the database location from our .env file
 }
 
 // This block defines our User "model", which will become a "users" table in the database.
