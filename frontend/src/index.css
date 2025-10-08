@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+	body {
+	@apply bg-[#cad3f5] dark:bg-[#24273a];
+	}
+}
+
+@layer utilities {
+	.gradients-container {
+		filter: url(#goo) blur(60%);
+		-webkit-filter: url(#goo);
+		width: 100%;
+		height: 100%;
+	}
+	.blob {
+  	--circle-size: 90%;
+  	--blending: hard-light;
+		--color1: 30, 102, 245;
+		--color2: 198, 160, 246;
+		--color3: 138, 173, 244;
+		--color4: 183, 189, 248;
+	}
+	.b1 {
+		@apply absolute opacity-100;
+		background: radial-gradient(circle at center, rgba(var(--color1), 0.8) 0, rgba(var(--color1), 0) 50%) no-repeat;
+		mix-blend-mode: var(--blending);
+		width: calc(var(--circle-size) * 2);
+		height: calc(var(--circle-size) * 2);
+		top: calc(50% - var(--circle-size) / 2);
+		left: calc(50% - var(--circle-size) / 2);
+  	transform-origin: center center;
+  	animation: moveVertical 30s ease infinite;
+	}
+	.b2 {
+		@apply absolute opacity-100;
+		background: radial-gradient(circle at center, rgba(var(--color2), 0.8) 0, rgba(var(--color2), 0) 50%) no-repeat;
+		mix-blend-mode: var(--blending);
+		width: calc(var(--circle-size) * 2);
+		height: calc(var(--circle-size) * 2);
+		top: calc(50% - var(--circle-size));
+		left: calc(50% - var(--circle-size));
+		transform-origin: calc(50% - 400px);
+		animation: moveInCircle 20s reverse infinite;
+	}
+	.b3 {
+		@apply absolute opacity-100;
+		background: radial-gradient(circle at center, rgba(var(--color3), 0.8) 0, rgba(var(--color3), 0) 50%) no-repeat;
+		mix-blend-mode: var(--blending);
+		width: var(--circle-size);
+		height: var(--circle-size);
+		top: calc(50% - var(--circle-size) / 2 * 200px);
+		left: calc(50% - var(--circle-size) / 2 * 200px);
+		transform-origin: calc(50% + 400px);
+		animation: moveInCircle 40s linear infinite;
+	}
+	.b4 {
+		@apply absolute opacity-100;
+		background: radial-gradient(circle at center, rgba(var(--color4), 0.8) 0, rgba(var(--color4), 0) 50%) no-repeat;
+		mix-blend-mode: var(--blending);
+		width: calc(var(--circle-size));
+		height: calc(var(--circle-size));
+		top: calc(50% - var(--circle-size));
+		left: calc(50% - var(--circle-size));
+		transform-origin: calc(50% - 200px);
+		animation: moveHorizontal 40s ease infinite;
+	}
+	.goo-defs {
+		position: absolute;
+		width: 0;
+		height: 0;
+		opacity: 0;
+		pointer-events: none;
+	}
+}
+
+@keyframes moveInCircle {
+	0% {
+		transform: rotate(0deg);
+	}
+	50% {
+		transform: rotate(180deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes moveVertical {
+	0% {
+		transform: translate(-50%);
+	}
+	50% {
+		transform: translate(50%);
+	}
+	100% {
+		transform: translate(-50%);
+	}
+}
+
+@keyframes moveHorizontal {
+	0% {
+		transform: translateX(-50%) translateY(-10%);
+	}
+	50% {
+		transform: translateX(50%) translateY(10%);
+	}
+	100% {
+		transform: translateX(-50%) translateY(-10%)
+	}
+}
