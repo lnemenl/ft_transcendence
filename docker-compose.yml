@@ -48,6 +48,7 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend:/app
+      - ./game:/app/public/game
       - /app/node_modules
     environment:
       -VITE_API_BASE_URL: "http://localhost:3011"
