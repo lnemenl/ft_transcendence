@@ -16,6 +16,7 @@ rightPoints = 0;
 canvas = document.getElementById("canvas");
 engine = new b.Engine(canvas, true);
 S = new b.Scene(engine);
+S.clearColor = new BABYLON.Color4(0, 0, 0, 0);
 
 camera = new b.FreeCamera("camera", new v3(0, 10, 8), S);
 camera.setTarget(v3.Zero());
@@ -45,12 +46,10 @@ rpaddle = b.MeshBuilder.CreateCapsule("rpaddle", {
 lpaddle.material = new b.StandardMaterial("lpaddle_mat", S);
 rpaddle.material = new b.StandardMaterial("lpaddle_mat", S);
 sphere.material = new b.StandardMaterial("sphere_mat", S);
-paddleColor = new b.Color3(1,0,0);
+paddleColor = new b.Color3(1,1,1);
 lpaddle.material.emissiveColor = paddleColor;
 rpaddle.material.emissiveColor = paddleColor;
 sphere.material.emissiveColor = paddleColor;
-ground.material = new BABYLON.StandardMaterial("mirrorMaterial", S);
-ground.material.reflectionTexture = new BABYLON.MirrorTexture("mirrorTexture", 512, S, true);
 
 p1 = new v3(5,0,0);
 p2 = new v3(-5,0,0);
@@ -100,7 +99,7 @@ function update(current_time_ms) {
     ball_dir *= -1;
     perturbation = 0.5 - Math.random();
   }
-  ballSpeed = document.getElementById("speed").value / 100;
+  ballSpeed = 0.1;
   ball_pos.x += ballSpeed * ball_dir;
   ball_pos.z += ballSpeed * perturbation;
   if (Math.abs(ball_pos.z) > 5)
@@ -114,23 +113,15 @@ function update(current_time_ms) {
   }
 }
 
-scoreCard = document.getElementById("score-card");
 
 function loop(current_time_ms) {
   update(current_time_ms);
 
-  r = document.getElementById("red")  .value / 100;
-  g = document.getElementById("green").value / 100;
-  b = document.getElementById("blue") .value / 100;
 
-  paddleColor.set(r,g,b);
   lpaddle.setPositionWithLocalVector(p1);
   rpaddle.setPositionWithLocalVector(p2);
   sphere.setPositionWithLocalVector(ball_pos);
   light3.position.set(ball_pos.x,ball_pos.y+1,ball_pos.z);
-  scoreCard.innerHTML = `
-  ${leftPoints} | ${rightPoints}
-  `;
   S.render();
   requestAnimationFrame(loop);
 }
