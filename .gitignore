@@ -25,7 +25,6 @@ pids/
 # Database
 # Database files are runtime data, not source code.
 database/
-migrations/
 *.db
 *.db-journal
 backend/database/*.db
