@@ -21,8 +21,8 @@ camera = new b.FreeCamera("camera", new v3(0, 10, 8), S);
 camera.setTarget(v3.Zero());
 
 
-// ground = b.MeshBuilder.CreateGround("ground", {width: 10, height: 10}, S);
-// ground.position = new v3(0,-1,0);
+ground = b.MeshBuilder.CreateGround("ground", {width: 12, height: 12}, S);
+ground.position = new v3(0,-1,0);
 
 sphere = b.MeshBuilder.CreateSphere("sphere", {diameter: BALL_DIAMETER}, S);
 
@@ -49,8 +49,8 @@ paddleColor = new b.Color3(1,0,0);
 lpaddle.material.emissiveColor = paddleColor;
 rpaddle.material.emissiveColor = paddleColor;
 sphere.material.emissiveColor = paddleColor;
-// ground.material = new BABYLON.StandardMaterial("mirrorMaterial", S);
-// ground.material.reflectionTexture = new BABYLON.MirrorTexture("mirrorTexture", 512, S, true);
+ground.material = new BABYLON.StandardMaterial("mirrorMaterial", S);
+ground.material.reflectionTexture = new BABYLON.MirrorTexture("mirrorTexture", 512, S, true);
 
 p1 = new v3(5,0,0);
 p2 = new v3(-5,0,0);
@@ -64,6 +64,12 @@ ball_pos = new v3(0, 0, 0);
 ball_dir = 1;
 perturbation = 0;
 
+function clamp(x, min, max) {
+  if (x < min) return min;
+  if (x > max) return max;
+  return x;
+}
+
 function update(current_time_ms) {
   const delta_ms = (current_time_ms - last_time_ms) / 1000;
   const speed = 12;
@@ -71,6 +77,8 @@ function update(current_time_ms) {
   if (keys_down.has('KeyS')) p1.z += delta_ms * speed;
   if (keys_down.has('KeyI')) p2.z -= delta_ms * speed;
   if (keys_down.has('KeyK')) p2.z += delta_ms * speed;
+  p1.z = clamp(p1.z, -3.9, 3.9);
+  p2.z = clamp(p2.z, -3.9, 3.9);
   last_time_ms = current_time_ms;
   box1 = {
     minX: p1.x - PADDLE_RADIUS,
