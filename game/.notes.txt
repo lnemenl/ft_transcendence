@@ -2,3 +2,4 @@ Wed Oct  8 11:26:27:
 - On collisions:
   https://www.metanetsoftware.com/technique/tutorialA.html
   https://www.reddit.com/r/learnprogramming/comments/ezz2n/comment/c1c9ksw/
+  https://iquilezles.org/articles/intersectors/ (capsule intersect)
