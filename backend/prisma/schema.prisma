@@ -12,7 +12,7 @@ datasource db {
 
 // This block defines our User "model", which will become a "users" table in the database.
 model User {
-  id        Int      @id @default(autoincrement()) // A unique, auto-incrementing number for each user (Primary Key)
+  id        String      @id @default(cuid()) // A unique, auto-incrementing number for each user (Primary Key)
   email     String   @unique // The user's email address, which must be unique
   password  String   // Where we will store the securely hashed password
 
@@ -22,4 +22,16 @@ model User {
 
   createdAt DateTime @default(now()) // Automatically set the creation timestamp
   updatedAt DateTime @updatedAt    // Automatically update the timestamp on any change
+}
+
+// This block defines the users JWT refresh tokens so that the user can refresh their API access token when expired
+model RefreshToken {
+  id      String  @id @default(cuid()) // Refresh token id
+  token   String  @unique // The httpOnly JWT token to generate a new access token
+  userId  String // The id of the user
+
+  expiresAt DateTime // When the token expires, typically 30 days from creation
+  createdAt DateTime  @default(now()) // Time when the token was created
+
+  @@index([userId])
 }
