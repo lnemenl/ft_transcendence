@@ -14,7 +14,7 @@
     "clean:all": "rm -rf backend/database/*.db backend/prisma/migrations && npm run prisma",
     "test": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest'",
     "test:coverage": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest --coverage'",
-    "test:setup": "npx dotenv-cli -e backend/.env.test -- bash -c 'export DATABASE_URL=\"file:$(pwd)/database/test.db\" && npx prisma migrate reset --force'"
+    "test:setup": "npx dotenv -e backend/.env.test -- bash -c 'export DATABASE_URL=\"file:$(pwd)/database/test.db\" && npx prisma migrate reset --force && npx prisma migrate deploy'"
   },
   "keywords": [],
   "author": "",

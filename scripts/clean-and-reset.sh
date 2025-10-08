@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🧹 Cleaning up everything..."
+echo "Cleaning up everything..."
+docker compose down --remove-orphans --volumes --rmi all || true
 
-# Stop all running containers and remove volumes
-docker compose down -v --remove-orphans
-
-# Remove any dangling images, containers, and cache
-docker system prune -af
-
-# Remove any leftover local SQLite databases and Prisma migrations
-echo "🗑️ Removing old local databases and migrations..."
+echo "Removing old local databases..."
 rm -rf backend/database/*.db
-rm -rf backend/prisma/migrations
-rm -rf backend/node_modules
 
-echo "✅ Cleanup complete!"
+# Ensure database folder exists
+mkdir -p backend/database
+
+echo "Rebuilding migrations..."
+cd backend
+npx prisma migrate dev --name init
+cd ..
+
+echo "✅ Cleanup and migration complete! You can now run:"
+echo "   npm run test"

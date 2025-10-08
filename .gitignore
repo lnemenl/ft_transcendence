@@ -1,8 +1,7 @@
 node_modules/
-
-# We only commit the source code (TypeScript), not the compiled JavaScript.
 dist/
 build/
+coverage/
 
 # Logs
 # Log files are generated at runtime and should not be versioned.
@@ -29,6 +28,9 @@ database/
 migrations/
 *.db
 *.db-journal
+backend/database/*.db
+backend/prisma/migrations/
+
 
 # OS generated files
 # These are system-specific and have no place in a shared repository.
