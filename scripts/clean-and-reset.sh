@@ -15,5 +15,5 @@ cd backend
 npx prisma migrate dev --name init
 cd ..
 
-echo "✅ Cleanup and migration complete! You can now run:"
+echo "Cleanup and migration complete! You can now run:"
 echo "   npm run test"

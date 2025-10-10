@@ -18,3 +18,10 @@ declare module "fastify" {
     };
   }
 }
+
+
+/*
+  “Hey TypeScript, I promise that:
+  Every FastifyInstance object will have a function called authenticate(request, reply).
+  Every FastifyRequest might have a .user object with these fields.”
+*/

@@ -85,11 +85,82 @@ describe("Authentication flow (cookie-based JWT)", () => {
 
     const res = await request(app.server)
       .post("/api/register")
-      .send({ email: "fail@example.com", password: "Password123!" });
+      .send(testUser);
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty("error", "Simulated failure");
     jest.restoreAllMocks();
+  });
+
+  it("POST /api/register with a short password should fail", async () => {
+    const userWithShortPassword = { email: "shortpass@example.com", password: "123" };
+    const res = await request(app.server)
+      .post("/api/register")
+      .send(userWithShortPassword)
+      .expect(400);
+    expect(res.body.error).toBe("Bad Request");
+    expect(res.body.message).toMatch(/password/i);
+  });
+
+  it("handle loginUser internal error", async () => {
+    // jest.spyOn to temporarily break the loginUser function
+    // and make it throw an error.
+    jest
+      .spyOn(authService, "loginUser")
+      .mockRejectedValueOnce(new Error("Simulated DB failure"));
+
+    // Attempt to log in
+    const res = await request(app.server)
+      .post("/api/login")
+      .send(testUser);
+
+    // Check that our route handler caught the error and sent a 401
+    expect(res.status).toBe(401);
+    expect(res.body).toHaveProperty("error", "Simulated DB failure");
+
+    // IMPORTANT: Clean up the mock after the test
+    jest.restoreAllMocks();
+  });
+
+  it("GET /api/profile should return 401 for expired token", async () => {
+    // Create user + token with 1-second expiration
+    await request(app.server).post("/api/register").send(testUser);
+
+    // Find the user we just created to get their actual ID
+    const user = await prisma.user.findUnique({ where: { email: testUser.email } });
+
+    // Now, sign a token with the REAL user ID and a short expiration
+    const token = app.jwt.sign({ sub: user!.id }, { expiresIn: "1s" });
+
+    // Wait for token to expire
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    const res = await request(app.server)
+      .get("/api/profile")
+      .set("Cookie", [`token=${token}`])
+      .expect(401);
+
+    expect(res.body).toHaveProperty("error", "Unauthorized");
+  });
+
+  it("GET /api/profile should also accept Authorization header", async () => {
+    // Register + login user to get JWT token directly
+    await request(app.server).post("/api/register").send(testUser);
+    const loginRes = await request(app.server)
+      .post("/api/login")
+      .send(testUser)
+      .expect(200);
+
+    const { accessToken } = loginRes.body;
+
+    // Use Authorization Bearer token instead of cookie
+    const res = await request(app.server)
+      .get("/api/profile")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(res.body).toHaveProperty("user");
+    expect(res.body.user.email).toBe(testUser.email);
   });
 
   // --- Login Flow ---
@@ -129,6 +200,16 @@ describe("Authentication flow (cookie-based JWT)", () => {
     expect(res.headers["set-cookie"]).toBeUndefined();
     expect(res.body).toHaveProperty("error", "Invalid email or password");
   });
+
+  it("POST /api/login with a missing password should fail", async () => {
+    const playload = { email: testUser.email };
+    const res = await request(app.server)
+      .post("/api/login")
+      .send(playload)
+      .expect(400);
+
+    expect(res.body.message).toMatch(/password/i);
+  })
 
   // --- Protected Route and Logout Flow ---
   describe("when authenticated", () => {
@@ -180,6 +261,16 @@ describe("Authentication flow (cookie-based JWT)", () => {
       expect(res.body.user).toHaveProperty("email", testUser.email);
     });
 
+    it("GET /api/profile with an invalid cookie should be unauthorized", async () => {
+      const fakeToken = "this.is.a.fake.token";
+      const res = await request(app.server)
+        .get("/api/profile")
+        .set("Cookie", `token=${fakeToken}`)
+        .expect(401);
+
+        expect(res.body).toHaveProperty("error", "Unauthorized");
+    })
+
     it("POST /api/logout should clear the cookie", async () => {
       const res = await request(app.server)
         .post("/api/logout")
@@ -187,6 +278,38 @@ describe("Authentication flow (cookie-based JWT)", () => {
         .expect(200);
 
       expect(res.body).toHaveProperty("ok", true);
+    });
+
+    it("GET /api/profile should reject malformed JWT", async () => {
+      const malformedToken = "abc.def.ghi";
+      const res = await request(app.server)
+        .get("/api/profile")
+        .set("Cookie", [`token=${malformedToken}`])
+        .expect(401);
+
+      expect(res.body).toHaveProperty("error", "Unauthorized");
+    });
+
+    it("POST /api/logout should expire cookie immediately", async () => {
+      // Register + login user to get cookie
+      await request(app.server).post("/api/register").send(testUser);
+      const loginRes = await request(app.server)
+        .post("/api/login")
+        .send(testUser)
+        .expect(200);
+
+      const cookie = loginRes.headers["set-cookie"];
+
+      // Logout
+      const logoutRes = await request(app.server)
+        .post("/api/logout")
+        .set("Cookie", cookie)
+        .expect(200);
+
+      expect(logoutRes.body).toEqual({ ok: true });
+      const setCookieHeader = logoutRes.headers["set-cookie"][0];
+      expect(setCookieHeader).toMatch(/token=;/); // token cleared
+      expect(setCookieHeader).toMatch(/Expires=/); // expired date present
     });
   });
 });
