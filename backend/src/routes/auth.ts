@@ -24,7 +24,10 @@ const registerSchema = {
     400: {
       description: "Bad request, e.g., email already exists",
       type: "object",
-      properties: { error: { type: "string" } },
+      properties: {
+        error: { type: "string" },
+        message: { type: "string" },
+      },
     },
   },
 } as const;
@@ -49,7 +52,10 @@ const loginSchema = {
     401: {
       description: "Invalid credentials",
       type: "object",
-      properties: { error: { type: "string" } },
+      properties: {
+        error: { type: "string" },
+        message: { type: "string" },
+      },
     },
   },
 } as const;
@@ -66,29 +72,34 @@ const logoutSchema = {
   },
 } as const;
 
-
 export default async function authRoutes(fastify: FastifyInstance) {
-  fastify.post("/register", { schema: registerSchema }, async (request, reply) => {
+  fastify.post(
+    "/register",
+    { schema: registerSchema },
+    async (request, reply) => {
+      try {
+        const { email, password } = request.body as {
+          email: string;
+          password: string;
+        };
+        const user = await registerUser(email, password);
+        return reply.status(201).send(user);
+      } catch (err) {
+        fastify.log.error(err);
+        return reply.status(400).send({ error: (err as Error).message });
+      }
+    },
+  );
+
+  // POST /api/login
+  fastify.post("/login", { schema: loginSchema }, async (request, reply) => {
     try {
       const { email, password } = request.body as {
         email: string;
         password: string;
       };
-      const user = await registerUser(email, password);
-      return reply.status(201).send(user);
-    } catch (err) {
-      fastify.log.error(err);
-      return reply.status(400).send({ error: (err as Error).message });
-    }
-  });
-
-
-  // POST /api/login
-  fastify.post("/login", { schema: loginSchema }, async (request, reply) => {
-    try {
-      const { email, password } = request.body as { email: string; password: string; };
       const token = await loginUser(email, password, reply);
-      
+
       reply.setCookie("token", token, {
         httpOnly: true,
         path: "/",
@@ -104,7 +115,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.post("/logout", {schema: logoutSchema }, async (_request, reply) => {
+  fastify.post("/logout", { schema: logoutSchema }, async (_request, reply) => {
     reply.clearCookie("token", { path: "/" });
     return reply.status(200).send({ ok: true });
   });
@@ -117,7 +128,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 //       |                                              |  1. `auth.ts` route handler calls `loginUser` service.
 //       |                                              |  2. `auth.service.ts` validates password, then calls `reply.jwtSign()` to create a JWT.
 //       |                                              |  3. `auth.ts` gets the token back.
-//       |                                              |  4. It calls `reply.setCookie("token", token, { httpOnly: true, ... })`. 
+//       |                                              |  4. It calls `reply.setCookie("token", token, { httpOnly: true, ... })`.
 //       |                                              |
 //       |<-- Response (200 OK) ------------------------|
 //       | (with "Set-Cookie" header)                   |

@@ -83,9 +83,7 @@ describe("Authentication flow (cookie-based JWT)", () => {
       .spyOn(authService, "registerUser")
       .mockRejectedValueOnce(new Error("Simulated failure"));
 
-    const res = await request(app.server)
-      .post("/api/register")
-      .send(testUser);
+    const res = await request(app.server).post("/api/register").send(testUser);
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty("error", "Simulated failure");
@@ -93,7 +91,10 @@ describe("Authentication flow (cookie-based JWT)", () => {
   });
 
   it("POST /api/register with a short password should fail", async () => {
-    const userWithShortPassword = { email: "shortpass@example.com", password: "123" };
+    const userWithShortPassword = {
+      email: "shortpass@example.com",
+      password: "123",
+    };
     const res = await request(app.server)
       .post("/api/register")
       .send(userWithShortPassword)
@@ -110,9 +111,7 @@ describe("Authentication flow (cookie-based JWT)", () => {
       .mockRejectedValueOnce(new Error("Simulated DB failure"));
 
     // Attempt to log in
-    const res = await request(app.server)
-      .post("/api/login")
-      .send(testUser);
+    const res = await request(app.server).post("/api/login").send(testUser);
 
     // Check that our route handler caught the error and sent a 401
     expect(res.status).toBe(401);
@@ -127,7 +126,9 @@ describe("Authentication flow (cookie-based JWT)", () => {
     await request(app.server).post("/api/register").send(testUser);
 
     // Find the user we just created to get their actual ID
-    const user = await prisma.user.findUnique({ where: { email: testUser.email } });
+    const user = await prisma.user.findUnique({
+      where: { email: testUser.email },
+    });
 
     // Now, sign a token with the REAL user ID and a short expiration
     const token = app.jwt.sign({ sub: user!.id }, { expiresIn: "1s" });
@@ -209,7 +210,7 @@ describe("Authentication flow (cookie-based JWT)", () => {
       .expect(400);
 
     expect(res.body.message).toMatch(/password/i);
-  })
+  });
 
   // --- Protected Route and Logout Flow ---
   describe("when authenticated", () => {
@@ -268,8 +269,8 @@ describe("Authentication flow (cookie-based JWT)", () => {
         .set("Cookie", `token=${fakeToken}`)
         .expect(401);
 
-        expect(res.body).toHaveProperty("error", "Unauthorized");
-    })
+      expect(res.body).toHaveProperty("error", "Unauthorized");
+    });
 
     it("POST /api/logout should clear the cookie", async () => {
       const res = await request(app.server)

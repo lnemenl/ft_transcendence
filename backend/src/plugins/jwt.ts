@@ -37,7 +37,6 @@ export default fp(async function (app: FastifyInstance) {
   );
 });
 
-
 // CLIENT (Browser)                                    SERVER (Fastify App)
 //         |                                                       |
 //         |                                                       |

@@ -3,7 +3,6 @@
 import { FastifyInstance } from "fastify";
 import { prisma } from "../utils/prisma";
 
-
 // Defining schema as a constant
 // The 'as const' is a TS trick that makes the onject readonly
 
@@ -24,7 +23,13 @@ const getProfileSchema = {
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" },
           },
-          required: ["id", "email", "isTwoFactorEnabled", "createdAt", "updatedAt"],
+          required: [
+            "id",
+            "email",
+            "isTwoFactorEnabled",
+            "createdAt",
+            "updatedAt",
+          ],
         },
       },
       required: ["user"],
@@ -47,7 +52,7 @@ export default async function profileRoutes(fastify: FastifyInstance) {
     "/profile",
     {
       schema: getProfileSchema,
-      preHandler: [fastify.authenticate]
+      preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
       // request.user is populated by request.jwtVerify()
