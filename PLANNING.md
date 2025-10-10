@@ -38,10 +38,10 @@ Focus is on identity, security, and social features.
 **Issue #2: `chore: Implement Protected Route Middleware`**
 * **User Story**: As a developer, I want a reusable way to protect certain API endpoints so that only authenticated users can access them.
 * **Acceptance Criteria**:
-    * [ ] Create a middleware or a `preHandler` hook in Fastify.
-    * [ ] The hook checks for a valid JWT in the `Authorization: Bearer <token>` header of incoming requests.
-    * [ ] If the token is valid, the user's information (especially the ID) is attached to the request object for later use.
-    * [ ] If the token is missing or invalid, the hook sends a `401 Unauthorized` error and stops the request.
+    * [x] Create a middleware or a `preHandler` hook in Fastify.
+    * [x] The hook checks for a valid JWT in the `Authorization: Bearer <token>` header of incoming requests. (Replaced with Fasity plugins and cookies for better security)
+    * [x] If the token is valid, the user's information (especially the ID) is attached to the request object for later use.
+    * [x] If the token is missing or invalid, the hook sends a `401 Unauthorized` error and stops the request.
 
 **Issue #3: `feat: Implement User Profile Management`**
 * **User Story**: As a logged-in user, I want to view and update my profile information, and view the public profiles of other users.

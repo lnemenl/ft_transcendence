@@ -26,17 +26,18 @@ services:
       - /app/node_modules
 
       # Saving database file
-      - ./backend/database:/app/database
+
+    env_file:
+      - ./backend/.env.docker
 
     # The single command that orchestrates the entire setup, build, and run process.
     command: >
       bash -c "
-        apt-get update -y && 
+        apt-get update -y &&
         apt-get install -y openssl &&
-        npm install &&
-        npm run check &&
-        npm run lint &&
-        npm run prisma &&
+        npm install --include=dev &&
+        npx prisma migrate deploy --schema=./prisma/schema.prisma &&
+        npx prisma generate --schema=./prisma/schema.prisma &&
         npm run dev
       "
   frontend:

@@ -1,9 +1,13 @@
 {
-  "extends": "./tsconfig.base.json", // Inherit all the base rules
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist", // Specify output dir relative to this service
-    "rootDir": "./src"
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "types": ["node"],
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts"], // Only compile files within this service's src folder
+  "files": ["src/types/fastify.d.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

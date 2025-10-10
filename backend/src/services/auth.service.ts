@@ -1,23 +1,12 @@
+import { prisma } from "../utils/prisma";
 import bcrypt from "bcrypt";
-import { PrismaBetterSQLite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient } from "@prisma/client";
-import * as dotenv from "dotenv";
-import jwt from "jsonwebtoken";
-
-dotenv.config();
-
-const adapter = new PrismaBetterSQLite3({
-  url: process.env.DATABASE_URL,
-});
-export const prisma = new PrismaClient({ adapter });
+import { FastifyReply } from "fastify";
 
 const SALT_ROUNDS = 10;
 
 export const registerUser = async (email: string, password: string) => {
   // Checking if a user with this email already exists in the database
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
+  const existingUser = await prisma.user.findUnique({ where: { email } });
 
   if (existingUser) {
     throw new Error("User with this email already exists");
@@ -29,10 +18,7 @@ export const registerUser = async (email: string, password: string) => {
 
   // Create a new user in the database
   const user = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-    },
+    data: { email, password: hashedPassword },
   });
 
   // Do not return the hashed password in the response
@@ -40,11 +26,12 @@ export const registerUser = async (email: string, password: string) => {
   return userWithoutPassword;
 };
 
-export const loginUser = async (email: string, password: string) => {
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-
+export const loginUser = async (
+  email: string,
+  password: string,
+  reply: FastifyReply,
+) => {
+  const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     throw new Error("Invalid email or password");
   }
@@ -54,11 +41,12 @@ export const loginUser = async (email: string, password: string) => {
     throw new Error("Invalid email or password");
   }
 
-  const token = jwt.sign(
+  const token = await reply.jwtSign(
     { sub: user.id }, // The playload. 'sub' is standard for 'subject' (the user's ID)
-    process.env.JWT_SECRET!, // The secret key from .env file. The '!' tells TypeScript we are sure this exists.
     { expiresIn: "1h" }, // The token will expire in 1h
   );
 
   return token;
 };
+
+//Payload = Request body (data sent by the client)
