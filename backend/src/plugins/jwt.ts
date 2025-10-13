@@ -49,7 +49,7 @@ export default fp(async function (app: FastifyInstance) {
 //         |                                                       |    (Token exists only in memory here)
 //         |                                                       |
 //    [3]  |<---------- Response (200 OK) -------------------------|
-//         |      Header: "Set-Cookie: token=eyJ...; HttpOnly"      |
+//         |      Header: "Set-Cookie: token=eyJ...; HttpOnly"     |
 //         |                                                       |
 //         |                                                       |
 //    [4]  | Browser receives the "Set-Cookie" header.             |
@@ -59,7 +59,7 @@ export default fp(async function (app: FastifyInstance) {
 //    ... Some time later ...                                      |
 //         |                                                       |
 //    [5]  |----------- GET /api/profile ------------------------->|
-//         |      (Browser automatically attaches the             |
+//         |      (Browser automatically attaches the              |
 //         |       "token=eyJ..." cookie to the request)           |
 //         |                                                       |
 //         |                                                  [6]  | The `authenticate` preHandler runs.
