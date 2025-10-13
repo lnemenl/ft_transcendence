@@ -1,11 +1,12 @@
 import request from "supertest";
 import app from "../index";
 import { prisma } from "../utils/prisma";
+import { User } from "@prisma/client";
 
 describe("User Profile Endpoints", () => {
   let user1Cookie: string[];
-  let user1: { id: number; email: string };
-  let user2: { id: number; email: string };
+  let user1: User;
+  let user2: User;
 
   // beforeAll should ONLY be used for setting up the app instance
   beforeAll(async () => {
@@ -28,14 +29,14 @@ describe("User Profile Endpoints", () => {
     user1Cookie = loginRes.headers["set-cookie"];
     user1 = (await prisma.user.findUnique({
       where: { email: user1Data.email },
-    })) as any;
+    }))!;
 
     // 3. Create user2 for this specific test
     const user2Data = { email: "user2@example.com", password: "Password123!" };
     await request(app.server).post("/api/register").send(user2Data);
     user2 = (await prisma.user.findUnique({
       where: { email: user2Data.email },
-    })) as any;
+    }))!;
   });
 
   // afterAll cleans up once all tests in this file are done.

@@ -156,12 +156,12 @@ describe("Authentication flow (cookie-based JWT)", () => {
 
     // Use Authorization Bearer token instead of cookie
     const res = await request(app.server)
-      .get("/api/profile")
+      .get("/api/users/me")
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
 
-    expect(res.body).toHaveProperty("user");
-    expect(res.body.user.email).toBe(testUser.email);
+    expect(res.body).toHaveProperty("email", testUser.email);
+    expect(res.body.email).toBe(testUser.email);
   });
 
   // --- Login Flow ---
