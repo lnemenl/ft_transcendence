@@ -51,3 +51,6 @@ ehthumbs.db
 # Test and coverage reports
 coverage/
 .nyc_output/
+
+.vite/
+frontend/public/
