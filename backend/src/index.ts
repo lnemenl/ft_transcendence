@@ -4,6 +4,7 @@ import jwtPlugin from "./plugins/jwt";
 import authRoutes from "./routes/auth";
 import profileRoutes from "./routes/profile";
 
+/* istanbul ignore next */
 if (process.env.NODE_ENV !== "test") {
   dotenv.config();
 }

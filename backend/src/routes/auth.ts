@@ -72,7 +72,7 @@ const logoutSchema = {
   },
 } as const;
 
-export default async function authRoutes(fastify: FastifyInstance) {
+const authRoutes = async (fastify: FastifyInstance) => {
   fastify.post(
     "/register",
     { schema: registerSchema },
@@ -119,7 +119,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
     reply.clearCookie("token", { path: "/" });
     return reply.status(200).send({ ok: true });
   });
-}
+};
+
+export default authRoutes;
 
 // CLIENT                                     SERVER (Your Fastify App)
 //       |                                              |

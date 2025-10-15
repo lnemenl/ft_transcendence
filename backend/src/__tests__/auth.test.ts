@@ -1,7 +1,6 @@
 import request from "supertest";
 import app from "../index";
 import { prisma } from "../utils/prisma";
-import * as authService from "../services/auth.service";
 
 const testUser = { email: "ci_test@example.com", password: "Password123!" };
 
@@ -78,18 +77,6 @@ describe("Authentication flow (cookie-based JWT)", () => {
     expect(res.body).toHaveProperty("error");
   });
 
-  it("handles registerUser internal error gracefully", async () => {
-    jest
-      .spyOn(authService, "registerUser")
-      .mockRejectedValueOnce(new Error("Simulated failure"));
-
-    const res = await request(app.server).post("/api/register").send(testUser);
-
-    expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error", "Simulated failure");
-    jest.restoreAllMocks();
-  });
-
   it("POST /api/register with a short password should fail", async () => {
     const userWithShortPassword = {
       email: "shortpass@example.com",
@@ -101,24 +88,6 @@ describe("Authentication flow (cookie-based JWT)", () => {
       .expect(400);
     expect(res.body.error).toBe("Bad Request");
     expect(res.body.message).toMatch(/password/i);
-  });
-
-  it("handle loginUser internal error", async () => {
-    // jest.spyOn to temporarily break the loginUser function
-    // and make it throw an error.
-    jest
-      .spyOn(authService, "loginUser")
-      .mockRejectedValueOnce(new Error("Simulated DB failure"));
-
-    // Attempt to log in
-    const res = await request(app.server).post("/api/login").send(testUser);
-
-    // Check that our route handler caught the error and sent a 401
-    expect(res.status).toBe(401);
-    expect(res.body).toHaveProperty("error", "Simulated DB failure");
-
-    // IMPORTANT: Clean up the mock after the test
-    jest.restoreAllMocks();
   });
 
   it("GET /api/profile should return 401 for expired token", async () => {

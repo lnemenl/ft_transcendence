@@ -5,7 +5,7 @@ import fastifyCookie from "@fastify/cookie";
 import fastifyJwt from "@fastify/jwt";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
-export default fp(async function (app: FastifyInstance) {
+const jwtPlugin = fp(async (app: FastifyInstance) => {
   if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET must be set in .env");
   }
@@ -36,6 +36,8 @@ export default fp(async function (app: FastifyInstance) {
     },
   );
 });
+
+export default jwtPlugin;
 
 // CLIENT (Browser)                                    SERVER (Fastify App)
 //         |                                                       |

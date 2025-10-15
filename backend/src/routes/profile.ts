@@ -47,7 +47,7 @@ const getProfileSchema = {
   },
 } as const;
 
-export default async function profileRoutes(fastify: FastifyInstance) {
+const profileRoutes = async (fastify: FastifyInstance) => {
   fastify.get(
     "/profile",
     {
@@ -72,4 +72,6 @@ export default async function profileRoutes(fastify: FastifyInstance) {
       return reply.status(200).send({ user });
     },
   );
-}
+};
+
+export default profileRoutes;
