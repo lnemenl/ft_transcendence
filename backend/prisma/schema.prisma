@@ -13,7 +13,6 @@ datasource db {
 // This block defines our User "model", which will become a "users" table in the database.
 model User {
   id          String      @id @default(cuid()) // A unique, auto-incrementing number for each user (Primary Key)
-  username    String      // The players username to be used throughout the website
   email       String      @unique // The user's email address, which must be unique
   password    String      // Where we will store the securely hashed password
   games       Game[]      @relation("UserGames") // The games that the user has participated in

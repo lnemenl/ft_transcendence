@@ -11,7 +11,7 @@ declare module "fastify" {
   interface FastifyRequest {
     // request.user is populated after jwtVerify()
     user?: {
-      sub: number;
+      sub: string;
       iat?: number;
       exp?: number;
       [key: string]: unknown;

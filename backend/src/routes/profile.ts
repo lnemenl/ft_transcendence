@@ -17,7 +17,7 @@ const getProfileSchema = {
         user: {
           type: "object",
           properties: {
-            id: { type: "number" },
+            id: { type: "string" },
             email: { type: "string", format: "email" },
             isTwoFactorEnabled: { type: "boolean" },
             createdAt: { type: "string", format: "date-time" },
@@ -56,7 +56,7 @@ const profileRoutes = async (fastify: FastifyInstance) => {
     },
     async (request, reply) => {
       // request.user is populated by request.jwtVerify()
-      const userId = (request.user as { sub: number }).sub;
+      const userId = (request.user as { sub: string }).sub;
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {

@@ -17,7 +17,7 @@ const registerSchema = {
       description: "User created successfully",
       type: "object",
       properties: {
-        id: { type: "number" },
+        id: { type: "string" },
         email: { type: "string", format: "email" },
       },
     },
