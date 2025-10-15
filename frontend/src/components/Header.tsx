@@ -2,7 +2,7 @@ import { SlControlPlay } from "react-icons/sl";
 
 export function Header() {
 	const handleScroll = () => {
-		document.getElementById("playmode")?.scrollIntoView({
+		document.getElementById("login")?.scrollIntoView({
 			behavior: "smooth",
 		});
 	};

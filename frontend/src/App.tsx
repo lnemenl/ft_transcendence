@@ -3,14 +3,14 @@ import { Blobs } from "./components/Blobs";
 import { Header } from "./components/Header";
 import { Game } from "./components/Game";
 import { DarkMode } from "./components/DarkMode";
-import { PlayMode } from "./components/PlayMode";
+import { Login } from "./components/Login";
 
 function App() {
   return <>
     <Blobs />
     <Header />
     <DarkMode />
-    <PlayMode />
+    <Login />
     <Game />
   </>;
 }
