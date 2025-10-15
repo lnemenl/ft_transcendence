@@ -1,7 +1,6 @@
 node_modules/
 dist/
 build/
-coverage/
 
 # Logs
 # Log files are generated at runtime and should not be versioned.
