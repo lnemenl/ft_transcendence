@@ -1,0 +1,33 @@
+{
+  "newGame": {
+    "description": "Create a new game",
+    "tags": ["Game"],
+    "body": {
+      "type": "object",
+      "required": ["winnerId", "player1Id", "player2Id", "tournamentId"],
+      "properties": {
+        "winnerId": { "type": "string" },
+        "player1Id": { "type": "string" },
+        "player2Id": { "type": "string" },
+        "tournamentId": { "type": "string" }
+      }
+    },
+    "response": {
+      "201": {
+        "description": "Game created successfully",
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        }
+      },
+      "400": {
+        "description": "Bad request, e.g., player not found",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}
