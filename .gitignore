@@ -1,6 +1,4 @@
 node_modules/
-
-# We only commit the source code (TypeScript), not the compiled JavaScript.
 dist/
 build/
 
@@ -26,9 +24,10 @@ pids/
 # Database
 # Database files are runtime data, not source code.
 database/
-migrations/
 *.db
 *.db-journal
+backend/database/*.db
+
 
 # OS generated files
 # These are system-specific and have no place in a shared repository.
