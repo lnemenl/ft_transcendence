@@ -2,7 +2,11 @@ import request from "supertest";
 import app from "../index";
 import { prisma } from "../utils/prisma";
 
-const testUser = { email: "ci_test@example.com", password: "Password123!" };
+const testUser = {
+  email: "ci_test@example.com",
+  password: "Password123!",
+  username: "ci_tester",
+};
 
 // Starting Fastify app in "test mode", making sure routes and plugins are loaded before any request is made
 beforeAll(async () => {
@@ -20,8 +24,8 @@ beforeEach(async () => {
 // Runs ONCE after all tests, cleans up the DB, closes the F. instance, Disconnects Prisma
 afterAll(async () => {
   await prisma.user.deleteMany({}); // Final cleanup
-  await app.close();
   await prisma.$disconnect();
+  await app.close();
 });
 
 describe("Authentication flow (cookie-based JWT)", () => {
@@ -42,6 +46,7 @@ describe("Authentication flow (cookie-based JWT)", () => {
       .expect(201);
 
     expect(res.body).toHaveProperty("email", testUser.email);
+    expect(res.body).toHaveProperty("username", testUser.username);
     expect(res.body).not.toHaveProperty("password");
   });
 
@@ -53,10 +58,55 @@ describe("Authentication flow (cookie-based JWT)", () => {
     const res = await request(app.server)
       .post("/api/register")
       .send(testUser)
-      .expect(400);
+      .expect(409);
 
     expect(res.body).toHaveProperty("error");
     expect(res.body.error).toMatch(/exists/i);
+  });
+
+  it("POST /api/register with an existing username should fail", async () => {
+    // create a first user
+    await request(app.server).post("/api/register").send(testUser).expect(201);
+
+    // attempt to create a different user with the same username
+    const other = {
+      email: "other@example.com",
+      password: "Password123!",
+      username: testUser.username,
+    };
+    const res = await request(app.server)
+      .post("/api/register")
+      .send(other)
+      .expect(409);
+
+    expect(res.body).toHaveProperty("error");
+    expect(res.body.error).toMatch(/username/i);
+  });
+
+  it("handles registerUser internal error gracefully", async () => {
+    // Use the test-only trigger username to cause a real service error
+    const res = await request(app.server).post("/api/register").send({
+      email: "err@example.com",
+      password: "Password123!",
+      username: "__simulate_error__",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error", "Simulated failure");
+  });
+
+  it("handles non-Error thrown values from registerUser", async () => {
+    // This triggers the test-only path that throws a non-Error (empty string)
+    const res = await request(app.server).post("/api/register").send({
+      email: "no-message@example.com",
+      password: "Password123!",
+      username: "__simulate_non_error__",
+    });
+
+    // The route does: const msg = (err as Error).message || "";
+    // For a thrown empty string, msg becomes "" and the response error is empty.
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error", "");
   });
 
   it("POST /api/register with a missing password should fail", async () => {
@@ -81,6 +131,7 @@ describe("Authentication flow (cookie-based JWT)", () => {
     const userWithShortPassword = {
       email: "shortpass@example.com",
       password: "123",
+      username: "dammy",
     };
     const res = await request(app.server)
       .post("/api/register")
@@ -125,12 +176,12 @@ describe("Authentication flow (cookie-based JWT)", () => {
 
     // Use Authorization Bearer token instead of cookie
     const res = await request(app.server)
-      .get("/api/profile")
+      .get("/api/users/me")
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
 
-    expect(res.body).toHaveProperty("user");
-    expect(res.body.user.email).toBe(testUser.email);
+    expect(res.body).toHaveProperty("email", testUser.email);
+    expect(res.body.email).toBe(testUser.email);
   });
 
   // --- Login Flow ---
@@ -205,7 +256,11 @@ describe("Authentication flow (cookie-based JWT)", () => {
 
     it("GET /api/profile should return 404 when user is missing", async () => {
       // Log in normally to get cookie
-      const user = { email: "ghost@example.com", password: "Password123!" };
+      const user = {
+        email: "ghost@example.com",
+        password: "Password123!",
+        username: "ghostuser",
+      };
       await request(app.server).post("/api/register").send(user);
       const loginRes = await request(app.server).post("/api/login").send(user);
       const cookie = loginRes.headers["set-cookie"];

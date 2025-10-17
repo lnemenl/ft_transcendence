@@ -51,7 +51,7 @@ export default jwtPlugin;
 //         |                                                       |    (Token exists only in memory here)
 //         |                                                       |
 //    [3]  |<---------- Response (200 OK) -------------------------|
-//         |      Header: "Set-Cookie: token=eyJ...; HttpOnly"      |
+//         |      Header: "Set-Cookie: token=eyJ...; HttpOnly"     |
 //         |                                                       |
 //         |                                                       |
 //    [4]  | Browser receives the "Set-Cookie" header.             |
@@ -61,7 +61,7 @@ export default jwtPlugin;
 //    ... Some time later ...                                      |
 //         |                                                       |
 //    [5]  |----------- GET /api/profile ------------------------->|
-//         |      (Browser automatically attaches the             |
+//         |      (Browser automatically attaches the              |
 //         |       "token=eyJ..." cookie to the request)           |
 //         |                                                       |
 //         |                                                  [6]  | The `authenticate` preHandler runs.

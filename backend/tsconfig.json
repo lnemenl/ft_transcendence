@@ -5,7 +5,8 @@
     "rootDir": "./src",
     "types": ["node"],
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "module": "CommonJS",
   },
   "files": ["src/types/fastify.d.ts"],
   "include": ["src/**/*.ts"],
