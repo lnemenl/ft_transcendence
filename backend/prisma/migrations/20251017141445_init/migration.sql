@@ -12,10 +12,10 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "Game" (
     "id" TEXT NOT NULL PRIMARY KEY,
-    "winnerId" TEXT NOT NULL,
+    "winnerId" TEXT,
     "tournamentId" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Game_winnerId_fkey" FOREIGN KEY ("winnerId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Game_winnerId_fkey" FOREIGN KEY ("winnerId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Game_tournamentId_fkey" FOREIGN KEY ("tournamentId") REFERENCES "Tournament" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 

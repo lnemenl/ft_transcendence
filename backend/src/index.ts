@@ -3,7 +3,10 @@ import dotenv from "dotenv";
 import jwtPlugin from "./plugins/jwt";
 import authRoutes from "./routes/auth";
 import profileRoutes from "./routes/profile";
+<<<<<<< HEAD
 import userRoutes from "./routes/user";
+=======
+>>>>>>> 846f5fa (Implemented second user login for game, implemented endpoint to create a Game, added tests)
 import gameRoutes from "./routes/game";
 
 /* istanbul ignore next */
