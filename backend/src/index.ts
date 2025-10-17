@@ -4,6 +4,7 @@ import jwtPlugin from "./plugins/jwt";
 import authRoutes from "./routes/auth";
 import profileRoutes from "./routes/profile";
 import userRoutes from "./routes/user";
+import gameRoutes from "./routes/game";
 
 /* istanbul ignore next */
 if (process.env.NODE_ENV !== "test") {
@@ -12,13 +13,17 @@ if (process.env.NODE_ENV !== "test") {
 
 // Initialize a Fastify server instance
 // Send logs through the pino-pretty module
-const app = Fastify({
-  logger: {
-    transport: {
-      target: "pino-pretty", // Use pino-pretty for nicely formatted logs
-    },
-  },
-});
+const app = Fastify(
+  process.env.NODE_ENV !== "test"
+    ? {
+        logger: {
+          transport: {
+            target: "pino-pretty", // Use pino-pretty for nicely formatted logs
+          },
+        },
+      }
+    : {},
+);
 
 // Registering plugins
 app.register(jwtPlugin);
@@ -27,6 +32,7 @@ app.register(jwtPlugin);
 app.register(authRoutes, { prefix: "/api" });
 app.register(profileRoutes, { prefix: "/api" });
 app.register(userRoutes, { prefix: "/api/users" });
+app.register(gameRoutes, { prefix: "/api" });
 
 // Define a basic "route". This tells the server what to do when it
 // receives a GET request to the main URL ("/").

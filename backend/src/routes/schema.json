@@ -4,11 +4,9 @@
     "tags": ["Game"],
     "body": {
       "type": "object",
-      "required": ["winnerId", "player1Id", "player2Id", "tournamentId"],
+      "required": ["winnerId"],
       "properties": {
         "winnerId": { "type": "string" },
-        "player1Id": { "type": "string" },
-        "player2Id": { "type": "string" },
         "tournamentId": { "type": "string" }
       }
     },

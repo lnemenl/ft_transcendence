@@ -11,6 +11,7 @@ const testUser = {
 // Starting Fastify app in "test mode", making sure routes and plugins are loaded before any request is made
 beforeAll(async () => {
   process.env.NODE_ENV = "test";
+  await prisma.$connect();
   await app.ready();
 });
 
@@ -204,6 +205,45 @@ describe("Authentication flow (cookie-based JWT)", () => {
       .expect(400);
 
     expect(res.body.message).toMatch(/password/i);
+  });
+
+  it("POST /api/login/player2 should allow a second user to log in", async () => {
+    const player2 = { email: "player2@example.com", password: "Password123!" };
+    await request(app.server).post("/api/register").send(player2).expect(201);
+
+    const result = await request(app.server)
+      .post("/api/login/player2")
+      .set("Cookie", cookie)
+      .send(player2);
+
+    expect(result.status).toBe(200);
+    const setCookieHeader = result.headers["set-cookie"];
+    const cookieString = setCookieHeader.find((c: string) =>
+      c.startsWith("player2_token="),
+    );
+    const token = cookieString?.split(";")[0].split("=")[1]; // token value
+    expect(token).toBeDefined();
+  });
+
+  it("POST /api/login/player2 without logged in to the app should fail", async () => {
+    const player2 = { email: "player2@example.com", password: "Password123!" };
+    const result = await request(app.server)
+      .post("/api/login/player2")
+      .send(player2);
+
+    expect(result.status).toBe(401);
+    expect(result.body.error).toBeDefined();
+  });
+
+  it("POST /api/login/player2 with invalid credentials should fail", async () => {
+    const player2 = { email: "player2@example.com", password: "Invalid!" };
+    const result = await request(app.server)
+      .post("/api/login/player2")
+      .set("Cookie", cookie)
+      .send(player2);
+
+    expect(result.status).toBe(401);
+    expect(result.body.error).toBeDefined();
   });
 
   // --- Protected Route and Logout Flow ---
