@@ -1,7 +1,6 @@
 node_modules/
 dist/
 build/
-coverage/
 
 # Logs
 # Log files are generated at runtime and should not be versioned.
@@ -51,3 +50,6 @@ ehthumbs.db
 # Test and coverage reports
 coverage/
 .nyc_output/
+
+.vite/
+frontend/public/
