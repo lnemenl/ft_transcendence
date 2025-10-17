@@ -8,9 +8,9 @@ const getMeSchema = {
     200: {
       type: "object",
       properties: {
-        id: { type: "number" },
+        id: { type: "string" },
         email: { type: "string", format: "email" },
-        displayName: { type: ["string", "null"] },
+        username: { type: ["string", "null"] },
         avatarUrl: { type: ["string", "null"], format: "uri" },
       },
     },
@@ -31,7 +31,7 @@ const updateUserSchema = {
   body: {
     type: "object",
     properties: {
-      displayName: { type: "string", minLength: 2 },
+      username: { type: "string", minLength: 2 },
       avatarUrl: { type: "string", format: "uri" },
     },
     minProperties: 1,
@@ -40,9 +40,9 @@ const updateUserSchema = {
     200: {
       type: "object",
       properties: {
-        id: { type: "number" },
+        id: { type: "string" },
         email: { type: "string", format: "email" },
-        displayName: { type: ["string", "null"] },
+        username: { type: ["string", "null"] },
         avatarUrl: { type: ["string", "null"], format: "uri" },
       },
     },
@@ -63,7 +63,7 @@ const getUserSchema = {
   params: {
     type: "object",
     properties: {
-      id: { type: "number" },
+      id: { type: "string" },
     },
     required: ["id"],
   },
@@ -71,8 +71,8 @@ const getUserSchema = {
     200: {
       type: "object",
       properties: {
-        id: { type: "number" },
-        displayName: { type: ["string", "null"] },
+        id: { type: "string" },
+        username: { type: ["string", "null"] },
         avatarUrl: { type: ["string", "null"], format: "uri" },
       },
     },
@@ -87,7 +87,7 @@ const getUserSchema = {
   },
 } as const;
 
-export default async function userRoutes(fastify: FastifyInstance) {
+const userRoutes = async (fastify: FastifyInstance) => {
   fastify.get(
     "/me",
     {
@@ -95,13 +95,13 @@ export default async function userRoutes(fastify: FastifyInstance) {
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
-      const userId = (request.user as { sub: number }).sub;
+      const userId = (request.user as { sub: string }).sub;
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
           id: true,
           email: true,
-          displayName: true,
+          username: true,
           avatarUrl: true,
         },
       });
@@ -118,9 +118,9 @@ export default async function userRoutes(fastify: FastifyInstance) {
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
-      const userId = (request.user as { sub: number }).sub;
+      const userId = (request.user as { sub: string }).sub;
       const dataToUpdate = request.body as {
-        displayName?: string;
+        username?: string;
         avatarUrl?: string;
       };
 
@@ -130,7 +130,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
         select: {
           id: true,
           email: true,
-          displayName: true,
+          username: true,
           avatarUrl: true,
         },
       });
@@ -145,12 +145,12 @@ export default async function userRoutes(fastify: FastifyInstance) {
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
-      const { id } = request.params as { id: number };
+      const { id } = request.params as { id: string };
       const user = await prisma.user.findUnique({
         where: { id },
         select: {
           id: true,
-          displayName: true,
+          username: true,
           avatarUrl: true,
         },
       });
@@ -159,4 +159,6 @@ export default async function userRoutes(fastify: FastifyInstance) {
       return reply.status(200).send(user);
     },
   );
-}
+};
+
+export default userRoutes;

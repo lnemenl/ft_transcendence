@@ -6,10 +6,11 @@ const registerSchema = {
   tags: ["Auth"],
   body: {
     type: "object",
-    required: ["email", "password"],
+    required: ["email", "password", "username"],
     properties: {
       email: { type: "string", format: "email" },
       password: { type: "string", minLength: 8 },
+      username: { type: "string", minLength: 2 },
     },
   },
   response: {
@@ -17,8 +18,9 @@ const registerSchema = {
       description: "User created successfully",
       type: "object",
       properties: {
-        id: { type: "number" },
+        id: { type: "string" },
         email: { type: "string", format: "email" },
+        username: { type: "string", minLength: 2 },
       },
     },
     400: {
@@ -27,7 +29,13 @@ const registerSchema = {
       properties: {
         error: { type: "string" },
         message: { type: "string" },
+        username: { type: "string" },
       },
+    },
+    409: {
+      description: "Conflict! email or username already exists",
+      type: "object",
+      properties: { error: { type: "string" } },
     },
   },
 } as const;
@@ -72,21 +80,26 @@ const logoutSchema = {
   },
 } as const;
 
-export default async function authRoutes(fastify: FastifyInstance) {
+const authRoutes = async (fastify: FastifyInstance) => {
   fastify.post(
     "/register",
     { schema: registerSchema },
     async (request, reply) => {
       try {
-        const { email, password } = request.body as {
+        const { email, password, username } = request.body as {
           email: string;
           password: string;
+          username: string;
         };
-        const user = await registerUser(email, password);
+        const user = await registerUser(email, password, username);
         return reply.status(201).send(user);
       } catch (err) {
         fastify.log.error(err);
-        return reply.status(400).send({ error: (err as Error).message });
+        const msg = (err as Error).message || "";
+        if (msg.match(/exists/i) || msg.match(/username/i)) {
+          return reply.status(409).send({ error: msg });
+        }
+        return reply.status(400).send({ error: msg });
       }
     },
   );
@@ -98,6 +111,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
         email: string;
         password: string;
       };
+
       const token = await loginUser(email, password, reply);
 
       reply.setCookie("token", token, {
@@ -107,11 +121,13 @@ export default async function authRoutes(fastify: FastifyInstance) {
         sameSite: "lax",
         maxAge: 60 * 60,
       });
-
       return reply.status(200).send({ accessToken: token });
     } catch (err) {
       fastify.log.error(err);
-      return reply.status(401).send({ error: (err as Error).message });
+      return reply.code(401).send({
+        error: "Invalid email or password",
+        message: (err as Error).message,
+      });
     }
   });
 
@@ -119,7 +135,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
     reply.clearCookie("token", { path: "/" });
     return reply.status(200).send({ ok: true });
   });
-}
+};
+
+export default authRoutes;
 
 // CLIENT                                     SERVER (Your Fastify App)
 //       |                                              |

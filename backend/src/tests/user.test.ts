@@ -21,7 +21,11 @@ describe("User Profile Endpoints", () => {
     await prisma.user.deleteMany({});
 
     // 2. Create and log in user1 for this specific test
-    const user1Data = { email: "user1@example.com", password: "Password123!" };
+    const user1Data = {
+      email: "user1@example.com",
+      password: "Password123!",
+      username: "user1",
+    };
     await request(app.server).post("/api/register").send(user1Data);
     const loginRes = await request(app.server)
       .post("/api/login")
@@ -32,7 +36,11 @@ describe("User Profile Endpoints", () => {
     }))!;
 
     // 3. Create user2 for this specific test
-    const user2Data = { email: "user2@example.com", password: "Password123!" };
+    const user2Data = {
+      email: "user2@example.com",
+      password: "Password123!",
+      username: "user2",
+    };
     await request(app.server).post("/api/register").send(user2Data);
     user2 = (await prisma.user.findUnique({
       where: { email: user2Data.email },
@@ -42,8 +50,8 @@ describe("User Profile Endpoints", () => {
   // afterAll cleans up once all tests in this file are done.
   afterAll(async () => {
     await prisma.user.deleteMany({});
-    await app.close();
     await prisma.$disconnect();
+    await app.close();
   });
 
   // tests for GET /api/users/me
@@ -60,6 +68,7 @@ describe("User Profile Endpoints", () => {
 
       expect(res.body.id).toBe(user1.id);
       expect(res.body.email).toBe(user1.email);
+      expect(res.body.username).toBe(user1.username);
     });
 
     it("should return 404 if the authenticated user is deleted", async () => {
@@ -78,38 +87,38 @@ describe("User Profile Endpoints", () => {
     it("should fail with 401 if not authenticated", async () => {
       await request(app.server)
         .patch("/api/users/me")
-        .send({ displayName: "New name" })
+        .send({ username: "New name" })
         .expect(401);
     });
 
-    it("should update both displayName and avatarUrl for the user", async () => {
+    it("should update both username and avatarUrl for the user", async () => {
       const res = await request(app.server)
         .patch("/api/users/me")
         .set("Cookie", user1Cookie)
         .send({
-          displayName: "UserOneUpdated",
+          username: "UserOneUpdated",
           avatarUrl: "https://example.com/avatar.png",
         })
         .expect(200);
 
-      expect(res.body.displayName).toBe("UserOneUpdated");
+      expect(res.body.username).toBe("UserOneUpdated");
       expect(res.body.avatarUrl).toBe("https://example.com/avatar.png");
     });
 
-    it("should update only the displayName", async () => {
+    it("should update only the username", async () => {
       const res = await request(app.server)
         .patch("/api/users/me")
         .set("Cookie", user1Cookie)
-        .send({ displayName: "JustTheName" })
+        .send({ username: "JustTheName" })
         .expect(200);
-      expect(res.body.displayName).toBe("JustTheName");
+      expect(res.body.username).toBe("JustTheName");
     });
 
-    it("should fail with 400 if displayName is too short", async () => {
+    it("should fail with 400 if username is too short", async () => {
       await request(app.server)
         .patch("/api/users/me")
         .set("Cookie", user1Cookie)
-        .send({ displayName: "A" })
+        .send({ username: "A" })
         .expect(400);
     });
 
@@ -141,6 +150,7 @@ describe("User Profile Endpoints", () => {
         .set("Cookie", user1Cookie)
         .expect(200);
       expect(res.body.id).toBe(user2.id);
+      expect(res.body.username).toBe(user2.username);
       expect(res.body.email).toBeUndefined();
     });
 
@@ -150,13 +160,6 @@ describe("User Profile Endpoints", () => {
         .get(`/api/users/${nonExistentId}`)
         .set("Cookie", user1Cookie)
         .expect(404);
-    });
-
-    it("should fail with 400 if the ID in the URL is not a number", async () => {
-      await request(app.server)
-        .get("/api/users/not-a-number")
-        .set("Cookie", user1Cookie)
-        .expect(400);
     });
   });
 });
