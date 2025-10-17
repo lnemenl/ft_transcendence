@@ -115,6 +115,36 @@ const authRoutes = async (fastify: FastifyInstance) => {
     }
   });
 
+  fastify.post(
+    "/login/player2",
+    {
+      schema: loginSchema,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const { email, password } = request.body as {
+          email: string;
+          password: string;
+        };
+        const token = await loginUser(email, password, reply);
+
+        reply.setCookie("player2_token", token, {
+          httpOnly: true,
+          path: "/",
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60,
+        });
+
+        return reply.status(200).send({ ok: true });
+      } catch (err) {
+        fastify.log.error(err);
+        return reply.status(401).send({ error: (err as Error).message });
+      }
+    },
+  );
+
   fastify.post("/logout", { schema: logoutSchema }, async (_request, reply) => {
     reply.clearCookie("token", { path: "/" });
     return reply.status(200).send({ ok: true });

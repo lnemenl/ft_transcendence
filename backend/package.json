@@ -12,8 +12,8 @@
     "build": "tsc --project tsconfig.json",
     "start": "node dist/index.js",
     "clean:all": "rm -rf database/*.db backend/prisma/migrations && npm run prisma",
-    "test": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest'",
-    "test:coverage": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest --coverage'",
+    "test": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest --runInBand'",
+    "test:coverage": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest --runInBand --coverage'",
     "test:setup": "npx dotenv -e backend/.env.test -- bash -c 'export DATABASE_URL=\"file:$(pwd)/database/test.db\" && npx prisma migrate reset --force && npx prisma migrate deploy'"
   },
   "keywords": [],
@@ -28,6 +28,7 @@
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.14.2",
+    "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "dotenv-cli": "^10.0.0",

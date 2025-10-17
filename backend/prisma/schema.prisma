@@ -28,8 +28,8 @@ model User {
 
 model Game {
   id            String      @id @default(cuid()) // A unique game id
-  winnerId      String      // The id of the winner player
-  winner        User        @relation("GameWinner", fields: [winnerId], references: [id]) // Link to the winner player
+  winnerId      String?      // The id of the winner player
+  winner        User?        @relation("GameWinner", fields: [winnerId], references: [id]) // Link to the winner player
   players       User[]      @relation("UserGames") // Players that participated in the game
   tournamentId  String?     // OPTIONAL: The tournament id that the game is in
   tournament    Tournament? @relation(fields: [tournamentId], references: [id]) // OPTIONAL: The tournament that the game is in
