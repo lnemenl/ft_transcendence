@@ -1,6 +1,6 @@
 import request from "supertest";
-import app from "../index";
-import { prisma } from "../utils/prisma";
+import app from "../../src/index";
+import { prisma } from "../../src/utils/prisma";
 import { User } from "@prisma/client";
 
 describe("User Profile Endpoints", () => {
@@ -20,7 +20,7 @@ describe("User Profile Endpoints", () => {
     // 1. Clean the database
     await prisma.user.deleteMany({});
 
-    // 2. Create and log in user1 for this specific test
+    // 2. Create and log in user1
     const user1Data = {
       email: "user1@example.com",
       password: "Password123!",
@@ -35,7 +35,7 @@ describe("User Profile Endpoints", () => {
       where: { email: user1Data.email },
     }))!;
 
-    // 3. Create user2 for this specific test
+    // 3. Create user2
     const user2Data = {
       email: "user2@example.com",
       password: "Password123!",

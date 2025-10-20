@@ -32,11 +32,6 @@ const registerSchema = {
         username: { type: "string" },
       },
     },
-    409: {
-      description: "Conflict! email or username already exists",
-      type: "object",
-      properties: { error: { type: "string" } },
-    },
   },
 } as const;
 
@@ -95,10 +90,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
         return reply.status(201).send(user);
       } catch (err) {
         fastify.log.error(err);
-        const msg = (err as Error).message || "";
-        if (msg.match(/exists/i) || msg.match(/username/i)) {
-          return reply.status(409).send({ error: msg });
-        }
+        const msg = (err as Error).message;
         return reply.status(400).send({ error: msg });
       }
     },

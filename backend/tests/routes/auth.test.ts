@@ -1,6 +1,6 @@
 import request from "supertest";
-import app from "../index";
-import { prisma } from "../utils/prisma";
+import app from "../../src/index";
+import { prisma } from "../../src/utils/prisma";
 
 const testUser = {
   email: "ci_test@example.com",
@@ -58,7 +58,7 @@ describe("Authentication flow (cookie-based JWT)", () => {
     const res = await request(app.server)
       .post("/api/register")
       .send(testUser)
-      .expect(409);
+      .expect(400);
 
     expect(res.body).toHaveProperty("error");
     expect(res.body.error).toMatch(/exists/i);
@@ -77,36 +77,10 @@ describe("Authentication flow (cookie-based JWT)", () => {
     const res = await request(app.server)
       .post("/api/register")
       .send(other)
-      .expect(409);
+      .expect(400);
 
     expect(res.body).toHaveProperty("error");
     expect(res.body.error).toMatch(/username/i);
-  });
-
-  it("handles registerUser internal error gracefully", async () => {
-    // Use the test-only trigger username to cause a real service error
-    const res = await request(app.server).post("/api/register").send({
-      email: "err@example.com",
-      password: "Password123!",
-      username: "__simulate_error__",
-    });
-
-    expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error", "Simulated failure");
-  });
-
-  it("handles non-Error thrown values from registerUser", async () => {
-    // This triggers the test-only path that throws a non-Error (empty string)
-    const res = await request(app.server).post("/api/register").send({
-      email: "no-message@example.com",
-      password: "Password123!",
-      username: "__simulate_non_error__",
-    });
-
-    // The route does: const msg = (err as Error).message || "";
-    // For a thrown empty string, msg becomes "" and the response error is empty.
-    expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error", "");
   });
 
   it("POST /api/register with a missing password should fail", async () => {

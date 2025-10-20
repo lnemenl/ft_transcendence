@@ -9,20 +9,8 @@ export const registerUser = async (
   password: string,
   username: string,
 ) => {
-  // Normalize inputs
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedUsername = username.trim();
-
-  // Test-only hook: allow tests to trigger an internal error without mocking.
-  // Use a clearly-named username so it's obvious and won't collide with real data.
-  if (normalizedUsername === "__simulate_error__") {
-    throw new Error("Simulated failure");
-  }
-
-  // Additional test-only hook. Helps coverage tools detect the `|| ""` branch in auth.ts.
-  if (normalizedUsername === "__simulate_non_error__") {
-    throw "";
-  }
 
   // Ensuring email or username isn't already taken.
   const existing = await prisma.user.findFirst({

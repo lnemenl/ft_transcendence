@@ -8,8 +8,8 @@ module.exports = {
   rootDir: ".",
 
   testMatch: [
-    '<rootDir>/src/tests/**/*.test.ts',
-    '<rootDir>/src/tests/**/*.spec.ts'
+    '<rootDir>/tests/**/*.test.ts',
+    '<rootDir>/tests/**/*.spec.ts'
   ],
 
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -24,7 +24,7 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/index.ts',
-    '!src/tests/**/*.test.ts',
+    '!tests/**/*.test.ts',
     '!**/node_modules/**'
   ],
 
