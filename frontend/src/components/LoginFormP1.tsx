@@ -16,13 +16,16 @@ export function LoginFormP1({ onBack }: LoginFormProps) {
     const data = { username, email, password};
     console.log("WHAT WAS SENT: ", data);
     try {
-      const res = await fetch("http://localhost:3011/api/register", {
+      const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       const result = await res.json();
+      if (res.OK) {
+        console.log("SUCCESS!");
+      }
       setMessage("${result.message || OK}");
     } catch (err) {
       setMessage("Error");
