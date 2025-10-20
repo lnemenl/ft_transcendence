@@ -1,5 +1,5 @@
 import Fastify from "fastify";
-import jwtPlugin from "../plugins/jwt";
+import jwtPlugin from "../../src/plugins/jwt";
 
 describe("JWT plugin", () => {
   it("throws error if JWT_SECRET is not set", async () => {
