@@ -12,16 +12,47 @@ datasource db {
 
 // This block defines our User "model", which will become a "users" table in the database.
 model User {
-  id                  String   @id @default(cuid()) // A unique, auto-incrementing number for each user (Primary Key)
-  email               String   @unique // The user's email address, which must be unique
-  password            String   // Where we will store the securely hashed password
-  username            String  @unique
-  avatarUrl           String?
-
+  id                String      @id @default(cuid()) // A unique, auto-incrementing number for each user (Primary Key)
+  username          String      // The players username to be used throughout the website
+  email             String      @unique // The user's email address, which must be unique
+  password          String      // Where we will store the securely hashed password
+  games             Game[]      @relation("UserGames") // The games that the user has participated in
+  gamesWon          Game[]      @relation("GameWinner") // The games that the user has won
+  tournaments       TournamentParticipant[]
   // Fields for Two-Factor Authentication (2FA)
-  isTwoFactorEnabled  Boolean @default(false)
-  twoFactorSecret     String? //The '?' makes this field optional
+  isTwoFactorEnabled Boolean @default(false)
+  twoFactorSecret    String? //The '?' makes this field optional
 
-  createdAt           DateTime @default(now()) // Automatically set the creation timestamp
-  updatedAt           DateTime @updatedAt    // Automatically update the timestamp on any change
+  createdAt DateTime @default(now()) // Automatically set the creation timestamp
+  updatedAt DateTime @updatedAt    // Automatically update the timestamp on any change
+}
+
+model Game {
+  id            String      @id @default(cuid()) // A unique game id
+  winnerId      String      // The id of the winner player
+  winner        User        @relation("GameWinner", fields: [winnerId], references: [id]) // Link to the winner player
+  players       User[]      @relation("UserGames") // Players that participated in the game
+  tournamentId  String?     // OPTIONAL: The tournament id that the game is in
+  tournament    Tournament? @relation(fields: [tournamentId], references: [id]) // OPTIONAL: The tournament that the game is in
+  createdAt     DateTime    @default(now()) // The date of the game
+}
+
+model Tournament {
+  id            String   @id @default(cuid()) // A unique tournament id
+  games         Game[] // The games that the tournament has
+  participants  TournamentParticipant[] // The players that participated in the tournament
+  startDate     DateTime // The date that the tournament started
+  endDate       DateTime? // The date that the tournament ended, can be NULL if the tournament has not ended yet
+}
+
+model TournamentParticipant {
+  userId        String // The id of the participant, found in User
+  tournamentId  String // The id of the tournament, found in Tournament
+  score         Int @default(0) // The score of the player
+  isEliminated  Boolean @default(false) // A boolean to indicate if the player has been eliminated or not
+  rank          Int? // The rank of the player in the tournament (How many games won)
+  player        User @relation(fields: [userId], references: [id]) // A link to the participant
+  tournament    Tournament  @relation(fields: [tournamentId], references: [id]) // A link to the tournament
+
+  @@id([userId, tournamentId]) // The id pair of User and Tournament acts as a unique identifier
 }
