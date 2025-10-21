@@ -15,6 +15,7 @@ model User {
   id                String      @id @default(cuid()) // A unique, auto-incrementing number for each user (Primary Key)
   username          String      // The players username to be used throughout the website
   email             String      @unique // The user's email address, which must be unique
+  avatarUrl         String?
   password          String      // Where we will store the securely hashed password
   games             Game[]      @relation("UserGames") // The games that the user has participated in
   gamesWon          Game[]      @relation("GameWinner") // The games that the user has won

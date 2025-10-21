@@ -208,7 +208,11 @@ describe("Authentication flow (cookie-based JWT)", () => {
   });
 
   it("POST /api/login/player2 should allow a second user to log in", async () => {
-    const player2 = { email: "player2@example.com", password: "Password123!" };
+    const player2 = {
+      email: "player2@example.com",
+      password: "Password123!",
+      username: "Player2",
+    };
     await request(app.server).post("/api/register").send(player2).expect(201);
 
     const result = await request(app.server)
