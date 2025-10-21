@@ -1,7 +1,19 @@
 import request from "supertest";
-import app from "../index";
-import { prisma } from "../utils/prisma";
-import { createGame } from "../services/game.service";
+import app from "../../src/index";
+import { prisma } from "../../src/utils/prisma";
+import { createGame } from "../../src/services/game.service";
+
+const registerTestUser1 = {
+  email: "ci_test_game@example.com",
+  password: "Password123!",
+  username: "TestUSer1",
+};
+
+const registerTestUser2 = {
+  email: "ci_test1_game@example.com",
+  password: "Password123!",
+  username: "TestUser2",
+};
 
 const testUser1 = {
   email: "ci_test_game@example.com",
@@ -37,11 +49,11 @@ describe("Game tests", () => {
   it("Registering both users", async () => {
     const res1 = await request(app.server)
       .post("/api/register")
-      .send(testUser1)
+      .send(registerTestUser1)
       .expect(201);
     const res2 = await request(app.server)
       .post("/api/register")
-      .send(testUSer2)
+      .send(registerTestUser2)
       .expect(201);
 
     testUser1Id = res1.body.id;
@@ -77,7 +89,7 @@ describe("Game tests", () => {
 
   it("POST /games with valid credentials should pass", async () => {
     const requestBody = { winnerId: testUser1Id, tournamentId: undefined };
-    cookie = [...cookie1, ...cookie2];
+    cookie = [cookie1, cookie2];
     const res = await request(app.server)
       .post("/api/games")
       .set("Cookie", cookie.join("; "))
@@ -122,7 +134,7 @@ describe("Game tests", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 1100));
 
-    const badCookie = [...cookie1, `player2_token=${token}`];
+    const badCookie = [cookie1, `player2_token=${token}`];
     const requestBody = { winnerId: testUser1Id, tournamentId: undefined };
     const res = await request(app.server)
       .post("/api/games")
