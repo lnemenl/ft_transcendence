@@ -32,10 +32,42 @@ const gameRoutes = async (fastify: FastifyInstance) => {
         const game = await createGame(winnerId, player1, player2, tournamentId);
         return reply.status(201).send(game);
       } catch (err) {
-        if ((err as Error).message === "Invalid ID") {
-          return reply.status(404).send({ error: (err as Error).message });
-        }
-        return reply.status(400).send({ error: (err as Error).message });
+        return reply.status(404).send({ error: (err as Error).message });
+      }
+    },
+  );
+
+  fastify.get(
+    "/games",
+    {
+      schema: schemas.getGames,
+      preHandler: [fastify.authenticate],
+    },
+    async (_request, reply) => {
+      try {
+        const games = await prisma.game.findMany({
+          select: {
+            id: true,
+            winner: {
+              select: {
+                id: true,
+                username: true,
+                avatarUrl: true,
+              },
+            },
+            players: {
+              select: {
+                id: true,
+                username: true,
+                avatarUrl: true,
+              },
+            },
+            createdAt: true,
+          },
+        });
+        return reply.status(200).send(games);
+      } catch (err) {
+        return reply.status(500).send({ error: (err as Error).message });
       }
     },
   );
@@ -47,35 +79,37 @@ const gameRoutes = async (fastify: FastifyInstance) => {
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
-      const { id } = request.params as { id: string };
-      const game = await prisma.game.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          winner: {
-            select: {
-              id: true,
-              username: true,
-              avatarUrl: true,
+      try {
+        const { id } = request.params as { id: string };
+        const game = await prisma.game.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            winner: {
+              select: {
+                id: true,
+                username: true,
+                avatarUrl: true,
+              },
             },
-          },
-          players: {
-            select: {
-              id: true,
-              username: true,
-              avatarUrl: true,
+            players: {
+              select: {
+                id: true,
+                username: true,
+                avatarUrl: true,
+              },
             },
+            createdAt: true,
           },
-          createdAt: true,
-        },
-      });
+        });
 
-      console.log("Fetched game:", game);
-
-      if (!game) {
-        return reply.status(400).send({ error: "Invalid game id" });
+        if (!game) {
+          return reply.status(400).send({ error: "Invalid game id" });
+        }
+        return reply.status(200).send({ game: game });
+      } catch (err) {
+        return reply.status(500).send({ error: (err as Error).message });
       }
-      return reply.status(200).send({ game: game });
     },
   );
 };

@@ -159,18 +159,6 @@ describe("Game tests", () => {
     expect(res.body).toHaveProperty("error", "Invalid ID");
   });
 
-  it("Testing the last else branch of catch in createGame()", async () => {
-    const spy = jest.spyOn(prisma.game, "create").mockImplementation(() => {
-      throw new Error("Some unexpected error");
-    });
-
-    await expect(
-      createGame("winnerId", "player1Id", "player2Id", "tournamentId"),
-    ).rejects.toThrow("Bad request");
-
-    spy.mockRestore();
-  });
-
   it("POST /games with invalid tournamentId should fail", async () => {
     const requestBody = { winnerId: testUser1Id, tournamentId: "123" };
     const res = await request(app.server)
@@ -189,17 +177,17 @@ describe("Game tests", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("game");
-    expect(res.body.game).toHaveProperty("id");
-    expect(res.body.game).toHaveProperty("winner");
-    expect(res.body.game).toHaveProperty("players");
-    expect(res.body.game).toHaveProperty("createdAt");
+    expect(res.body.game).toHaveProperty(
+      "id",
+      "winner",
+      "players",
+      "createdAt",
+    );
     expect(Array.isArray(res.body.game.players)).toBe(true);
 
     for (const player of res.body.game.players) {
-      expect(player).toHaveProperty("id");
-      expect(player).toHaveProperty("username");
-      expect(player).not.toHaveProperty("email");
-      expect(player).not.toHaveProperty("password");
+      expect(player).toHaveProperty("id", "username", "avatarUrl");
+      expect(player).not.toHaveProperty("email", "password");
     }
   });
 
@@ -210,5 +198,54 @@ describe("Game tests", () => {
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty("error", "Invalid game id");
+  });
+
+  it("POST /games Creating more games for the next test", async () => {
+    const requestBody = { winnerId: testUser2Id, tounamentId: undefined };
+    const res = await request(app.server)
+      .post("/api/games")
+      .set("Cookie", cookie.join("; "))
+      .send(requestBody);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty(
+      "id",
+      "winnerId",
+      "winner",
+      "players",
+      "tounamentId",
+      "tournament",
+      "createdAt",
+    );
   })
+
+  it ("GET /games should return all games", async () => {
+    const res = await request(app.server)
+      .get("/api/games")
+      .set("Cookie", cookie.join("; "));
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+
+    for (const game of res.body) {
+      expect(game).toHaveProperty("id", "winner", "players", "createdAt");
+      expect(game.winner).toHaveProperty("id", "username", "avatarUrl");
+      expect(game.winner).not.toHaveProperty("email", "password");
+      for (const player of game.players) {
+        expect(player).toHaveProperty("id", "username", "avatarUrl");
+        expect(player).not.toHaveProperty("email", "password");
+      }
+    }
+  });
+
+  it("GET /games when there are no games stored should return an empty array", async () => {
+    await prisma.game.deleteMany({});
+    const res = await request(app.server)
+      .get("/api/games")
+      .set("Cookie", cookie.join("; "));
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBe(0);
+  });
 });

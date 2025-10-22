@@ -28,6 +28,56 @@
     }
   },
 
+  "getGames": {
+    "description": "Get all games",
+    "tags": ["Game"],
+    "response": {
+      "200": {
+        "description": "Games found successfully",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "winner": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": {
+                  "type": ["string", "null"],
+                  "format": "uri"
+                }
+              }
+            },
+            "players": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "username": { "type": "string" },
+                  "avatarUrl": {
+                    "type": ["string", "null"],
+                    "format": "uri"
+                  }
+                }
+              }
+            },
+            "createdAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      },
+      "500": {
+        "description": "Internal server error",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+
   "getGameById": {
     "description": "Get game by id",
     "tags": ["Game"],
@@ -71,6 +121,13 @@
         }
       },
       "400": {
+        "description": "Invalid id",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "500": {
         "description": "Invalid id",
         "type": "object",
         "properties": {
