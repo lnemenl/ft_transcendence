@@ -1,56 +1,38 @@
 import { useState } from "react";
 
-type LoginFormProps = {
-  onBack: () => void;
-  onLogin: () => void;
+type SignUpFormProps = {
+  onBack: () => void; 
 };
 
-export function LoginFormP1({ onBack, onLogin }: LoginFormProps) {
+export function SignUpForm({ onBack }: SignUpFormProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-
-  const handleScroll = () => {
-    document.getElementById("game")?.scrollIntoView({ behavior: "smooth" });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const data = { username, email, password};
     console.log("WHAT WAS SENT: ", data);
-    
-    setMessage("");
-
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      if (res.ok) {
-        //things happen
-        const result = await res.json();
-        console.log("SUCCESS!", result);
-        setMessage(result.message || "Login succesful!");
-
-        //handle scrolling to the singleplayer / multiplayer window here
-        onLogin();
-        handleScroll();
-
-      } else {
-        const errorData = await res.json();
-        console.log("Login failed with status:", res.status, errorData);
-        setMessage(errorData.message || `Login failed: HTTP ${res.status}`)
+      const result = await res.json();
+      if (result.OK) {
+        console.log("SUCCESS!");
       }
+      setMessage("${result.message || OK}");
+      console.log(message);
     } catch (err) {
-      //handeling network errors
-      console.log("network or parsing error:", err);
-      setMessage("Could not connect to the server");
+      setMessage("Error");
     }
   };
+
   return (
   <div className="min-w-90">
     <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
@@ -68,7 +50,7 @@ export function LoginFormP1({ onBack, onLogin }: LoginFormProps) {
         </div>
         <div className="flex flex-col items-center justify-center mt-6 w-full max-w-sm">
           <button type="submit" className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-4 py-2 text-white mb-4">
-            Login
+            Sign Up
           </button>
           <button type="button" onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700">Back</button>
       </div>

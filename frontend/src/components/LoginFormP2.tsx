@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 type LoginFormProps = {
-  onBack: () => void; // ✅ define the prop type
+  onBack: () => void;
 };
 
 export function LoginFormP2({ onBack }: LoginFormProps) {
@@ -34,7 +34,6 @@ export function LoginFormP2({ onBack }: LoginFormProps) {
   return (
   <div className="min-w-90">
     <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
-        <h3 className="text-xl font-semibold text-[#6688cc] mb-4">Player 2</h3>
         <div className="mb-4">
           <label className="block text-[#24273a] text-sm font-bold mb-2" htmlFor="username">Username</label>
           <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline" id="username-p2" type="text" placeholder="Username" required/>
