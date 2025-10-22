@@ -45,6 +45,7 @@ describe("Game tests", () => {
   let playerToken: string | undefined;
   let testUser1Id: string;
   let testUser2Id: string;
+  let gameId: string;
 
   it("Registering both users", async () => {
     const res1 = await request(app.server)
@@ -105,6 +106,8 @@ describe("Game tests", () => {
       "tournament",
       "createdAt",
     );
+    const { id } = res.body as { id: string };
+    gameId = id;
   });
 
   it("POST /games with no winnerId should fail", async () => {
@@ -178,4 +181,34 @@ describe("Game tests", () => {
     expect(res.status).toBe(404);
     expect(res.body).toHaveProperty("error", "Invalid ID");
   });
+
+  it("GET /games/:id with a valid game id should pass", async () => {
+    const res = await request(app.server)
+      .get(`/api/games/${gameId}`)
+      .set("Cookie", cookie.join("; "));
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("game");
+    expect(res.body.game).toHaveProperty("id");
+    expect(res.body.game).toHaveProperty("winner");
+    expect(res.body.game).toHaveProperty("players");
+    expect(res.body.game).toHaveProperty("createdAt");
+    expect(Array.isArray(res.body.game.players)).toBe(true);
+
+    for (const player of res.body.game.players) {
+      expect(player).toHaveProperty("id");
+      expect(player).toHaveProperty("username");
+      expect(player).not.toHaveProperty("email");
+      expect(player).not.toHaveProperty("password");
+    }
+  });
+
+  it("GET /games/:id with invalid game id should fail", async () => {
+    const res = await request(app.server)
+      .get("/api/games/123")
+      .set("Cookie", cookie.join("; "));
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error", "Invalid game id");
+  })
 });
