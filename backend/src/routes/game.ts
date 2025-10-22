@@ -1,6 +1,7 @@
-import { FastifyInstance } from "fastify";
+import { FastifyError, FastifyInstance } from "fastify";
 import { createGame } from "../services/game.service";
 import schemas from "./schema.json";
+import { prisma } from "../utils/prisma";
 
 const gameRoutes = async (fastify: FastifyInstance) => {
   fastify.post(
@@ -36,6 +37,45 @@ const gameRoutes = async (fastify: FastifyInstance) => {
         }
         return reply.status(400).send({ error: (err as Error).message });
       }
+    },
+  );
+
+  fastify.get(
+    "/games/:id",
+    {
+      schema: schemas.getGameById,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const game = await prisma.game.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          winner: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+            },
+          },
+          players: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+            },
+          },
+          createdAt: true,
+        },
+      });
+
+      console.log("Fetched game:", game);
+
+      if (!game) {
+        return reply.status(400).send({ error: "Invalid game id" });
+      }
+      return reply.status(200).send({ game: game });
     },
   );
 };
