@@ -10,7 +10,7 @@ export function SignUpForm({ onBack }: SignUpFormProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const data = { username, email, password};

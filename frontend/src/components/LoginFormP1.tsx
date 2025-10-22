@@ -15,7 +15,7 @@ export function LoginFormP1({ onBack, onLogin }: LoginFormProps) {
     document.getElementById("game")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const data = { username, email, password};

@@ -4,7 +4,7 @@ type Props = {
 };
 
 export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
-  const handleLogOut = async (e) => {
+  const handleLogOut = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     try {
@@ -14,7 +14,7 @@ export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
       });
 
       if (res.ok) {
-        console.log("Succesfull logout!!!");
+        console.log("Succesfull logout!");
         onBack();
         onLogOut();
       }
