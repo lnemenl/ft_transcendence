@@ -4,8 +4,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "types": ["node"],
-    "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
   },
   "files": ["src/types/fastify.d.ts"],
   "include": ["src/**/*.ts"],

@@ -4,12 +4,26 @@ import { FastifyReply } from "fastify";
 
 const SALT_ROUNDS = 10;
 
-export const registerUser = async (email: string, password: string) => {
-  // Checking if a user with this email already exists in the database
-  const existingUser = await prisma.user.findUnique({ where: { email } });
+export const registerUser = async (
+  email: string,
+  password: string,
+  username: string,
+) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedUsername = username.trim();
 
-  if (existingUser) {
-    throw new Error("User with this email already exists");
+  // Ensuring email or username isn't already taken.
+  const existing = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: normalizedEmail }, { username: normalizedUsername }],
+    },
+  });
+
+  if (existing) {
+    if (existing.email === normalizedEmail) {
+      throw new Error("User with this email already exists");
+    }
+    throw new Error("Username already taken");
   }
 
   // Hash the password for security. Never store plain-text passwords
@@ -18,7 +32,11 @@ export const registerUser = async (email: string, password: string) => {
 
   // Create a new user in the database
   const user = await prisma.user.create({
-    data: { email, password: hashedPassword },
+    data: {
+      email: normalizedEmail,
+      password: hashedPassword,
+      username: normalizedUsername,
+    },
   });
 
   // Do not return the hashed password in the response
@@ -31,7 +49,10 @@ export const loginUser = async (
   password: string,
   reply: FastifyReply,
 ) => {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  });
   if (!user) {
     throw new Error("Invalid email or password");
   }
