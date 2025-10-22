@@ -6,6 +6,7 @@ import { LogOut } from "./LogOut";
 
 type View = "register" | "choice" | "login";
 
+
 export function LoginRegister() {
   const [isLoggedIn, setLogIn] = useState(false);
   const handleLogIn = () => {
@@ -15,28 +16,27 @@ export function LoginRegister() {
     setLogIn(false);
   }
   const [currentView, setCurrentView] = useState<View>("choice");
-
   const handleSelectMode = (view: View) => setCurrentView(view);
   const handleBack = () => setCurrentView("choice");
 
   const transformPage = useMemo(() => {
     switch (currentView) {
       case "register":
-        return "translateX(0%)";          // show left panel
+        return "translateX(0%)";
       case "login":
-        return "translateX(-66.6666%)";   // show right panel
+        return "translateX(-66.6666%)";
       case "choice":
       default:
-        return "translateX(-33.3333%)";   // show middle panel
+        return "translateX(-33.3333%)"; 
     }
   }, [currentView]);
 
   return (
-  <div id="login" className="flex justify-center items-center">
-    <div className="w-full max-w-4xl h-[520px] bg-blue-50/50 rounded-2xl shadow-2xl overflow-hidden mt-20">
+  <div id="login" className="h-screen w-screen flex justify-center items-center">
+    <div className="w-full max-w-4xl h-[550px] bg-blue-50/50 dark:bg-[#24273a]/50 rounded-2xl shadow-2xl overflow-hidden">
       {!isLoggedIn && (
         <>
-        <div className="flex w-[300%] transition-transform duration-500 ease-in-out" style={{ transform: transformPage }}>
+        <div className="flex w-[300%] h-full transition-transform duration-500 ease-in-out" style={{ transform: transformPage }}>
           <div className="w-[33.3333%] flex-shrink-0">
             <SignUp onBack={handleBack} />
           </div>
@@ -52,7 +52,7 @@ export function LoginRegister() {
       {isLoggedIn && (
         //logged out window here
         <div className="w-full h-full">
-          <LogOut onLogOut={handleLogOut} />
+          <LogOut onBack={handleBack} onLogOut={handleLogOut} />
         </div>
       )} 
     </div>
