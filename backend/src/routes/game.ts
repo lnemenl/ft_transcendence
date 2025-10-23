@@ -161,6 +161,50 @@ const gameRoutes = async (fastify: FastifyInstance) => {
       }
     },
   );
+
+  fastify.get(
+    "/games/me/won",
+    {
+      schema: schemas.getGames,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const userId = (request.user as { sub: string }).sub;
+        const games = await prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            gamesWon: {
+              select: {
+                id: true,
+                winner: {
+                  select: {
+                    id: true,
+                    username: true,
+                    avatarUrl: true,
+                  },
+                },
+                players: {
+                  select: {
+                    id: true,
+                    username: true,
+                    avatarUrl: true,
+                  },
+                },
+                createdAt: true,
+              },
+            },
+          },
+        });
+        if (!games) {
+          return reply.status(404).send({ error: "User not found" });
+        }
+        return reply.status(200).send(games.gamesWon);
+      } catch (_err) {
+        return reply.status(500).send({ error: "Internal server error" });
+      }
+    },
+  );
 };
 
 export default gameRoutes;
