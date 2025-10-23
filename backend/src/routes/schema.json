@@ -95,6 +95,13 @@
           }
         }
       },
+      "404": {
+        "description": "User not found",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
       "500": {
         "description": "Internal server error",
         "type": "object",
