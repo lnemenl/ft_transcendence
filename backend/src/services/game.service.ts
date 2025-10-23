@@ -1,25 +1,59 @@
 import { prisma } from "../utils/prisma";
+import { Prisma } from "@prisma/client";
 
 export const createGame = async (
-  winner: string,
+  winner: number,
   player1: string,
   player2: string,
   tournament: string | undefined,
 ) => {
   try {
+    let winnerId: string;
+    if (winner === 1) {
+      winnerId = player1;
+    } else if (winner === 2) {
+      winnerId = player2;
+    } else {
+      throw new Error("Invalid winner");
+    }
     const game = await prisma.game.create({
       data: {
         winner: {
-          connect: { id: winner },
+          connect: { id: winnerId },
         },
         players: {
           connect: [{ id: player1 }, { id: player2 }],
         },
         tournament: tournament ? { connect: { id: tournament } } : undefined,
       },
+      select: {
+        id: true,
+        winner: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
+        players: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
+        createdAt: true,
+      },
     });
     return game;
-  } catch (_err) {
-    throw new Error("Invalid ID");
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        throw new Error("Invalid ID");
+      } else {
+        throw new Error("Internal server error");
+      }
+    }
+    throw new Error("Invalid winner");
   }
 };

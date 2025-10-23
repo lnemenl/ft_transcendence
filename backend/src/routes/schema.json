@@ -4,9 +4,9 @@
     "tags": ["Game"],
     "body": {
       "type": "object",
-      "required": ["winnerId"],
+      "required": ["winner"],
       "properties": {
-        "winnerId": { "type": "string" },
+        "winner": { "type": "number" },
         "tournamentId": { "type": "string" }
       }
     },
@@ -15,11 +15,38 @@
         "description": "Game created successfully",
         "type": "object",
         "properties": {
-          "id": { "type": "string" }
+          "id": { "type": "string" },
+          "winner": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": { "type": [ "string", "null" ], "format": "uri" }
+            }
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": { "type": [ "string", "null" ], "format": "uri" }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
         }
       },
       "400": {
         "description": "Bad request, e.g., player not found",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "500": {
+        "description": "Database error",
         "type": "object",
         "properties": {
           "error": { "type": "string" }
@@ -86,38 +113,33 @@
         "description": "Game found successfully",
         "type": "object",
         "properties": { 
-          "game": {
+          "id": { "type": "string" },
+          "winner": {
             "type": "object",
             "properties": {
               "id": { "type": "string" },
-              "winner": {
-                "type": "object",
-                "properties": {
-                  "id": { "type": "string" },
-                  "username": { "type": "string" },
-                  "avatarUrl": {
-                    "type": [ "string", "null" ],
-                    "format": "uri"
-                  }
-                }
-              },
-              "players": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": { "type": "string" },
-                    "username": { "type": "string" },
-                    "avatarUrl": {
-                      "type": [ "string", "null" ],
-                      "format": "uri"
-                    }
-                  }
-                }
-              },
-              "createdAt": { "type": "string", "format": "date-time" }
+              "username": { "type": "string" },
+              "avatarUrl": {
+                "type": [ "string", "null" ],
+                "format": "uri"
+              }
             }
-          }
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": {
+                  "type": [ "string", "null" ],
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
         }
       },
       "400": {

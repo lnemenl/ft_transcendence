@@ -1,4 +1,4 @@
-import { FastifyError, FastifyInstance } from "fastify";
+import { FastifyInstance } from "fastify";
 import { createGame } from "../services/game.service";
 import schemas from "./schema.json";
 import { prisma } from "../utils/prisma";
@@ -24,15 +24,20 @@ const gameRoutes = async (fastify: FastifyInstance) => {
       }
       try {
         const player1 = (request.user as { sub: string }).sub;
-        const { winnerId, tournamentId } = request.body as {
-          winnerId: string;
+        const { winner, tournamentId } = request.body as {
+          winner: number;
           tournamentId: string;
         };
         const player2 = (player as { sub: string }).sub;
-        const game = await createGame(winnerId, player1, player2, tournamentId);
+        const game = await createGame(winner, player1, player2, tournamentId);
         return reply.status(201).send(game);
       } catch (err) {
-        return reply.status(404).send({ error: (err as Error).message });
+        if ((err as Error).message === "Invalid ID") {
+          return reply.status(404).send({ error: (err as Error).message });
+        } else if ((err as Error).message === "Internal server error") {
+          return reply.status(500).send({ error: (err as Error).message });
+        }
+        return reply.status(400).send({ error: (err as Error).message });
       }
     },
   );
@@ -106,7 +111,7 @@ const gameRoutes = async (fastify: FastifyInstance) => {
         if (!game) {
           return reply.status(400).send({ error: "Invalid game id" });
         }
-        return reply.status(200).send({ game: game });
+        return reply.status(200).send(game);
       } catch (err) {
         return reply.status(500).send({ error: (err as Error).message });
       }
