@@ -1,39 +1,39 @@
 import { useState } from "react";
+import { handleRequest } from "./AuthRequest";
 
 type SignUpFormProps = {
   onBack: () => void; 
+  onLogin: () => void;
 };
 
-export function SignUpForm({ onBack }: SignUpFormProps) {
+export function SignUpForm({ onBack, onLogin }: SignUpFormProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleScroll = () => {
+    document.getElementById("game")?.scrollIntoView({ behavior: "smooth" });
+  };
 
-    const data = { username, email, password};
-    console.log("WHAT WAS SENT: ", data);
-
-    setError("");
-    try {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (res.ok) {
-        console.log("SUCCESS!");
-      } else {
-        const errorData = await res.json();
-        console.log("SignUp failed with status:", res.status, errorData);
-        setError(errorData.message);
-      }
-    } catch (err) {
-      setError("Could not connect to the server");
-    }
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    handleRequest({
+      e,
+      endpoint: "register",
+      data: { username, email, password },
+      onSuccess: () => {
+        handleRequest({
+          e,
+          endpoint: "login",
+          data: { username, email, password },
+          onSuccess: () => {
+            handleScroll();
+            onLogin();
+        }
+        })
+      },
+      setError,
+    });
   };
 
   return (

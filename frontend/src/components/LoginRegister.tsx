@@ -38,7 +38,7 @@ export function LoginRegister() {
         <>
         <div className="flex w-[300%] h-full transition-transform duration-500 ease-in-out" style={{ transform: transformPage }}>
           <div className="w-[33.3333%] flex-shrink-0">
-            <SignUp onBack={handleBack} />
+            <SignUp onBack={handleBack} onLogin={handleLogIn} />
           </div>
           <div className="w-[33.3333%] flex-shrink-0">
             <Choice onSelectMode={handleSelectMode} />
