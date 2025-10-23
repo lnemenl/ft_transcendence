@@ -1,7 +1,7 @@
 import request from "supertest";
+import { expect } from "@jest/globals";
 import app from "../../src/index";
 import { prisma } from "../../src/utils/prisma";
-import { createGame } from "../../src/services/game.service";
 
 const registerTestUser1 = {
   email: "ci_test_game@example.com",
@@ -89,7 +89,7 @@ describe("Game tests", () => {
   });
 
   it("POST /games with valid credentials should pass", async () => {
-    const requestBody = { winnerId: testUser1Id, tournamentId: undefined };
+    const requestBody = { winner: 1, tournamentId: undefined };
     cookie = [cookie1, cookie2];
     const res = await request(app.server)
       .post("/api/games")
@@ -97,21 +97,31 @@ describe("Game tests", () => {
       .send(requestBody);
 
     expect(res.status).toBe(201);
-    expect(res.body).toHaveProperty(
-      "id",
-      "winnerId",
-      "winner",
-      "players",
-      "tounamentId",
-      "tournament",
-      "createdAt",
-    );
-    const { id } = res.body as { id: string };
+    expect(res.body).toHaveProperty("id");
+    expect(res.body).toHaveProperty("winner");
+    expect(res.body.winner).toHaveProperty("id");
+    expect(res.body.winner).toHaveProperty("username");
+    expect(res.body.winner).toHaveProperty("avatarUrl");
+    expect(res.body.winner).not.toHaveProperty("email");
+    expect(res.body.winner).not.toHaveProperty("password");
+    expect(res.body).toHaveProperty("players");
+    expect(res.body).toHaveProperty("createdAt");
+    expect(Array.isArray(res.body.players)).toBe(true);
+
+    for (const player of res.body.players) {
+      expect(player).toHaveProperty("id");
+      expect(player).toHaveProperty("username");
+      expect(player).toHaveProperty("avatarUrl");
+      expect(player).not.toHaveProperty("email");
+      expect(player).not.toHaveProperty("password");
+    }
+    const { id: id, ..._restBody } = res.body;
     gameId = id;
+    console.log(gameId);
   });
 
   it("POST /games with no winnerId should fail", async () => {
-    const requestBody = { winnerId: undefined, tournamentId: undefined };
+    const requestBody = { winner: undefined, tournamentId: undefined };
     const res = await request(app.server)
       .post("/api/games")
       .set("Cookie", cookie)
@@ -122,7 +132,7 @@ describe("Game tests", () => {
   });
 
   it("POST /games with no token for player 2 should pass", async () => {
-    const requestBody = { winnerId: testUser1Id, tournamentId: undefined };
+    const requestBody = { winner: 2, tournamentId: undefined };
     const res = await request(app.server)
       .post("/api/games")
       .set("Cookie", cookie1)
@@ -138,7 +148,7 @@ describe("Game tests", () => {
     await new Promise((resolve) => setTimeout(resolve, 1100));
 
     const badCookie = [cookie1, `player2_token=${token}`];
-    const requestBody = { winnerId: testUser1Id, tournamentId: undefined };
+    const requestBody = { winner: 2, tournamentId: undefined };
     const res = await request(app.server)
       .post("/api/games")
       .set("Cookie", badCookie)
@@ -149,18 +159,18 @@ describe("Game tests", () => {
   });
 
   it("POST /games with invalid winnerId should fail", async () => {
-    const requestBody = { winnerId: "123", tournamentId: undefined };
+    const requestBody = { winner: 3, tournamentId: undefined };
     const res = await request(app.server)
       .post("/api/games")
       .set("Cookie", cookie.join("; "))
       .send(requestBody);
 
-    expect(res.status).toBe(404);
-    expect(res.body).toHaveProperty("error", "Invalid ID");
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty("error", "Invalid winner");
   });
 
   it("POST /games with invalid tournamentId should fail", async () => {
-    const requestBody = { winnerId: testUser1Id, tournamentId: "123" };
+    const requestBody = { winner: 2, tournamentId: "123" };
     const res = await request(app.server)
       .post("/api/games")
       .set("Cookie", cookie.join("; "))
@@ -176,18 +186,23 @@ describe("Game tests", () => {
       .set("Cookie", cookie.join("; "));
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("game");
-    expect(res.body.game).toHaveProperty(
-      "id",
-      "winner",
-      "players",
-      "createdAt",
-    );
-    expect(Array.isArray(res.body.game.players)).toBe(true);
+    expect(res.body).toHaveProperty("id");
+    expect(res.body).toHaveProperty("winner");
+    expect(res.body.winner).toHaveProperty("id");
+    expect(res.body.winner).toHaveProperty("username");
+    expect(res.body.winner).toHaveProperty("avatarUrl");
+    expect(res.body.winner).not.toHaveProperty("email");
+    expect(res.body.winner).not.toHaveProperty("password");
+    expect(res.body).toHaveProperty("players");
+    expect(res.body).toHaveProperty("createdAt");
+    expect(Array.isArray(res.body.players)).toBe(true);
 
-    for (const player of res.body.game.players) {
-      expect(player).toHaveProperty("id", "username", "avatarUrl");
-      expect(player).not.toHaveProperty("email", "password");
+    for (const player of res.body.players) {
+      expect(player).toHaveProperty("id");
+      expect(player).toHaveProperty("username");
+      expect(player).toHaveProperty("avatarUrl");
+      expect(player).not.toHaveProperty("email");
+      expect(player).not.toHaveProperty("password");
     }
   });
 
@@ -201,22 +216,29 @@ describe("Game tests", () => {
   });
 
   it("POST /games Creating more games for the next test", async () => {
-    const requestBody = { winnerId: testUser2Id, tounamentId: undefined };
+    const requestBody = { winner: 2, tounamentId: undefined };
     const res = await request(app.server)
       .post("/api/games")
       .set("Cookie", cookie.join("; "))
       .send(requestBody);
 
     expect(res.status).toBe(201);
-    expect(res.body).toHaveProperty(
-      "id",
-      "winnerId",
-      "winner",
-      "players",
-      "tounamentId",
-      "tournament",
-      "createdAt",
-    );
+    expect(res.body).toHaveProperty("id");
+    expect(res.body).toHaveProperty("winner");
+    expect(res.body.winner).toHaveProperty("id");
+    expect(res.body.winner).toHaveProperty("username");
+    expect(res.body.winner).toHaveProperty("avatarUrl");
+    expect(res.body.winner).not.toHaveProperty("email");
+    expect(res.body.winner).not.toHaveProperty("password");
+    expect(res.body).toHaveProperty("players");
+    for (const player of res.body.players) {
+      expect(player).toHaveProperty("id");
+      expect(player).toHaveProperty("username");
+      expect(player).toHaveProperty("avatarUrl");
+      expect(player).not.toHaveProperty("email");
+      expect(player).not.toHaveProperty("password");
+    }
+    expect(res.body).toHaveProperty("createdAt");
   })
 
   it ("GET /games should return all games", async () => {
@@ -228,12 +250,21 @@ describe("Game tests", () => {
     expect(Array.isArray(res.body)).toBe(true);
 
     for (const game of res.body) {
-      expect(game).toHaveProperty("id", "winner", "players", "createdAt");
-      expect(game.winner).toHaveProperty("id", "username", "avatarUrl");
-      expect(game.winner).not.toHaveProperty("email", "password");
+      expect(game).toHaveProperty("id");
+      expect(game).toHaveProperty("winner");
+      expect(game).toHaveProperty("players");
+      expect(game).toHaveProperty("createdAt");
+      expect(game.winner).toHaveProperty("id");
+      expect(game.winner).toHaveProperty("username");
+      expect(game.winner).toHaveProperty("avatarUrl");
+      expect(game.winner).not.toHaveProperty("email");
+      expect(game.winner).not.toHaveProperty("password");
       for (const player of game.players) {
-        expect(player).toHaveProperty("id", "username", "avatarUrl");
-        expect(player).not.toHaveProperty("email", "password");
+        expect(player).toHaveProperty("id");
+        expect(player).toHaveProperty("username");
+        expect(player).toHaveProperty("avatarUrl");
+        expect(player).not.toHaveProperty("email");
+        expect(player).not.toHaveProperty("password");
       }
     }
   });
