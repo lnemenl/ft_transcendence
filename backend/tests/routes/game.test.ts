@@ -117,7 +117,6 @@ describe("Game tests", () => {
     }
     const { id: id, ..._restBody } = res.body;
     gameId = id;
-    console.log(gameId);
   });
 
   it("POST /games with no winnerId should fail", async () => {
@@ -179,6 +178,19 @@ describe("Game tests", () => {
     expect(res.status).toBe(404);
     expect(res.body).toHaveProperty("error", "Invalid ID");
   });
+
+  it("POST /games with invalid player 2 should fail", async () => {
+    const badToken = app.jwt.sign({ sub: "e124512wwdas" }, { expiresIn: "1m" });
+    const badCookie = [cookie1, `player2_token=${badToken}`];
+    const requestBody = { winner: 2, tournamentId: undefined };
+    const res = await request(app.server)
+      .post("/api/games")
+      .set("Cookie", badCookie)
+      .send(requestBody);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty("error", "Invalid ID");
+  }) 
 
   it("GET /games/:id with a valid game id should pass", async () => {
     const res = await request(app.server)
@@ -268,6 +280,44 @@ describe("Game tests", () => {
       }
     }
   });
+
+  it("GET /games/me with a valid user should return all games the user has participated in", async () => {
+    const res = await request(app.server)
+      .get("/api/games/me")
+      .set("Cookie", cookie.join("; "));
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    for (const game of res.body) {
+      expect(game).toHaveProperty("id");
+      expect(game).toHaveProperty("winner");
+      expect(game).toHaveProperty("players");
+      expect(game).toHaveProperty("createdAt");
+      expect(game.winner).toHaveProperty("id");
+      expect(game.winner).toHaveProperty("username");
+      expect(game.winner).toHaveProperty("avatarUrl");
+      expect(game.winner).not.toHaveProperty("email");
+      expect(game.winner).not.toHaveProperty("password");
+      for (const player of game.players) {
+        expect(player).toHaveProperty("id");
+        expect(player).toHaveProperty("username");
+        expect(player).toHaveProperty("avatarUrl");
+        expect(player).not.toHaveProperty("email");
+        expect(player).not.toHaveProperty("password");
+      }
+    }
+  });
+
+  it("GET /games/me with an invalid user should fail", async () => {
+    const badToken = app.jwt.sign({ sub: "e124512wwdas" }, { expiresIn: "1m" });
+
+    const res = await request(app.server)
+      .get("/api/games/me")
+      .set("Cookie", `token=${badToken}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty("error", "User not found");
+  })
 
   it("GET /games when there are no games stored should return an empty array", async () => {
     await prisma.game.deleteMany({});
