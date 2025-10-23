@@ -190,7 +190,7 @@ describe("Game tests", () => {
 
     expect(res.status).toBe(404);
     expect(res.body).toHaveProperty("error", "Invalid ID");
-  }) 
+  });
 
   it("GET /games/:id with a valid game id should pass", async () => {
     const res = await request(app.server)
@@ -251,9 +251,9 @@ describe("Game tests", () => {
       expect(player).not.toHaveProperty("password");
     }
     expect(res.body).toHaveProperty("createdAt");
-  })
+  });
 
-  it ("GET /games should return all games", async () => {
+  it("GET /games should return all games", async () => {
     const res = await request(app.server)
       .get("/api/games")
       .set("Cookie", cookie.join("; "));
