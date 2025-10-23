@@ -2,6 +2,7 @@
 
 const PLAYING_FIELD_WIDTH  = 20;
 const PLAYING_FIELD_HEIGHT = 15;
+const WINNING_SCORE        = 2; // 11 for real gameplay
 
 const States = Object.freeze({
   START:      Symbol('start'),
@@ -9,7 +10,7 @@ const States = Object.freeze({
   GAME_OVER:  Symbol('game_over'),
 });
 G = {
-  height: PLAYING_FIELD_WIDTH, width: PLAYING_FIELD_WIDTH,
+  height: PLAYING_FIELD_HEIGHT, width: PLAYING_FIELD_WIDTH,
   ball: {
     diameter: 0.7,
     dir: {x: 1, z: 0},
@@ -68,12 +69,12 @@ last_time_ms = 0;
 function update(current_time_ms) {
   const delta_ms = (current_time_ms - last_time_ms) / 1000;
   last_time_ms = current_time_ms;
+  console.log(G.state);
   switch (G.state)
   {
     case States.START:
       {
         G.p1.score = 0; G.p2.score = 0;
-        if (keys_down.size > 0) G.state = States.PLAYING;
         break;
       }
     case States.PLAYING:
@@ -99,9 +100,9 @@ function update(current_time_ms) {
           G.ball.z = 0; G.ball.x = 0;
         }
         // This logic needs to move to a transition state
-        if (Math.max(G.p1.score, G.p2.score) >= 11) {
+        if (Math.max(G.p1.score, G.p2.score) >= WINNING_SCORE) {
           G.state = States.GAME_OVER;
-          setTimeout(() => G.state = States.START, 3000);
+          // setTimeout(() => G.state = States.START, 3000);
           xhrPost("https://echo.free.beeceptor.com",
             {P1: G.p1.score, P2: G.p2.score});
         }
@@ -126,10 +127,31 @@ const scoreDisplay = Object.assign(document.createElement('h1'), {
   style: 'position:absolute; top:20px; left:50%;'
   + 'transform:translateX(-50%); text-align:center'
 });
+const startButtonStyle = 'position:absolute; top:200px; left:50%;'
+  + 'transform:translateX(-50%); text-align:center'
+  + 'pointer-events: auto; background-color: transparent;'
+  + 'color: white;'
+  + 'border: none; font-size: 4em;'
+  + 'font-family: monospace;'
+;
+
+const startButton = Object.assign(document.createElement('button'), {
+  style: startButtonStyle});
+startButton.innerHTML = `Click here`;
+startButton.onclick = () => {
+  if (G.state === States.START
+   || G.state === States.GAME_OVER)
+  {
+    G.p1.score = 0; G.p2.score = 0;
+    G.state = States.PLAYING;
+    startButton.style = "display: none;"
+  }
+}
 
 canvas.parentNode.insertBefore(container, canvas);
 container.append(canvas, overlay);
 overlay.appendChild(scoreDisplay);
+container.appendChild(startButton);
 
 S = createScene(canvas, G);
 function loop(current_time_ms) {
@@ -140,6 +162,7 @@ function loop(current_time_ms) {
       let winner = G.p1.score > G.p2.score ? G.p1 : G.p2;
       let loser  = G.p1.score < G.p2.score ? G.p1 : G.p2;
       scoreDisplay.textContent = `${winner.name} wins! ${winner.score} to ${loser.score}`;
+      startButton.style = startButtonStyle;
       break;
     case States.START:
       scoreDisplay.textContent = `Controls: WS, IK`
