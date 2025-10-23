@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node"],
+    "types": ["node", "jest"],
     "resolveJsonModule": true,
   },
   "files": ["src/types/fastify.d.ts"],
