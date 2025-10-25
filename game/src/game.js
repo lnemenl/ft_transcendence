@@ -66,9 +66,7 @@ document.addEventListener('keyup', (e) => keys_down.delete(e.code));
 
 last_time_ms = 0;
 
-function update(current_time_ms) {
-  const delta_ms = (current_time_ms - last_time_ms) / 1000;
-  last_time_ms = current_time_ms;
+function update(delta_ms, keys_down) {
   switch (G.state)
   {
     case States.START:
@@ -154,7 +152,9 @@ container.appendChild(startButton);
 
 S = createScene(canvas, G);
 function loop(current_time_ms) {
-  update(current_time_ms);
+  const delta_ms = (current_time_ms - last_time_ms) / 1000;
+  last_time_ms = current_time_ms;
+  update(delta_ms, keys_down);
   scoreDisplay.textContent = `${G.p1.score} | ${G.p2.score}`;
   switch (G.state) {
     case States.GAME_OVER:
@@ -217,6 +217,6 @@ function createScene(canvas, G)
 
 function xhrPost(url, body) {
   req = new XMLHttpRequest();
-  req.open("POST", url);
+  req.open("POST", url); // Nonblocking by default these days
   req.send(JSON.stringify(body));
 }

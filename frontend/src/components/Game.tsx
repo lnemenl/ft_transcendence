@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 export function Game() {
   useEffect(() => {
     const script = document.createElement('script');
-    script.src = '/game/game.js';
+    script.src = '/game/src/game.js';
     document.body.appendChild(script);
 
     return () => {
