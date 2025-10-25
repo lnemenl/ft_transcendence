@@ -69,7 +69,6 @@ last_time_ms = 0;
 function update(current_time_ms) {
   const delta_ms = (current_time_ms - last_time_ms) / 1000;
   last_time_ms = current_time_ms;
-  console.log(G.state);
   switch (G.state)
   {
     case States.START:
