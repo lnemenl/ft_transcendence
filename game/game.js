@@ -2,7 +2,7 @@
 
 const PLAYING_FIELD_WIDTH  = 20;
 const PLAYING_FIELD_HEIGHT = 15;
-const WINNING_SCORE        = 2; // 11 for real gameplay
+const WINNING_SCORE        = 11; // 11 for real gameplay
 
 const States = Object.freeze({
   START:      Symbol('start'),
