@@ -40,15 +40,15 @@ export function SignUpForm({ onBack, onLogin }: SignUpFormProps) {
   <div className="min-w-90">
     <form onSubmit={handleSubmit} className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
         <div className="mb-4">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username">Username</label>
+          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username-p1">Username</label>
           <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="username-p1" type="text" placeholder="Username" required/>
         </div>
         <div className="mb-4">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="email">Email</label>
+          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="email-p1">Email</label>
           <input onChange={(e) => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="email-p1" type="email" value={email} placeholder="Email" required />
         </div>
         <div className="">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password">Password</label>
+          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password-p1">Password</label>
           <input onChange={(e) => setPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="password-p1" type="password" placeholder="Password" required/>
         </div>
         <div className="flex flex-col items-center justify-center w-full max-w-sm">
