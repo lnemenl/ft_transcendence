@@ -5,10 +5,20 @@ require('dotenv').config({ path: '.env.test' });
 const isCI = process.env.CI === 'true';
 
 module.exports = {
-  // Tell Jest to run tests using the "projects" defined below
-  projects: ['<rootDir>/jest.config.unit.cjs', '<rootDir>/jest.config.e2e.cjs'],
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  testMatch: ['<rootDir>/tests/routes/**/*.test.ts', '<rootDir>/tests/plugins/**/*.test.ts'],
+  transform: {
+    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
+  },
 
-  // Global settings (like coverage) can live here
+  // Use the E2E setup file for all tests
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+
+  clearMocks: true,
+  testTimeout: 10000,
+
+  // Global settings
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/index.ts',

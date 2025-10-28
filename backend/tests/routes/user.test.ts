@@ -59,7 +59,11 @@ describe('User Profile Endpoints', () => {
         prisma.user.delete({ where: { id: user1.id } }),
       ]);
 
-      await request(app.server).get('/api/users/me').set('Cookie', user1Cookie).expect(404);
+      const validToken = app.jwt.sign({ id: user1.id }, { expiresIn: '15min' });
+      await request(app.server)
+        .get('/api/users/me')
+        .set('Cookie', [`accessToken=${validToken}`])
+        .expect(404);
     });
   });
 
