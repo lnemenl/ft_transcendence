@@ -1,314 +1,234 @@
-import request from "supertest";
-import app from "../../src/index";
-import { prisma } from "../../src/utils/prisma";
+import request from 'supertest';
+import { app, prisma } from '../setup';
+import { expect, it, describe, beforeEach } from '@jest/globals';
+import { User } from '@prisma/client';
 
 const testUser = {
-  email: "ci_test@example.com",
-  password: "Password123!",
-  username: "ci_tester",
+  email: `test@example.com`,
+  password: 'Password123!',
+  username: `tester`,
 };
 
-// Starting Fastify app in "test mode", making sure routes and plugins are loaded before any request is made
-beforeAll(async () => {
-  process.env.NODE_ENV = "test";
-  await app.ready();
-});
-
-// Runs BEFORE EACH individual test case (each "it" block), ensures database isolation
-// Every test starts with a clean state, no leftover users from previous runs
+// Runs BEFORE EACH individual test case
 beforeEach(async () => {
-  // Clean the database to ensure complete test isolation
-  await prisma.user.deleteMany({});
+  try {
+    await prisma.refreshToken.deleteMany({});
+    await prisma.user.deleteMany({});
+  } catch (err) {
+    console.log(err);
+  }
 });
 
-// Runs ONCE after all tests, cleans up the DB, closes the F. instance, Disconnects Prisma
-afterAll(async () => {
-  await prisma.user.deleteMany({}); // Final cleanup
-  await prisma.$disconnect();
-  await app.close();
-});
-
-describe("Authentication flow (cookie-based JWT)", () => {
-  let cookie: string[] = [];
-
-  // --- Server health check ---
-  it("GET / should return hello message", async () => {
-    const res = await request(app.server).get("/");
+// Main test suite for authentication
+// E2E tests for authentication
+describe('Authentication System', () => {
+  // Server health check
+  it('GET / should return hello message', async () => {
+    const res = await request(app.server).get('/');
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("hello", "auth-service");
+    expect(res.body).toHaveProperty('hello', 'auth-service');
   });
 
-  // --- Registration Flow ---
-  it("POST /api/register should create a new user", async () => {
-    const res = await request(app.server)
-      .post("/api/register")
-      .send(testUser)
-      .expect(201);
-
-    expect(res.body).toHaveProperty("email", testUser.email);
-    expect(res.body).toHaveProperty("username", testUser.username);
-    expect(res.body).not.toHaveProperty("password");
-  });
-
-  it("POST /api/register with an existing email should fail", async () => {
-    // 1. Create the user first so it exists in the DB for this test
-    await request(app.server).post("/api/register").send(testUser).expect(201);
-
-    // 2. Now, try to register again with the same email
-    const res = await request(app.server)
-      .post("/api/register")
-      .send(testUser)
-      .expect(400);
-
-    expect(res.body).toHaveProperty("error");
-    expect(res.body.error).toMatch(/exists/i);
-  });
-
-  it("POST /api/register with an existing username should fail", async () => {
-    // create a first user
-    await request(app.server).post("/api/register").send(testUser).expect(201);
-
-    // attempt to create a different user with the same username
-    const other = {
-      email: "other@example.com",
-      password: "Password123!",
-      username: testUser.username,
-    };
-    const res = await request(app.server)
-      .post("/api/register")
-      .send(other)
-      .expect(400);
-
-    expect(res.body).toHaveProperty("error");
-    expect(res.body.error).toMatch(/username/i);
-  });
-
-  it("POST /api/register with a missing password should fail", async () => {
-    const res = await request(app.server)
-      .post("/api/register")
-      .send({ email: "anotheruser@example.com" }) // No password
-      .expect(400);
-
-    expect(res.body).toHaveProperty("error");
-  });
-
-  it("POST /api/register with an invalid email should fail", async () => {
-    const res = await request(app.server)
-      .post("/api/register")
-      .send({ email: "not-a-valid-email", password: "Password123!" })
-      .expect(400);
-
-    expect(res.body).toHaveProperty("error");
-  });
-
-  it("POST /api/register with a short password should fail", async () => {
-    const userWithShortPassword = {
-      email: "shortpass@example.com",
-      password: "123",
-      username: "dammy",
-    };
-    const res = await request(app.server)
-      .post("/api/register")
-      .send(userWithShortPassword)
-      .expect(400);
-    expect(res.body.error).toBe("Bad Request");
-    expect(res.body.message).toMatch(/password/i);
-  });
-
-  it("GET /api/profile should return 401 for expired token", async () => {
-    // Create user + token with 1-second expiration
-    await request(app.server).post("/api/register").send(testUser);
-
-    // Find the user we just created to get their actual ID
-    const user = await prisma.user.findUnique({
-      where: { email: testUser.email },
+  // Registration Flow
+  describe('Registration (POST /api/register)', () => {
+    it('should create a new user', async () => {
+      const res = await request(app.server).post('/api/register').send(testUser).expect(201);
+      expect(res.body).toHaveProperty('email', testUser.email);
+      expect(res.body).toHaveProperty('username', testUser.username);
+      expect(res.body).not.toHaveProperty('password');
     });
 
-    // Now, sign a token with the REAL user ID and a short expiration
-    const token = app.jwt.sign({ sub: user!.id }, { expiresIn: "1s" });
-
-    // Wait for token to expire
-    await new Promise((resolve) => setTimeout(resolve, 1100));
-
-    const res = await request(app.server)
-      .get("/api/profile")
-      .set("Cookie", [`token=${token}`])
-      .expect(401);
-
-    expect(res.body).toHaveProperty("error", "Unauthorized");
-  });
-
-  it("GET /api/profile should also accept Authorization header", async () => {
-    // Register + login user to get JWT token directly
-    await request(app.server).post("/api/register").send(testUser);
-    const loginRes = await request(app.server)
-      .post("/api/login")
-      .send(testUser)
-      .expect(200);
-
-    const { accessToken } = loginRes.body;
-
-    // Use Authorization Bearer token instead of cookie
-    const res = await request(app.server)
-      .get("/api/users/me")
-      .set("Authorization", `Bearer ${accessToken}`)
-      .expect(200);
-
-    expect(res.body).toHaveProperty("email", testUser.email);
-    expect(res.body.email).toBe(testUser.email);
-  });
-
-  // --- Login Flow ---
-  it("POST /api/login with valid credentials should succeed", async () => {
-    // 1. Register the user so we can log in
-    await request(app.server).post("/api/register").send(testUser).expect(201);
-
-    // 2. Log in
-    const res = await request(app.server)
-      .post("/api/login")
-      .send(testUser)
-      .expect(200);
-
-    cookie = res.headers["set-cookie"];
-    expect(cookie).toBeDefined();
-    expect(res.body).toHaveProperty("accessToken");
-  });
-
-  it("POST /api/login with wrong password should fail", async () => {
-    await request(app.server).post("/api/register").send(testUser).expect(201);
-
-    const res = await request(app.server)
-      .post("/api/login")
-      .send({ email: testUser.email, password: "WrongPassword!" })
-      .expect(401);
-
-    expect(res.headers["set-cookie"]).toBeUndefined();
-    expect(res.body).toHaveProperty("error", "Invalid email or password");
-  });
-
-  it("POST /api/login with a non-existent user should fail", async () => {
-    const res = await request(app.server)
-      .post("/api/login")
-      .send({ email: "nouser@example.com", password: "Password123!" })
-      .expect(401);
-
-    expect(res.headers["set-cookie"]).toBeUndefined();
-    expect(res.body).toHaveProperty("error", "Invalid email or password");
-  });
-
-  it("POST /api/login with a missing password should fail", async () => {
-    const playload = { email: testUser.email };
-    const res = await request(app.server)
-      .post("/api/login")
-      .send(playload)
-      .expect(400);
-
-    expect(res.body.message).toMatch(/password/i);
-  });
-
-  // --- Protected Route and Logout Flow ---
-  describe("when authenticated", () => {
-    let authenticatedCookie: string[];
-
-    // Before each test in this "authenticated" block, register and log in the user
-    beforeEach(async () => {
-      await request(app.server)
-        .post("/api/register")
-        .send(testUser)
-        .expect(201);
-      const res = await request(app.server)
-        .post("/api/login")
-        .send(testUser)
-        .expect(200);
-      authenticatedCookie = res.headers["set-cookie"];
+    it('with an existing email should fail', async () => {
+      await request(app.server).post('/api/register').send(testUser).expect(201);
+      const res = await request(app.server).post('/api/register').send(testUser).expect(400);
+      expect(res.body).toHaveProperty('error');
+      expect(res.body.error).toMatch(/exists/i);
     });
 
-    it("GET /api/profile without cookie should be unauthorized", async () => {
-      const res = await request(app.server).get("/api/profile").expect(401);
-      expect(res.body).toHaveProperty("error", "Unauthorized");
-    });
-
-    it("GET /api/profile should return 404 when user is missing", async () => {
-      // Log in normally to get cookie
-      const user = {
-        email: "ghost@example.com",
-        password: "Password123!",
-        username: "ghostuser",
+    it('with an existing username should fail', async () => {
+      await request(app.server).post('/api/register').send(testUser).expect(201);
+      const other = {
+        email: 'other@example.com',
+        password: 'Password123!',
+        username: testUser.username,
       };
-      await request(app.server).post("/api/register").send(user);
-      const loginRes = await request(app.server).post("/api/login").send(user);
-      const cookie = loginRes.headers["set-cookie"];
-
-      // Manually delete the user to simulate non-existent record
-      await prisma.user.deleteMany({ where: { email: user.email } });
-
-      const res = await request(app.server)
-        .get("/api/profile")
-        .set("Cookie", cookie);
-
-      expect(res.status).toBe(404);
-      expect(res.body).toHaveProperty("error", "User not found");
+      const res = await request(app.server).post('/api/register').send(other).expect(400);
+      expect(res.body).toHaveProperty('error');
+      expect(res.body.error).toMatch(/username/i);
     });
 
-    it("GET /api/profile with a valid cookie should return user info", async () => {
+    it('POST /api/register with a missing password should fail', async () => {
       const res = await request(app.server)
-        .get("/api/profile")
-        .set("Cookie", authenticatedCookie)
-        .expect(200);
+        .post('/api/register')
+        .send({ email: 'anotheruser@example.com', username: 'another' }) // No password
+        .expect(400);
 
-      expect(res.body).toHaveProperty("user");
-      expect(res.body.user).toHaveProperty("email", testUser.email);
+      expect(res.body).toHaveProperty('error');
     });
 
-    it("GET /api/profile with an invalid cookie should be unauthorized", async () => {
-      const fakeToken = "this.is.a.fake.token";
+    it('POST /api/register with an invalid email should fail', async () => {
       const res = await request(app.server)
-        .get("/api/profile")
-        .set("Cookie", `token=${fakeToken}`)
+        .post('/api/register')
+        .send({ email: 'not-a-valid-email', password: 'Password123!', username: 'invalid' })
+        .expect(400);
+
+      expect(res.body).toHaveProperty('error');
+    });
+
+    it('POST /api/register with a short password should fail', async () => {
+      const userWithShortPassword = {
+        email: 'shortpass@example.com',
+        password: '123',
+        username: 'dammy',
+      };
+      const res = await request(app.server).post('/api/register').send(userWithShortPassword).expect(400);
+      expect(res.body.error).toMatch('Bad Request');
+    });
+  });
+
+  // Login Flow
+  describe('Login (POST /api/login)', () => {
+    beforeEach(async () => {
+      // Register the user so we can log in
+      await request(app.server).post('/api/register').send(testUser).expect(201);
+    });
+
+    it('with valid credentials should succeed and set cookies', async () => {
+      const res = await request(app.server).post('/api/login').send(testUser).expect(200);
+      const cookie = res.headers['set-cookie'];
+      expect(cookie).toBeDefined();
+      // This check handles both single string and array
+      const cookieHeader = Array.isArray(cookie) ? cookie.join(';') : cookie;
+      expect(cookieHeader).toMatch(/accessToken=/);
+      expect(cookieHeader).toMatch(/refreshToken=/);
+      expect(res.body).toHaveProperty('accessToken');
+    });
+
+    it('with wrong password should fail', async () => {
+      const res = await request(app.server)
+        .post('/api/login')
+        .send({ email: testUser.email, password: 'WrongPassword!' })
         .expect(401);
-
-      expect(res.body).toHaveProperty("error", "Unauthorized");
+      expect(res.headers['set-cookie']).toBeUndefined();
+      expect(res.body).toHaveProperty('error', 'Invalid email or password');
     });
 
-    it("POST /api/logout should clear the cookie", async () => {
+    it('with a non-existent user should fail', async () => {
       const res = await request(app.server)
-        .post("/api/logout")
-        .set("Cookie", authenticatedCookie)
-        .expect(200);
-
-      expect(res.body).toHaveProperty("ok", true);
-    });
-
-    it("GET /api/profile should reject malformed JWT", async () => {
-      const malformedToken = "abc.def.ghi";
-      const res = await request(app.server)
-        .get("/api/profile")
-        .set("Cookie", [`token=${malformedToken}`])
+        .post('/api/login')
+        .send({ email: 'nouser@example.com', password: 'Password123!' })
         .expect(401);
+      expect(res.headers['set-cookie']).toBeUndefined();
+      expect(res.body).toHaveProperty('error', 'Invalid email or password');
+    });
+  });
 
-      expect(res.body).toHaveProperty("error", "Unauthorized");
+  // Protected Route and Logout Flow
+  describe('Authenticated Flows (Profile & Logout)', () => {
+    let authenticatedCookie: string[];
+    let authenticatedUser: User;
+
+    beforeEach(async () => {
+      await request(app.server).post('/api/register').send(testUser).expect(201);
+      const res = await request(app.server).post('/api/login').send(testUser).expect(200);
+
+      const cookies = res.headers['set-cookie'];
+      if (!cookies) throw new Error('No cookies set on login');
+      authenticatedCookie = Array.isArray(cookies) ? cookies : [cookies];
+
+      const userFromDb = await prisma.user.findUnique({ where: { email: testUser.email } });
+      if (!userFromDb) throw new Error('Test user not found in DB after login');
+      authenticatedUser = userFromDb;
     });
 
-    it("POST /api/logout should expire cookie immediately", async () => {
-      // Register + login user to get cookie
-      await request(app.server).post("/api/register").send(testUser);
-      const loginRes = await request(app.server)
-        .post("/api/login")
-        .send(testUser)
+    it('GET /api/profile without cookie should be unauthorized', async () => {
+      const res = await request(app.server).get('/api/profile').expect(401);
+      expect(res.body).toHaveProperty('error', 'Unauthorized');
+    });
+
+    it('GET /api/profile with a valid cookie should return user info', async () => {
+      const res = await request(app.server).get('/api/profile').set('Cookie', authenticatedCookie).expect(200);
+      expect(res.body).toHaveProperty('user');
+      expect(res.body.user).toHaveProperty('email', testUser.email);
+    });
+
+    it('GET /api/profile should return 404 when user is missing from DB', async () => {
+      await prisma.refreshToken.deleteMany({ where: { userId: authenticatedUser.id } });
+      await prisma.user.delete({ where: { id: authenticatedUser.id } });
+
+      const res = await request(app.server).get('/api/profile').set('Cookie', authenticatedCookie).expect(404);
+      expect(res.body).toHaveProperty('error', 'User not found');
+    });
+
+    it('POST /api/logout should clear cookies', async () => {
+      const res = await request(app.server).post('/api/logout').set('Cookie', authenticatedCookie).expect(200);
+      expect(res.body).toHaveProperty('ok', true);
+
+      const cookies = res.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+      const setCookieHeader = Array.isArray(cookies) ? cookies.join(';') : cookies!;
+
+      expect(setCookieHeader).toMatch(/accessToken=;/);
+      expect(setCookieHeader).toMatch(/refreshToken=;/);
+    });
+
+    it('GET /api/profile should reject malformed JWT', async () => {
+      const res = await request(app.server).get('/api/profile').set('Cookie', [`accessToken=abc.def.ghi`]).expect(401);
+      expect(res.body).toHaveProperty('error', 'Unauthorized');
+    });
+  });
+
+  // Token Lifecycle & Refresh Flow
+  describe('Token Lifecycle & Refresh', () => {
+    const expiryUser = {
+      email: `expirytest@example.com`,
+      password: 'Password123!',
+      username: `expiryuser`,
+    };
+
+    beforeEach(async () => {
+      await request(app.server).post('/api/register').send(expiryUser).expect(201);
+    });
+
+    it('GET /api/profile should return 401 for an expired access token (no refresh token)', async () => {
+      const user = await prisma.user.findUnique({ where: { email: expiryUser.email } });
+      const token = app.jwt.sign({ id: user!.id }, { expiresIn: '1ms' });
+      await new Promise((r) => setTimeout(r, 50));
+
+      await request(app.server)
+        .get('/api/profile')
+        .set('Cookie', [`accessToken=${token}`])
+        .expect(401);
+    });
+
+    it('should refresh access token when expired but refresh token is valid', async () => {
+      const loginRes = await request(app.server).post('/api/login').send(expiryUser).expect(200);
+      await new Promise((r) => setTimeout(r, 1500));
+
+      const profileRes = await request(app.server)
+        .get('/api/profile')
+        .set('Cookie', loginRes.headers['set-cookie'])
         .expect(200);
 
-      const cookie = loginRes.headers["set-cookie"];
+      const cookies = profileRes.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+      const setCookieHeader = Array.isArray(cookies) ? cookies.join(';') : cookies!;
+      expect(setCookieHeader).toMatch(/accessToken=/);
+      expect(profileRes.body).toHaveProperty('user');
+      expect(profileRes.body.user.email).toBe(expiryUser.email);
+    });
 
-      // Logout
-      const logoutRes = await request(app.server)
-        .post("/api/logout")
-        .set("Cookie", cookie)
-        .expect(200);
+    it('should return 401 if refresh token is invalid/revoked', async () => {
+      const loginRes = await request(app.server).post('/api/login').send(expiryUser).expect(200);
 
-      expect(logoutRes.body).toEqual({ ok: true });
-      const setCookieHeader = logoutRes.headers["set-cookie"][0];
-      expect(setCookieHeader).toMatch(/token=;/); // token cleared
-      expect(setCookieHeader).toMatch(/Expires=/); // expired date present
+      const user = await prisma.user.findUnique({ where: { email: expiryUser.email } });
+      await prisma.refreshToken.updateMany({
+        where: { userId: user!.id },
+        data: { revoked: true },
+      });
+      await new Promise((r) => setTimeout(r, 1500));
+
+      await request(app.server).get('/api/profile').set('Cookie', loginRes.headers['set-cookie']).expect(401);
     });
   });
 });

@@ -1,33 +1,21 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 require('dotenv').config({ path: '.env.test' });
 
 const isCI = process.env.CI === 'true';
 
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  rootDir: ".",
+  // Tell Jest to run tests using the "projects" defined below
+  projects: ['<rootDir>/jest.config.unit.cjs', '<rootDir>/jest.config.e2e.cjs'],
 
-  testMatch: [
-    '<rootDir>/tests/**/*.test.ts',
-    '<rootDir>/tests/**/*.spec.ts'
-  ],
-
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-
-  transform: {
-    '^.+\\.ts$': [
-      'ts-jest',
-      { tsconfig: 'tsconfig.test.json' }
-    ],
-  },
-
+  // Global settings (like coverage) can live here
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/index.ts',
-    '!tests/**/*.test.ts',
-    '!**/node_modules/**'
+    '!src/types/**/*.ts',
+    '!src/utils/prisma.ts',
+    '!**/node_modules/**',
   ],
-
   coverageThreshold: isCI
     ? {}
     : {
@@ -38,10 +26,4 @@ module.exports = {
           statements: 70,
         },
       },
-
-  // Remove setupFilesAfterEnv
-  setupFilesAfterEnv: [],
-
-  clearMocks: true,
-  testTimeout: 10000,
 };

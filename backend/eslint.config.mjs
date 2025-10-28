@@ -1,6 +1,7 @@
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import eslintPluginPrettier from "eslint-plugin-prettier";
+import { error } from "console";
 
 export default tseslint.config([
   // Block 1: Global Ignores
@@ -38,6 +39,23 @@ export default tseslint.config([
   },
 
   // Prettier Integration (must be last)
-  eslintPluginPrettierRecommended,
+  {
+    plugins: {
+      prettier: eslintPluginPrettier
+    },
+    rules: {
+      "prettier/prettier": [
+        "error",
+        {},
+        {
+          usePrettierrc: true,
+          fileInfoOptions: {
+            configPath: "./prettier.config.ts",
+            ignorePath: "./.config/prettier/prettieringnore"
+          }
+        }
+      ]
+    }
+  }
 ]);
 
