@@ -110,6 +110,8 @@ function update(G, delta_ms, keys_down) {
     case STATES.WAITING:
         G.p1.roundsWon = 0;
         G.p2.roundsWon = 0;
+        G.p1.score = 0;
+        G.p2.score = 0;
         movePlayers(G, delta_ms, keys_down);
         break;
     case STATES.PLAYING:
