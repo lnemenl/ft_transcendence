@@ -1,49 +1,67 @@
-function createScene(canvas, G)
-{
-  const b = BABYLON; const v3 = BABYLON.Vector3;
+/*jslint browser */
+/*global BABYLON */
 
-  const Engine = new b.Engine(canvas);
-  const S = new b.Scene(Engine);
-  S.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+const createGround = BABYLON.MeshBuilder.CreateGround;
+const createSphere = BABYLON.MeshBuilder.CreateSphere;
+const createCapsule = BABYLON.MeshBuilder.CreateCapsule;
+const zeroVector = BABYLON.Vector3.Zero;
 
-  S.camera = new b.FreeCamera("camera", new v3(0, 15, 8), S);
-  S.ground = b.MeshBuilder.CreateGround("ground",
-    {width: G.width, height: G.height}, S);
-  S.sphere = b.MeshBuilder.CreateSphere("sphere", {diameter: G.ball.diameter}, S);
+function createScene(canvas, G) {
+    const B = BABYLON;
+    const V3 = BABYLON.Vector3;
 
-  S.camera.setTarget(v3.Zero());
-  S.ground.position = new v3(0,-1,0);
+    const Engine = new B.Engine(canvas);
+    const S = new B.Scene(Engine);
+    S.clearColor = new BABYLON.Color4(0, 0, 0, 0);
 
-  S.light3 = new b.PointLight("light3", new v3(0, 2, 0), S);
-  S.light3.intensity = 0.1;
+    S.camera = new B.FreeCamera("camera", new V3(0, 15, 8), S);
+    S.ground = createGround("ground", {
+        height: G.height,
+        width: G.width
+    }, S);
+    S.sphere = createSphere("sphere", {
+        diameter: G.ball.diameter
+    }, S);
 
-  Object.assign(S, {
-    lpaddle: b.MeshBuilder.CreateCapsule("lpaddle", {
-      height: G.p1.height, radius: G.p1.width,
-      orientation: new v3(0, 0, 1)
-    }, S),
-    rpaddle: b.MeshBuilder.CreateCapsule("rpaddle", {
-      height: G.p2.height, radius: G.p2.width,
-      orientation: new v3(0, 0, 1)
-    }, S)
-  });
+    S.camera.setTarget(zeroVector());
+    S.ground.position = new V3(0, -1, 0);
 
-  const paddleColor = new b.Color3(1,1,1);
-  [S.lpaddle, S.rpaddle, S.sphere].forEach(mesh => {
-    mesh.material = new b.StandardMaterial(`${mesh.name}_mat`, S);
-    mesh.material.emissiveColor = paddleColor;
-  });
-  return (S);
+    S.light3 = new B.PointLight("light3", new V3(0, 2, 0), S);
+    S.light3.intensity = 0.1;
+
+    Object.assign(S, {
+        lpaddle: createCapsule("lpaddle", {
+            height: G.p1.height,
+            orientation: new V3(0, 0, 1),
+            radius: G.p1.width
+        }, S),
+        rpaddle: createCapsule("rpaddle", {
+            height: G.p2.height,
+            orientation: new V3(0, 0, 1),
+            radius: G.p2.width
+        }, S)
+    });
+
+    const paddleColor = new B.Color3(1, 1, 1);
+    [S.lpaddle, S.rpaddle, S.sphere].forEach(function (mesh) {
+        mesh.material = new B.StandardMaterial(`${mesh.name}_mat`, S);
+        mesh.material.emissiveColor = paddleColor;
+    });
+    return (S);
 }
 
-export function createRenderer(canvas, G, playingFieldHeight) {
-  const S = createScene(canvas, G, playingFieldHeight);
+const createRenderer = Object.freeze(
+    function (canvas, G) {
+        const S = createScene(canvas, G);
 
-  return function render(G) {
-    S.lpaddle.position.set(G.p1.x,   0, G.p1.z);
-    S.rpaddle.position.set(G.p2.x,   0, G.p2.z);
-    S.sphere.position.set (G.ball.x, 0, G.ball.z);
-    S.light3.position.set (G.ball.x, 1, G.ball.z);
-    S.render();
-  };
-}
+        return function render(G) {
+            S.lpaddle.position.set(G.p1.x, 0, G.p1.z);
+            S.rpaddle.position.set(G.p2.x, 0, G.p2.z);
+            S.sphere.position.set(G.ball.x, 0, G.ball.z);
+            S.light3.position.set(G.ball.x, 1, G.ball.z);
+            S.render();
+        };
+    }
+);
+
+export {createRenderer};
