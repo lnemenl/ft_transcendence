@@ -2,9 +2,6 @@ import { FastifyInstance } from 'fastify';
 import { prisma } from '../utils/prisma';
 import { getProfileSchema } from './schema.json';
 
-// Defining schema as a constant
-// The 'as const' is a TS trick that makes the onject readonly
-
 const profileRoutes = async (fastify: FastifyInstance) => {
   fastify.get(
     '/profile',

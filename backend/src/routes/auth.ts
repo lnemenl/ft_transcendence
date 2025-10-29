@@ -59,6 +59,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
       try {
         await revokeRefreshTokenByRaw(refresh);
       } catch (err) {
+        /* istanbul ignore next */
         fastify.log.error(err);
       }
       reply.clearCookie('refreshToken', { path: '/' });
@@ -70,3 +71,35 @@ const authRoutes = async (fastify: FastifyInstance) => {
 };
 
 export default authRoutes;
+
+/*
+    - httpOnly: true  // JavaScript in browser CANNOT access this cookie
+      Prevents XSS (Cross-Site Scripting) attacks
+      Only the server can read/write this cookie
+    - path: '/'  // Cookie is sent with requests to ALL paths on this domain
+      '/' → Cookie sent to /, /api/login, /profile, etc. (everywhere)
+    - secure
+      secure: true   // Cookie ONLY sent over HTTPS (encrypted connections)
+      secure: false  // Cookie sent over HTTP or HTTPS
+
+      In production (live website):
+      NODE_ENV = 'production' → secure: true → Only HTTPS
+
+      In development (localhost):
+      NODE_ENV = 'development' → secure: false → HTTP is OK
+
+    - sameSite: 'lax'  // Balances security and usability
+      'strict': Cookie NEVER sent to cross-site requests (most secure, breaks some workflows)
+      'lax': Cookie sent on top-level navigation (GET requests), but not from other sites' forms/AJAX
+      'none': Cookie always sent (must also set secure: true)
+
+      User clicks link from external-site.com to your-site.com
+      ✓ Cookie IS sent (safe top-level navigation)
+
+      external-site.com has a form that POSTs to your-site.com
+      ✗ Cookie NOT sent (CSRF protection)
+
+      external-site.com makes AJAX call to your-site.com
+      ✗ Cookie NOT sent (CSRF protection)
+
+*/

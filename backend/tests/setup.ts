@@ -13,6 +13,7 @@ const resetDb = async () => {
 
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';
+  process.env.JWT_ACCESS_EXPIRES_IN = '1s';
   await app.ready();
   await prisma.$connect();
   await resetDb();

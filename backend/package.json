@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint \"src/**/*.ts\"",
-    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.mjs\"",
     "check": "prettier --check \"src/**/*.ts\"",
     "prisma": "npx prisma migrate dev --name init",
     "dev": "ts-node src/index.ts",

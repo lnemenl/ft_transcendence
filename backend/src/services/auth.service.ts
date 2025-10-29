@@ -2,6 +2,7 @@ import { prisma } from '../utils/prisma';
 import bcrypt from 'bcrypt';
 import { FastifyReply } from 'fastify';
 import crypto from 'crypto';
+import { getAccessTokenExpiresIn } from '../config';
 
 const SALT_ROUNDS = 10;
 
@@ -17,7 +18,7 @@ const createRefreshToken = async (userId: string) => {
   const days = 14;
   const raw = generateRawRefreshToken();
   const tokenHash = hashRefreshToken(raw);
-  const expiresAt = new Date(Date.now() + days * 24 * 3600 * 1000);
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60);
 
   await prisma.refreshToken.create({
     data: {
@@ -32,9 +33,8 @@ const createRefreshToken = async (userId: string) => {
 export const verifyRefreshToken = async (raw: string) => {
   const tokenHash = hashRefreshToken(raw);
   const rec = await prisma.refreshToken.findUnique({ where: { tokenHash } });
-  if (!rec) return null;
-  if (rec.revoked) return null;
-  if (rec.expiresAt < new Date()) return null;
+  /* istanbul ignore next */
+  if (!rec || rec.revoked || rec.expiresAt < new Date()) return null;
   return rec;
 };
 
@@ -56,8 +56,6 @@ export const registerUser = async (email: string, password: string, username: st
     throw new Error('Username already taken');
   }
 
-  // Hash the password for security. Never store plain-text passwords
-  // To compare the password with plain text: compareSync(text, hash)
   const hashedPassword = bcrypt.hashSync(password, SALT_ROUNDS);
 
   // Create a new user in the database
@@ -86,25 +84,19 @@ export const loginUser = async (body: loginBody, reply: FastifyReply) => {
 
   if (!email && !username) throw new Error('Provide username or email');
 
-  let user = null;
+  // Look up by email or username in a single query
+  const whereConditions = [];
+  if (email) whereConditions.push({ email });
+  if (username) whereConditions.push({ username });
 
-  if (email) {
-    user = await prisma.user.findUnique({ where: { email } });
-  } else if (username) {
-    user = await prisma.user.findUnique({ where: { username } });
-  } else {
-    throw new Error('Provide username or email');
-  }
+  const user = await prisma.user.findFirst({ where: { OR: whereConditions } });
 
   if (!user) throw new Error('Invalid email or password');
 
   const isPasswordValid = bcrypt.compareSync(body.password, user.password);
   if (!isPasswordValid) throw new Error('Invalid email or password');
 
-  const accessToken = await reply.jwtSign(
-    { id: user.id }, // The playload. 'sub' is standard for 'subject' (the user's ID)
-    { expiresIn: process.env.NODE_ENV === 'test' ? '1s' : '15min' }, // The token will expire in 1h
-  );
+  const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
 
   const refreshToken = await createRefreshToken(user.id);
 

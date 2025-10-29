@@ -5,6 +5,7 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyJwt from '@fastify/jwt';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { verifyRefreshToken } from '../services/auth.service';
+import { getAccessTokenExpiresIn, getSecureCookies } from '../config';
 
 const jwtPlugin = fp(async (app: FastifyInstance) => {
   if (!process.env.JWT_SECRET) {
@@ -31,26 +32,19 @@ const jwtPlugin = fp(async (app: FastifyInstance) => {
     } catch (_err) {
       // Access token failed, try refresh token
       const refreshToken = request.cookies.refreshToken;
-      if (!refreshToken) {
-        return reply.status(401).send({ error: 'Unauthorized' });
-      }
-
-      const isValid = await verifyRefreshToken(refreshToken);
+      const isValid = refreshToken ? await verifyRefreshToken(refreshToken) : null;
       if (!isValid) {
         return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       // Issue new access token
-      const accessToken = await reply.jwtSign(
-        { id: isValid.userId },
-        { expiresIn: process.env.NODE_ENV === 'test' ? '1s' : '15min' },
-      );
+      const accessToken = await reply.jwtSign({ id: isValid.userId }, { expiresIn: getAccessTokenExpiresIn() });
 
       // Set new access token cookie
       reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: getSecureCookies(),
         sameSite: 'lax',
         maxAge: 60 * 15,
       });
