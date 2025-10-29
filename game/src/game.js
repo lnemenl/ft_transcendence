@@ -7,9 +7,6 @@ import {createUI} from "./ui.js";
 let g_LAST_TIME_MS = 0;
 
 const canvas = document.getElementById("canvas");
-const PLAYING_FIELD_HEIGHT = 15;
-const PLAYING_FIELD_WIDTH = 20;
-const WINNING_SCORE = 11;
 const STATES = Object.freeze({
     GAME_OVER: Symbol("game_over"),
     PLAYING: Symbol("playing"),
@@ -19,20 +16,24 @@ const STATES = Object.freeze({
 
 const G = {
     ball: {
+        acceleration: 0.5,
         diameter: 0.7,
         dir: {
             x: 1,
             z: 0
         },
-        speed: 15,
+        speed: 0,
+        topSpeed: 15,
         x: 0,
         z: 0
     },
+    bestOf: 3,
     countdown: 0,
-    height: PLAYING_FIELD_HEIGHT,
+    height: 15,
     p1: {
         height: 2.6,
         name: "Player 1",
+        roundsWon: 0,
         score: 0,
         speed: 20,
         width: 0.2,
@@ -42,6 +43,7 @@ const G = {
     p2: {
         height: 2.6,
         name: "Player 2",
+        roundsWon: 0,
         score: 0,
         speed: 20,
         width: 0.2,
@@ -49,7 +51,8 @@ const G = {
         z: 0
     },
     state: STATES.START,
-    width: PLAYING_FIELD_WIDTH
+    width: 20,
+    winningScore: 11
 };
 
 function move(v, u, speed, dt) {
@@ -77,6 +80,9 @@ function collide(ball, p) {
     if (intersect(ball, p)) {
         ball.dir.x *= -1;
         ball.dir.z = (2 / p.height) * (ball.z - p.z);
+        if (ball.speed < ball.topSpeed * 3) {
+            ball.speed += ball.acceleration;
+        }
     }
 }
 
@@ -84,26 +90,38 @@ const keys_down = new Set();
 document.addEventListener("keydown", (e) => keys_down.add(e.code));
 document.addEventListener("keyup", (e) => keys_down.delete(e.code));
 
+function movePlayers(G, delta_ms, keys_down) {
+    if (keys_down.has("KeyW") && G.p1.z > -5) {
+        move(G.p1, {z: -1}, G.p1.speed, delta_ms);
+    }
+    if (keys_down.has("KeyS") && G.p1.z < 5) {
+        move(G.p1, {z: 1}, G.p1.speed, delta_ms);
+    }
+    if (keys_down.has("KeyI") && G.p2.z > -5) {
+        move(G.p2, {z: -1}, G.p2.speed, delta_ms);
+    }
+    if (keys_down.has("KeyK") && G.p2.z < 5) {
+        move(G.p2, {z: 1}, G.p2.speed, delta_ms);
+    }
+}
+
 function update(G, delta_ms, keys_down) {
     switch (G.state) {
+    case STATES.WAITING:
+        G.p1.roundsWon = 0;
+        G.p2.roundsWon = 0;
+        movePlayers(G, delta_ms, keys_down);
+        break;
     case STATES.PLAYING:
-        if (keys_down.has("KeyW") && G.p1.z > -5) {
-            move(G.p1, {z: -1}, G.p1.speed, delta_ms);
-        }
-        if (keys_down.has("KeyS") && G.p1.z < 5) {
-            move(G.p1, {z: 1}, G.p1.speed, delta_ms);
-        }
-        if (keys_down.has("KeyI") && G.p2.z > -5) {
-            move(G.p2, {z: -1}, G.p2.speed, delta_ms);
-        }
-        if (keys_down.has("KeyK") && G.p2.z < 5) {
-            move(G.p2, {z: 1}, G.p2.speed, delta_ms);
-        }
+        movePlayers(G, delta_ms, keys_down);
         if (G.ball.dir.x > 0) {
             collide(G.ball, G.p1);
         }
         if (G.ball.dir.x < 0) {
             collide(G.ball, G.p2);
+        }
+        if (G.ball.speed < G.ball.topSpeed) {
+            G.ball.speed += G.ball.acceleration;
         }
         move(G.ball, G.ball.dir, G.ball.speed, delta_ms);
         if (Math.abs(G.ball.z) > 6.3) {
@@ -121,16 +139,28 @@ function update(G, delta_ms, keys_down) {
             if (G.ball.x > 0) {
                 G.p2.score += 1;
             }
+            G.ball.speed = 0;
             G.ball.z = 0;
             G.ball.x = 0;
+            G.ball.dir.x = (-1) ** (G.p1.score + G.p2.score);
+            G.ball.dir.z = 0;
+        }
+        if (Math.max(G.p1.score, G.p2.score) >= G.winningScore) {
+            if (G.p1.score > G.p2.score) {
+                G.p1.roundsWon += 1;
+            } else {
+                G.p2.roundsWon += 1;
+            }
+            G.p1.score = 0;
+            G.p2.score = 0;
         }
         // This logic needs to move to a transition state
-        if (Math.max(G.p1.score, G.p2.score) >= WINNING_SCORE) {
+        if (Math.max(G.p1.roundsWon, G.p2.roundsWon) >= G.bestOf / 2) {
             G.state = STATES.GAME_OVER;
             // setTimeout(() => G.state = STATES.START, 3000);
             xhrPost("https://echo.free.beeceptor.com", {
-                P1: G.p1.score,
-                P2: G.p2.score
+                P1: G.p1.roundsWon,
+                P2: G.p2.roundsWon
             });
         }
         break;
