@@ -83,10 +83,9 @@ const createUI = Object.freeze(
 export {createUI};
 
 function showScoreString(G) {
-    let winner = G.p1;
-    let loser = G.p2;
-    if (winner.score < loser.score) {
-        [winner, loser] = [loser, winner];
+    if (G.p1.roundsWon < G.p2.roundsWon) {
+        return `${G.p2.name} wins! ${G.p2.roundsWon} to ${G.p1.roundsWon}`;
+    } else {
+        return `${G.p1.name} wins! ${G.p1.roundsWon} to ${G.p2.roundsWon}`;
     }
-    return `${winner.name} wins! ${winner.roundsWon} to ${loser.roundsWon}`;
 }
