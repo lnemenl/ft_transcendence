@@ -1,20 +1,16 @@
-import "fastify";
+import 'fastify';
 
-declare module "fastify" {
+declare module 'fastify' {
   interface FastifyInstance {
-    authenticate: (
-      request: FastifyRequest,
-      reply: FastifyReply,
-    ) => Promise<void>;
+    authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 
   interface FastifyRequest {
     // request.user is populated after jwtVerify()
     user?: {
-      sub: string;
-      iat?: number;
-      exp?: number;
-      [key: string]: unknown;
+      id: string;
+      created?: number;
+      expires?: number;
     };
   }
 }
