@@ -83,7 +83,7 @@
           "properties": {
             "id": { "type": "string" },
             "email": { "type": "string", "format": "email" },
-            "username": { "type": ["string", "null"] },
+            "username": { "type": "string" },
             "avatarUrl": { "type": ["string", "null"], "format": "uri" }
           }
         },
@@ -106,7 +106,7 @@
           "type": "object",
           "properties": {
             "id": { "type": "string" },
-            "username": { "type": ["string", "null"] },
+            "username": { "type": "string" },
             "avatarUrl": { "type": ["string", "null"], "format": "uri" }
           }
         },
@@ -132,7 +132,7 @@
           "properties": {
             "id": { "type": "string" },
             "email": { "type": "string", "format": "email" },
-            "username": { "type": ["string", "null"] },
+            "username": { "type": "string" },
             "avatarUrl": { "type": ["string", "null"], "format": "uri" }
           }
         },
