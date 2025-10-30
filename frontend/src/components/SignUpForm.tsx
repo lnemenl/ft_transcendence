@@ -6,15 +6,15 @@ type SignUpFormProps = {
   onLogin: () => void;
 };
 
-export function SignUpForm({ onBack, onLogin }: SignUpFormProps) {
+export function SignUpForm({ onBack }: SignUpFormProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleScroll = () => {
+  /*const handleScroll = () => {
     document.getElementById("game")?.scrollIntoView({ behavior: "smooth" });
-  };
+  };*/
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     handleRequest({
@@ -22,18 +22,10 @@ export function SignUpForm({ onBack, onLogin }: SignUpFormProps) {
       endpoint: "register",
       data: { username, email, password },
       onSuccess: () => {
-        handleRequest({
-          e,
-          endpoint: "login",
-          data: { username, email, password },
-          onSuccess: () => {
-            handleScroll();
-            onLogin();
-        }
-        })
+          onBack();
       },
       setError,
-    });
+    })
   };
 
   return (
