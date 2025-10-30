@@ -7,7 +7,7 @@
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     "noEmit": true,
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "@types/supertest"],
     "outDir": "./dist-test"
   },
   "include": [

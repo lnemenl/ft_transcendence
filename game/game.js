@@ -2,7 +2,7 @@
 
 const PLAYING_FIELD_WIDTH  = 20;
 const PLAYING_FIELD_HEIGHT = 15;
-const WINNING_SCORE        = 2; // 11 for real gameplay
+const WINNING_SCORE        = 11; // 11 for real gameplay
 
 const States = Object.freeze({
   START:      Symbol('start'),
@@ -69,7 +69,6 @@ last_time_ms = 0;
 function update(current_time_ms) {
   const delta_ms = (current_time_ms - last_time_ms) / 1000;
   last_time_ms = current_time_ms;
-  console.log(G.state);
   switch (G.state)
   {
     case States.START:

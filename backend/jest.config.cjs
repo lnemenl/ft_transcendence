@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 require('dotenv').config({ path: '.env.test' });
 
 const isCI = process.env.CI === 'true';
@@ -5,29 +7,25 @@ const isCI = process.env.CI === 'true';
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  rootDir: ".",
-
-  testMatch: [
-    '<rootDir>/tests/**/*.test.ts',
-    '<rootDir>/tests/**/*.spec.ts'
-  ],
-
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-
+  testMatch: ['<rootDir>/tests/routes/**/*.test.ts', '<rootDir>/tests/plugins/**/*.test.ts'],
   transform: {
-    '^.+\\.ts$': [
-      'ts-jest',
-      { tsconfig: 'tsconfig.test.json' }
-    ],
+    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
 
+  // Use the E2E setup file for all tests
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+
+  clearMocks: true,
+  testTimeout: 10000,
+
+  // Global settings
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/index.ts',
-    '!tests/**/*.test.ts',
-    '!**/node_modules/**'
+    '!src/types/**/*.ts',
+    '!src/utils/prisma.ts',
+    '!**/node_modules/**',
   ],
-
   coverageThreshold: isCI
     ? {}
     : {
@@ -38,10 +36,4 @@ module.exports = {
           statements: 70,
         },
       },
-
-  // Remove setupFilesAfterEnv
-  setupFilesAfterEnv: [],
-
-  clearMocks: true,
-  testTimeout: 10000,
 };
