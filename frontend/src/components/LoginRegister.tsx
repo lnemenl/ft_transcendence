@@ -50,7 +50,7 @@ export function LoginRegister() {
         </>
       )}
       {isLoggedIn && (
-        //logged out window here
+        //logged out window here or multiplayer / practice mode here
         <div className="w-full h-full">
           <LogOut onBack={handleBack} onLogOut={handleLogOut} />
         </div>

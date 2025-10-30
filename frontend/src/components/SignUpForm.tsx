@@ -32,15 +32,21 @@ export function SignUpForm({ onBack }: SignUpFormProps) {
   <div className="min-w-90">
     <form onSubmit={handleSubmit} className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
         <div className="mb-4">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username-p1">Username</label>
+          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username-p1">
+            Username
+          </label>
           <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="username-p1" type="text" placeholder="Username" required/>
         </div>
         <div className="mb-4">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="email-p1">Email</label>
+          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="email-p1">
+            Email
+          </label>
           <input onChange={(e) => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="email-p1" type="email" value={email} placeholder="Email" required />
         </div>
         <div className="">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password-p1">Password</label>
+          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password-p1">
+            Password
+          </label>
           <input onChange={(e) => setPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="password-p1" type="password" placeholder="Password" required/>
         </div>
         <div className="flex flex-col items-center justify-center w-full max-w-sm">
@@ -50,8 +56,10 @@ export function SignUpForm({ onBack }: SignUpFormProps) {
           <button type="submit" className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-4 py-2 text-white mb-4">
             Sign Up
           </button>
-          <button type="button" onClick={onBack} className="text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700">Back</button>
-      </div>
+          <button type="button" onClick={onBack} className="text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700">
+            Back
+          </button>
+        </div>
       </form>
   </div>
   );
