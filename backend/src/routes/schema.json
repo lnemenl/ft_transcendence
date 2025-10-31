@@ -13,17 +13,24 @@
     "response": {
       "200": {
         "type": "object",
-        "properties": { "accessToken": { "type": "string" } }
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format":"email" },
+          "accessToken": { "type": "string" }
+        }
       },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
+
   "logoutSchema": {
     "tags": ["Auth"],
     "response": {
       "200": { "type": "object", "properties": { "ok": { "type": "boolean" } } }
     }
   },
+
   "registerSchema": {
     "description": "Register a new user",
     "tags": ["Auth"],
@@ -48,96 +55,266 @@
       "400": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
-    "getProfileSchema": {
-      "tags": ["User"],
-      "response": {
-        "200": {
-          "description": "Successful response with user profile",
-          "type": "object",
-          "properties": {
-            "user": {
+
+  "getProfileSchema": {
+    "tags": ["User"],
+    "response": {
+      "200": {
+        "description": "Successful response with user profile",
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "email": { "type": "string", "format": "email" },
+              "username": { "type": "string" },
+              "isTwoFactorEnabled": { "type": "boolean" },
+              "createdAt": { "type": "string", "format": "date-time" },
+              "updatedAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["id", "email", "username", "isTwoFactorEnabled", "createdAt", "updatedAt"]
+          }
+        },
+        "required": ["user"]
+      },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "getMeSchema": {
+    "description": "Return the currently authenticated user's profile",
+    "tags": ["User"],
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        }
+      },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "getUserSchema": {
+    "description": "Fetch a public user profile by ID",
+    "tags": ["User"],
+    "params": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        }
+      },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "updateUserSchema": {
+    "description": "Update the currently authenticated user's profile",
+    "tags": ["User"],
+    "body": {
+      "type": "object",
+      "properties": {
+        "username": { "type": "string", "minLength": 2 },
+        "avatarUrl": { "type": "string", "format": "uri" }
+      },
+      "minProperties": 1
+    },
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        }
+      },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "newGame": {
+    "description": "Create a new game",
+    "tags": ["Game"],
+    "body": {
+      "type": "object",
+      "required": ["winner"],
+      "properties": {
+        "winner": { "type": "number" },
+        "tournamentId": { "type": "string" }
+      }
+    },
+    "response": {
+      "201": {
+        "description": "Game created successfully",
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "winner": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": { "type": [ "string", "null" ], "format": "uri" }
+            }
+          },
+          "players": {
+            "type": "array",
+            "items": {
               "type": "object",
               "properties": {
                 "id": { "type": "string" },
-                "email": { "type": "string", "format": "email" },
                 "username": { "type": "string" },
-                "isTwoFactorEnabled": { "type": "boolean" },
-                "createdAt": { "type": "string", "format": "date-time" },
-                "updatedAt": { "type": "string", "format": "date-time" }
-              },
-              "required": ["id", "email", "username", "isTwoFactorEnabled", "createdAt", "updatedAt"]
+                "avatarUrl": { "type": [ "string", "null" ], "format": "uri" }
+              }
             }
           },
-          "required": ["user"]
-        },
-        "401": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "404": { "type": "object", "properties": { "error": { "type": "string" } } }
-      }
-    },
-    "getMeSchema": {
-      "description": "Return the currently authenticated user's profile",
-      "tags": ["User"],
-      "response": {
-        "200": {
-          "type": "object",
-          "properties": {
-            "id": { "type": "string" },
-            "email": { "type": "string", "format": "email" },
-            "username": { "type": "string" },
-            "avatarUrl": { "type": ["string", "null"], "format": "uri" }
-          }
-        },
-        "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "401": { "type": "object", "properties": { "error": { "type": "string" } } }
-      }
-    },
-    "getUserSchema": {
-      "description": "Fetch a public user profile by ID",
-      "tags": ["User"],
-      "params": {
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "400": {
+        "description": "Bad request, e.g., player not found",
         "type": "object",
         "properties": {
-          "id": { "type": "string" }
-        },
-        "required": ["id"]
+          "error": { "type": "string" }
+        }
       },
-      "response": {
-        "200": {
-          "type": "object",
-          "properties": {
-            "id": { "type": "string" },
-            "username": { "type": "string" },
-            "avatarUrl": { "type": ["string", "null"], "format": "uri" }
-          }
-        },
-        "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "401": { "type": "object", "properties": { "error": { "type": "string" } } }
-      }
-    },
-
-    "updateUserSchema": {
-      "description": "Update the currently authenticated user's profile",
-      "tags": ["User"],
-      "body": {
+      "500": {
+        "description": "Database error",
         "type": "object",
         "properties": {
-          "username": { "type": "string", "minLength": 2 },
-          "avatarUrl": { "type": "string", "format": "uri" }
-        },
-        "minProperties": 1
-      },
-      "response": {
-        "200": {
-          "type": "object",
-          "properties": {
-            "id": { "type": "string" },
-            "email": { "type": "string", "format": "email" },
-            "username": { "type": "string" },
-            "avatarUrl": { "type": ["string", "null"], "format": "uri" }
-          }
-        },
-        "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+          "error": { "type": "string" }
+        }
       }
     }
+  },
+
+  "getGames": {
+    "description": "Get all games",
+    "tags": ["Game"],
+    "response": {
+      "200": {
+        "description": "Games found successfully",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "winner": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": {
+                  "type": ["string", "null"],
+                  "format": "uri"
+                }
+              }
+            },
+            "players": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "username": { "type": "string" },
+                  "avatarUrl": {
+                    "type": ["string", "null"],
+                    "format": "uri"
+                  }
+                }
+              }
+            },
+            "createdAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      },
+      "404": {
+        "description": "User not found",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "500": {
+        "description": "Internal server error",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "getGameById": {
+    "description": "Get game by id",
+    "tags": ["Game"],
+    "response": {
+      "200": {
+        "description": "Game found successfully",
+        "type": "object",
+        "properties": { 
+          "id": { "type": "string" },
+          "winner": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": {
+                "type": [ "string", "null" ],
+                "format": "uri"
+              }
+            }
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": {
+                  "type": [ "string", "null" ],
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "400": {
+        "description": "Invalid id",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "500": {
+        "description": "Invalid id",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  } 
 }
