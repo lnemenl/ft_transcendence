@@ -46,10 +46,10 @@ Focus is on identity, security, and social features.
 **Issue #3: `feat: Implement User Profile Management`**
 * **User Story**: As a logged-in user, I want to view and update my profile information, and view the public profiles of other users.
 * **Acceptance Criteria**:
-    * [ ] Create a `GET /api/users/me` endpoint that uses the protected route middleware to fetch and return the currently logged-in user's data (excluding the password).
-    * [ ] Create a `PATCH /api/users/me` endpoint to update the logged-in user's details (e.g., display name, avatar URL).
-    * [ ] Create a `GET /api/users/:id` endpoint to fetch a public view of any user's profile.
-    * [ ] All these endpoints must be protected by the JWT middleware.
+    * [x] Create a `GET /api/users/me` endpoint that uses the protected route middleware to fetch and return the currently logged-in user's data (excluding the password).
+    * [x] Create a `PATCH /api/users/me` endpoint to update the logged-in user's details (e.g., display name, avatar URL).
+    * [x] Create a `GET /api/users/:id` endpoint to fetch a public view of any user's profile.
+    * [x] All these endpoints must be protected by the JWT middleware.
 
 **Issue #4: `feat: Implement Two-Factor Authentication (2FA)`**
 * **User Story**: As a security-conscious user, I want to enable 2FA on my account to protect it from unauthorized access.

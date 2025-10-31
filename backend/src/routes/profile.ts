@@ -1,64 +1,20 @@
-// Protected route using preHandler: [fastify.authenticate]
-
-import { FastifyInstance } from "fastify";
-import { prisma } from "../utils/prisma";
-
-// Defining schema as a constant
-// The 'as const' is a TS trick that makes the onject readonly
-
-const getProfileSchema = {
-  description: "Return current authenticated user's profile",
-  tags: ["User"],
-  response: {
-    200: {
-      description: "Successful response with user profile",
-      type: "object",
-      properties: {
-        user: {
-          type: "object",
-          properties: {
-            id: { type: "string" },
-            email: { type: "string", format: "email" },
-            username: { type: "string", minLength: 2 },
-            isTwoFactorEnabled: { type: "boolean" },
-            createdAt: { type: "string", format: "date-time" },
-            updatedAt: { type: "string", format: "date-time" },
-          },
-          required: [
-            "id",
-            "email",
-            "username",
-            "isTwoFactorEnabled",
-            "createdAt",
-            "updatedAt",
-          ],
-        },
-      },
-      required: ["user"],
-    },
-    401: {
-      description: "Unauthorized",
-      type: "object",
-      properties: { error: { type: "string" } },
-    },
-    404: {
-      description: "User not found",
-      type: "object",
-      properties: { error: { type: "string" } },
-    },
-  },
-} as const;
+import { FastifyInstance } from 'fastify';
+import { prisma } from '../utils/prisma';
+import { getProfileSchema } from './schema.json';
 
 const profileRoutes = async (fastify: FastifyInstance) => {
   fastify.get(
-    "/profile",
+    '/profile',
     {
       schema: getProfileSchema,
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
       // request.user is populated by request.jwtVerify()
-      const userId = (request.user as { sub: string }).sub;
+      const userId = (request.user as { id: string }).id;
+      if (!userId) {
+        return reply.status(401).send({ error: 'Unauthorized' });
+      }
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -71,7 +27,7 @@ const profileRoutes = async (fastify: FastifyInstance) => {
         },
       });
 
-      if (!user) return reply.status(404).send({ error: "User not found" });
+      if (!user) return reply.status(404).send({ error: 'User not found' });
       return reply.status(200).send({ user });
     },
   );
