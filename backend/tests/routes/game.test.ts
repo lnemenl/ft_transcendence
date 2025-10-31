@@ -7,7 +7,7 @@ import { getCookies } from '../helpers';
 const registerTestUser1 = {
   email: 'ci_test_game@example.com',
   password: 'Password123!',
-  username: 'TestUSer1',
+  username: 'TestUser1',
 };
 
 const registerTestUser2 = {
