@@ -13,7 +13,12 @@
     "response": {
       "200": {
         "type": "object",
-        "properties": { "accessToken": { "type": "string" } }
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format":"email" },
+          "accessToken": { "type": "string" }
+        }
       },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } }
     }

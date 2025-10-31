@@ -66,6 +66,9 @@ describe('Authentication System', () => {
         .expect(200);
 
       expect(res.body).toHaveProperty('accessToken');
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('username');
+      expect(res.body).toHaveProperty('avatarUrl');
       expect(hasCookie(res, 'accessToken')).toBe(true);
       expect(hasCookie(res, 'refreshToken')).toBe(true);
     });
@@ -77,6 +80,9 @@ describe('Authentication System', () => {
         .expect(200);
 
       expect(res.body).toHaveProperty('accessToken');
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('username');
+      expect(res.body).toHaveProperty('avatarUrl');
       expect(hasCookie(res, 'accessToken')).toBe(true);
       expect(hasCookie(res, 'refreshToken')).toBe(true);
     });

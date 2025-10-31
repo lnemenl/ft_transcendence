@@ -74,6 +74,9 @@ OR
 `200 OK`
 ```json
 {
+  "id": "string",
+  "username": "string",
+  "avatarUrl": "string" || "null",
   "accessToken": "string"
 }
 ```
@@ -81,6 +84,53 @@ OR
 Sets HTTP-only cookies:
 - `accessToken`: Expires in 15 minutes
 - `refreshToken`: Expires in 14 days
+
+`401 Unauthorized`
+```json
+{
+  "error": "Invalid email or password"
+}
+```
+
+### POST /api/login/player2
+
+Authenticate a user and receive access tokens. refresh token will get revoked immidiately upon creation.
+
+**Request Body**
+```json
+{
+  "email": "user@example.com",
+  "password": "string"
+}
+```
+
+OR
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+**Validation**
+- Either `email` or `username` must be provided
+- `password`: Required
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "username": "string",
+  "avatarUrl": "string" || "null",
+  "accessToken": "string"
+}
+```
+
+Sets HTTP-only cookies:
+- `accessToken`: Expires in 15 minutes
 
 `401 Unauthorized`
 ```json
