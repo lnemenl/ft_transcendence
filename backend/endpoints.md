@@ -76,7 +76,7 @@ OR
 {
   "id": "string",
   "username": "string",
-  "avatarUrl": "string" || "null",
+  "avatarUrl": "string | null",
   "accessToken": "string"
 }
 ```
@@ -124,7 +124,7 @@ OR
 {
   "id": "string",
   "username": "string",
-  "avatarUrl": "string" || "null",
+  "avatarUrl": "string | null",
   "accessToken": "string"
 }
 ```
@@ -321,3 +321,279 @@ Get a user's public profile by ID.
 - Access token expires in 15 minutes
 - Refresh token expires in 14 days
 - If access token is invalid, the refresh token is automatically used to issue a new access token
+
+## Game
+
+### POST /api/games
+
+Create a new game
+
+**Authentication**: Required
+
+**Request Body**
+
+```json
+{
+  "winner": "number",
+  "tournamentId": "string",
+}
+```
+- `tournamentId` is optional, required only when a game is part of a tournament
+- `winner` can be `1` or `2`
+  - `1`: player 1 won the game
+  - `2`: player 2 won the game
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "ok": "boolean"
+}
+```
+- This response is sent when player2 has not logged in and a game entry has not been created.
+
+`201 Created`
+```json
+{
+  "id": "string",
+  "winner" {
+    "id": "string",
+    "username": "string",
+    "avatarUrl": "string | null"
+  },
+  "players": [
+    {
+      "id": "string",
+      "username": "string",
+      "avatarUrl": "string | null"
+    },
+    {
+      "id": "string",
+      "username": "string",
+      "avatarUrl": "string | null"
+    }
+  ],
+  "ceatedAt": "string"
+}
+```
+
+`400 Bad Request`
+```json
+{
+  "error": "string"
+}
+```
+
+`404 Not Found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### GET /api/games
+
+Sends an array of all games
+
+**Authentication**: Required
+
+**Responses**
+
+`200 OK`
+```json
+{
+  [
+    {
+      "id": "string",
+      "winner" {
+        "id": "string",
+        "username": "string",
+        "avatarUrl": "string | null"
+      },
+      "players": [
+        {
+          "id": "string",
+          "username": "string",
+          "avatarUrl": "string | null"
+        },
+        {
+          "id": "string",
+          "username": "string",
+          "avatarUrl": "string | null"
+        }
+      ],
+      "ceatedAt": "string"
+    },
+    {...}
+  ]
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### GET /api/games/:id
+
+Sends the game information found by `id`
+
+**Authentication**: Required
+
+**URL Parameters**
+- `id`: Game ID (string)
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "winner" {
+    "id": "string",
+    "username": "string",
+    "avatarUrl": "string | null"
+  },
+  "players": [
+    {
+      "id": "string",
+      "username": "string",
+      "avatarUrl": "string | null"
+    },
+    {
+      "id": "string",
+      "username": "string",
+      "avatarUrl": "string | null"
+    }
+  ],
+  "ceatedAt": "string"
+}
+```
+
+`400 Bad Request`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### GET /api/games/me
+
+Sends an array of all games the user has participated in
+
+**Authentication**: Required
+
+**Responses**
+
+`200 OK`
+```json
+{
+  [
+    {
+      "id": "string",
+      "winner" {
+        "id": "string",
+        "username": "string",
+        "avatarUrl": "string | null"
+      },
+      "players": [
+        {
+          "id": "string",
+          "username": "string",
+          "avatarUrl": "string | null"
+        },
+        {
+          "id": "string",
+          "username": "string",
+          "avatarUrl": "string | null"
+        }
+      ],
+      "ceatedAt": "string"
+    },
+    {...}
+  ]
+}
+```
+
+`404 Not found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### GET /api/games/me/won
+
+Sends an array of all games the user has won
+
+**Authentication**: Required
+
+**Responses**
+
+`200 OK`
+```json
+{
+  [
+    {
+      "id": "string",
+      "winner" {
+        "id": "string",
+        "username": "string",
+        "avatarUrl": "string | null"
+      },
+      "players": [
+        {
+          "id": "string",
+          "username": "string",
+          "avatarUrl": "string | null"
+        },
+        {
+          "id": "string",
+          "username": "string",
+          "avatarUrl": "string | null"
+        }
+      ],
+      "ceatedAt": "string"
+    },
+    {...}
+  ]
+}
+```
+
+`404 Not Found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
