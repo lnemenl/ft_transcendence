@@ -1,101 +1,16 @@
-import { FastifyInstance } from "fastify";
-import { prisma } from "../utils/prisma";
-
-const getMeSchema = {
-  description: "Return the currently authenticated user's profile",
-  tags: ["User"],
-  response: {
-    200: {
-      type: "object",
-      properties: {
-        id: { type: "string" },
-        email: { type: "string", format: "email" },
-        username: { type: ["string", "null"] },
-        avatarUrl: { type: ["string", "null"], format: "uri" },
-      },
-    },
-    404: {
-      type: "object",
-      properties: { error: { type: "string" } },
-    },
-    401: {
-      type: "object",
-      properties: { error: { type: "string" } },
-    },
-  },
-} as const;
-
-const updateUserSchema = {
-  description: "Update the currently authenticated user's profile",
-  tags: ["User"],
-  body: {
-    type: "object",
-    properties: {
-      username: { type: "string", minLength: 2 },
-      avatarUrl: { type: "string", format: "uri" },
-    },
-    minProperties: 1,
-  },
-  response: {
-    200: {
-      type: "object",
-      properties: {
-        id: { type: "string" },
-        email: { type: "string", format: "email" },
-        username: { type: ["string", "null"] },
-        avatarUrl: { type: ["string", "null"], format: "uri" },
-      },
-    },
-    404: {
-      type: "object",
-      properties: { error: { type: "string" } },
-    },
-    401: {
-      type: "object",
-      properties: { error: { type: "string" } },
-    },
-  },
-} as const;
-
-const getUserSchema = {
-  description: "Fetch a public user profile by ID",
-  tags: ["User"],
-  params: {
-    type: "object",
-    properties: {
-      id: { type: "string" },
-    },
-    required: ["id"],
-  },
-  response: {
-    200: {
-      type: "object",
-      properties: {
-        id: { type: "string" },
-        username: { type: ["string", "null"] },
-        avatarUrl: { type: ["string", "null"], format: "uri" },
-      },
-    },
-    404: {
-      type: "object",
-      properties: { error: { type: "string" } },
-    },
-    401: {
-      type: "object",
-      properties: { error: { type: "string" } },
-    },
-  },
-} as const;
+import { FastifyInstance } from 'fastify';
+import { prisma } from '../utils/prisma';
+import { updateUserSchema, getUserSchema, getMeSchema } from './schema.json';
 
 const userRoutes = async (fastify: FastifyInstance) => {
   fastify.get(
-    "/me",
+    '/me',
     {
       schema: getMeSchema,
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
-      const userId = (request.user as { sub: string }).sub;
+      const userId = (request.user as { id: string }).id;
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -106,19 +21,19 @@ const userRoutes = async (fastify: FastifyInstance) => {
         },
       });
 
-      if (!user) return reply.status(404).send({ error: "User not found" });
+      if (!user) return reply.status(404).send({ error: 'User not found' });
       return reply.status(200).send(user);
     },
   );
 
   fastify.patch(
-    "/me",
+    '/me',
     {
       schema: updateUserSchema,
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
-      const userId = (request.user as { sub: string }).sub;
+      const userId = (request.user as { id: string }).id;
       const dataToUpdate = request.body as {
         username?: string;
         avatarUrl?: string;
@@ -139,7 +54,7 @@ const userRoutes = async (fastify: FastifyInstance) => {
   );
 
   fastify.get(
-    "/:id",
+    '/:id',
     {
       schema: getUserSchema,
       preHandler: [fastify.authenticate],
@@ -155,7 +70,7 @@ const userRoutes = async (fastify: FastifyInstance) => {
         },
       });
 
-      if (!user) return reply.status(404).send({ error: "User not found" });
+      if (!user) return reply.status(404).send({ error: 'User not found' });
       return reply.status(200).send(user);
     },
   );

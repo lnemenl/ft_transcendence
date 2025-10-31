@@ -35,6 +35,7 @@ services:
       bash -c "
         apt-get update -y &&
         apt-get install -y openssl &&
+        apt-get install -y python3 make g++ &&
         npm install --include=dev &&
         npx prisma migrate deploy --schema=./prisma/schema.prisma &&
         npx prisma generate --schema=./prisma/schema.prisma &&

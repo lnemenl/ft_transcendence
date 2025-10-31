@@ -1,165 +1,137 @@
-import request from "supertest";
-import app from "../../src/index";
-import { prisma } from "../../src/utils/prisma";
-import { User } from "@prisma/client";
+import request from 'supertest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+import { app } from '../setup';
+import { testUsers } from '../fixtures';
+import { cleanDatabase, createAuthenticatedUser } from '../helpers';
 
-describe("User Profile Endpoints", () => {
-  let user1Cookie: string[];
-  let user1: User;
-  let user2: User;
+beforeEach(cleanDatabase);
 
-  // beforeAll should ONLY be used for setting up the app instance
-  beforeAll(async () => {
-    process.env.NODE_ENV = "test";
-    await app.ready();
-  });
+describe('User Profile Management', () => {
+  // GET CURRENT USER
+  describe('GET /api/users/me', () => {
+    it('returns current user profile when authenticated', async () => {
+      const { cookies, user } = await createAuthenticatedUser(testUsers.alice);
 
-  // Use beforeEach to ensure a clean database and fresh test data for every single test
-  // This prevents tests from interfering with each other
-  beforeEach(async () => {
-    // 1. Clean the database
-    await prisma.user.deleteMany({});
+      const res = await request(app.server).get('/api/users/me').set('Cookie', cookies).expect(200);
 
-    // 2. Create and log in user1
-    const user1Data = {
-      email: "user1@example.com",
-      password: "Password123!",
-      username: "user1",
-    };
-    await request(app.server).post("/api/register").send(user1Data);
-    const loginRes = await request(app.server)
-      .post("/api/login")
-      .send(user1Data);
-    user1Cookie = loginRes.headers["set-cookie"];
-    user1 = (await prisma.user.findUnique({
-      where: { email: user1Data.email },
-    }))!;
-
-    // 3. Create user2
-    const user2Data = {
-      email: "user2@example.com",
-      password: "Password123!",
-      username: "user2",
-    };
-    await request(app.server).post("/api/register").send(user2Data);
-    user2 = (await prisma.user.findUnique({
-      where: { email: user2Data.email },
-    }))!;
-  });
-
-  // afterAll cleans up once all tests in this file are done.
-  afterAll(async () => {
-    await prisma.user.deleteMany({});
-    await prisma.$disconnect();
-    await app.close();
-  });
-
-  // tests for GET /api/users/me
-  describe("GET /api/users/me", () => {
-    it("should fail with 401 if not authenticated", async () => {
-      await request(app.server).get("/api/users/me").expect(401);
+      expect(res.body).toMatchObject({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      });
     });
 
-    it("should return the profile of the currently logged-in user", async () => {
-      const res = await request(app.server)
-        .get("/api/users/me")
-        .set("Cookie", user1Cookie)
-        .expect(200);
-
-      expect(res.body.id).toBe(user1.id);
-      expect(res.body.email).toBe(user1.email);
-      expect(res.body.username).toBe(user1.username);
+    it('rejects request without authentication', async () => {
+      await request(app.server).get('/api/users/me').expect(401);
     });
 
-    it("should return 404 if the authenticated user is deleted", async () => {
-      // The user is logged in via beforeEach, so we just need to delete them.
-      await prisma.user.delete({ where: { id: user1.id } });
+    it('returns 404 when authenticated user is deleted', async () => {
+      const { user } = await createAuthenticatedUser(testUsers.alice);
+
+      // Create a fresh token and delete user
+      const validToken = app.jwt.sign({ id: user.id }, { expiresIn: '15min' });
+      await cleanDatabase();
 
       await request(app.server)
-        .get("/api/users/me")
-        .set("Cookie", user1Cookie)
+        .get('/api/users/me')
+        .set('Cookie', [`accessToken=${validToken}`])
         .expect(404);
     });
   });
 
-  // Test for PATCH /api/users/me
-  describe("PATCH /api/users/me", () => {
-    it("should fail with 401 if not authenticated", async () => {
-      await request(app.server)
-        .patch("/api/users/me")
-        .send({ username: "New name" })
-        .expect(401);
+  // UPDATE CURRENT USER
+  describe('PATCH /api/users/me', () => {
+    it('updates username successfully', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const res = await request(app.server)
+        .patch('/api/users/me')
+        .set('Cookie', cookies)
+        .send({ username: 'alice_updated' })
+        .expect(200);
+
+      expect(res.body.username).toBe('alice_updated');
     });
 
-    it("should update both username and avatarUrl for the user", async () => {
+    it('updates avatarUrl successfully', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
       const res = await request(app.server)
-        .patch("/api/users/me")
-        .set("Cookie", user1Cookie)
+        .patch('/api/users/me')
+        .set('Cookie', cookies)
+        .send({ avatarUrl: 'https://example.com/avatar.png' })
+        .expect(200);
+
+      expect(res.body.avatarUrl).toBe('https://example.com/avatar.png');
+    });
+
+    it('updates both username and avatarUrl', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const res = await request(app.server)
+        .patch('/api/users/me')
+        .set('Cookie', cookies)
         .send({
-          username: "UserOneUpdated",
-          avatarUrl: "https://example.com/avatar.png",
+          username: 'alice_new',
+          avatarUrl: 'https://example.com/new.jpg',
         })
         .expect(200);
 
-      expect(res.body.username).toBe("UserOneUpdated");
-      expect(res.body.avatarUrl).toBe("https://example.com/avatar.png");
+      expect(res.body.username).toBe('alice_new');
+      expect(res.body.avatarUrl).toBe('https://example.com/new.jpg');
     });
 
-    it("should update only the username", async () => {
-      const res = await request(app.server)
-        .patch("/api/users/me")
-        .set("Cookie", user1Cookie)
-        .send({ username: "JustTheName" })
-        .expect(200);
-      expect(res.body.username).toBe("JustTheName");
+    it('rejects request without authentication', async () => {
+      await request(app.server).patch('/api/users/me').send({ username: 'test' }).expect(401);
     });
 
-    it("should fail with 400 if username is too short", async () => {
+    it('rejects empty update', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      await request(app.server).patch('/api/users/me').set('Cookie', cookies).send({}).expect(400);
+    });
+
+    it('rejects short username', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      await request(app.server).patch('/api/users/me').set('Cookie', cookies).send({ username: 'a' }).expect(400);
+    });
+
+    it('rejects invalid avatarUrl', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
       await request(app.server)
-        .patch("/api/users/me")
-        .set("Cookie", user1Cookie)
-        .send({ username: "A" })
-        .expect(400);
-    });
-
-    it("should fail with 400 if avatarUrl is not a valid URI", async () => {
-      await request(app.server)
-        .patch("/api/users/me")
-        .set("Cookie", user1Cookie)
-        .send({ avatarUrl: "not-a-valid-url" })
-        .expect(400);
-    });
-
-    it("should fail with 400 if the body is empty", async () => {
-      await request(app.server)
-        .patch("/api/users/me")
-        .set("Cookie", user1Cookie)
-        .send({}) // required minProperties: 1
+        .patch('/api/users/me')
+        .set('Cookie', cookies)
+        .send({ avatarUrl: 'not-a-url' })
         .expect(400);
     });
   });
 
-  describe("GET /api/users/:id", () => {
-    it("should fail with 401 if not authenticated", async () => {
-      await request(app.server).get(`/api/users/${user2.id}`).expect(401);
+  // VIEW OTHER USER
+  describe('GET /api/users/:id', () => {
+    it('returns public profile of another user', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const { user: bob } = await createAuthenticatedUser(testUsers.bob);
+
+      const res = await request(app.server).get(`/api/users/${bob.id}`).set('Cookie', cookies).expect(200);
+
+      expect(res.body.id).toBe(bob.id);
+      expect(res.body.username).toBe(bob.username);
+      expect(res.body.email).toBeUndefined(); // Email should not be public
     });
 
-    it("should return the public profile of another user", async () => {
-      const res = await request(app.server)
-        .get(`/api/users/${user2.id}`)
-        .set("Cookie", user1Cookie)
-        .expect(200);
-      expect(res.body.id).toBe(user2.id);
-      expect(res.body.username).toBe(user2.username);
-      expect(res.body.email).toBeUndefined();
+    it('rejects request without authentication', async () => {
+      const { user } = await createAuthenticatedUser(testUsers.alice);
+
+      await request(app.server).get(`/api/users/${user.id}`).expect(401);
     });
 
-    it("should return 404 if the requested user ID does not exist", async () => {
-      const nonExistentId = 999999;
-      await request(app.server)
-        .get(`/api/users/${nonExistentId}`)
-        .set("Cookie", user1Cookie)
-        .expect(404);
+    it('returns 404 for non-existent user', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const nonExistentId = 'clxkq0000000008l9d9e6g3h1';
+      await request(app.server).get(`/api/users/${nonExistentId}`).set('Cookie', cookies).expect(404);
     });
   });
 });

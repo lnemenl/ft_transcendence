@@ -1,168 +1,105 @@
-import { FastifyInstance } from "fastify";
-import { registerUser, loginUser } from "../services/auth.service";
-
-const registerSchema = {
-  description: "Register a new user",
-  tags: ["Auth"],
-  body: {
-    type: "object",
-    required: ["email", "password", "username"],
-    properties: {
-      email: { type: "string", format: "email" },
-      password: { type: "string", minLength: 8 },
-      username: { type: "string", minLength: 2 },
-    },
-  },
-  response: {
-    201: {
-      description: "User created successfully",
-      type: "object",
-      properties: {
-        id: { type: "string" },
-        email: { type: "string", format: "email" },
-        username: { type: "string", minLength: 2 },
-      },
-    },
-    400: {
-      description: "Bad request, e.g., email already exists",
-      type: "object",
-      properties: {
-        error: { type: "string" },
-        message: { type: "string" },
-        username: { type: "string" },
-      },
-    },
-  },
-} as const;
-
-const loginSchema = {
-  description: "Log in a user and receive a JWT",
-  tags: ["Auth"],
-  body: {
-    type: "object",
-    required: ["email", "password"],
-    properties: {
-      email: { type: "string", format: "email" },
-      password: { type: "string" },
-    },
-  },
-  response: {
-    200: {
-      description: "Login successful",
-      type: "object",
-      properties: { accessToken: { type: "string" } },
-    },
-    401: {
-      description: "Invalid credentials",
-      type: "object",
-      properties: {
-        error: { type: "string" },
-        message: { type: "string" },
-      },
-    },
-  },
-} as const;
-
-const logoutSchema = {
-  description: "Log out a user by clearing their cookie",
-  tags: ["Auth"],
-  response: {
-    200: {
-      description: "Logout successful",
-      type: "object",
-      properties: { ok: { type: "boolean" } },
-    },
-  },
-} as const;
+import { FastifyInstance } from 'fastify';
+import { registerUser, loginUser, revokeRefreshTokenByRaw } from '../services/auth.service';
+import { loginSchema, logoutSchema, registerSchema } from './schema.json';
 
 const authRoutes = async (fastify: FastifyInstance) => {
-  fastify.post(
-    "/register",
-    { schema: registerSchema },
-    async (request, reply) => {
-      try {
-        const { email, password, username } = request.body as {
-          email: string;
-          password: string;
-          username: string;
-        };
-        const user = await registerUser(email, password, username);
-        return reply.status(201).send(user);
-      } catch (err) {
-        fastify.log.error(err);
-        const msg = (err as Error).message;
-        return reply.status(400).send({ error: msg });
-      }
-    },
-  );
-
-  // POST /api/login
-  fastify.post("/login", { schema: loginSchema }, async (request, reply) => {
+  fastify.post('/register', { schema: registerSchema }, async (request, reply) => {
     try {
-      const { email, password } = request.body as {
+      const { email, password, username } = request.body as {
         email: string;
         password: string;
+        username: string;
       };
-
-      const token = await loginUser(email, password, reply);
-
-      reply.setCookie("token", token, {
-        httpOnly: true,
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60,
-      });
-      return reply.status(200).send({ accessToken: token });
+      const user = await registerUser(email, password, username);
+      return reply.status(201).send(user);
     } catch (err) {
       fastify.log.error(err);
-      return reply.code(401).send({
-        error: "Invalid email or password",
-        message: (err as Error).message,
-      });
+      const msg = (err as Error).message;
+      return reply.status(400).send({ error: msg });
     }
   });
 
-  fastify.post("/logout", { schema: logoutSchema }, async (_request, reply) => {
-    reply.clearCookie("token", { path: "/" });
+  // POST /api/login
+  fastify.post('/login', { schema: loginSchema }, async (request, reply) => {
+    try {
+      const body = request.body as {
+        email?: string;
+        username?: string;
+        password: string;
+      };
+
+      const { accessToken, refreshToken } = await loginUser(body, reply);
+
+      reply.setCookie('accessToken', accessToken, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60, // 15 minutes
+      });
+
+      reply.setCookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 14 * 24 * 60 * 60, // 14 days
+      });
+
+      return reply.status(200).send({ accessToken });
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.code(401).send({ error: (err as Error).message });
+    }
+  });
+
+  fastify.post('/logout', { schema: logoutSchema }, async (request, reply) => {
+    const refresh = request.cookies?.refreshToken;
+    if (refresh) {
+      try {
+        await revokeRefreshTokenByRaw(refresh);
+      } catch (err) {
+        /* istanbul ignore next */
+        fastify.log.error(err);
+      }
+      reply.clearCookie('refreshToken', { path: '/' });
+    }
+
+    reply.clearCookie('accessToken', { path: '/' });
     return reply.status(200).send({ ok: true });
   });
 };
 
 export default authRoutes;
 
-// CLIENT                                     SERVER (Your Fastify App)
-//       |                                              |
-//       |--- POST /api/login ------------------------->|
-//       | (with email/password)                        |
-//       |                                              |  1. `auth.ts` route handler calls `loginUser` service.
-//       |                                              |  2. `auth.service.ts` validates password, then calls `reply.jwtSign()` to create a JWT.
-//       |                                              |  3. `auth.ts` gets the token back.
-//       |                                              |  4. It calls `reply.setCookie("token", token, { httpOnly: true, ... })`.
-//       |                                              |
-//       |<-- Response (200 OK) ------------------------|
-//       | (with "Set-Cookie" header)                   |
-//       |                                              |
-//       | BROWSER STORES THE 'token' COOKIE            |
-//       |                                              |
-//    ... Time passes ...                               |
-//       |                                              |
-//       |--- GET /api/profile -----------------------> |  (Browser automatically includes the 'token' cookie)
-//       |                                              |
-//       |                                              |  5. The request hits the `/api/profile` route.
-//       |                                              |  6. The `preHandler: [fastify.authenticate]` runs first.
-//       |                                              |
-//       |                                              |     `authenticate` decorator (from `jwt.ts`) is triggered.
-//       |                                              |     It calls `request.jwtVerify()`.
-//       |                                              |
-//       |                                              |     `@fastify/jwt` automatically finds
-//       |                                              |     and verifies the 'token' cookie.
-//       |                                              |
-//       |                                              |     If valid, it decodes the payload ({ sub: 123 }) and attaches it to `request.user`.
-//       |                                              |
-//       |                                              |  7. The main route handler for `/api/profile` now runs.
-//       |                                              |  8. It can safely access `request.user.sub` to know which user is logged in.
-//       |                                              |
-//       |<-- Response (200 OK) ------------------------|
-//       | (with user profile data)                     |
-//       |
+/*
+    - httpOnly: true  // JavaScript in browser CANNOT access this cookie
+      Prevents XSS (Cross-Site Scripting) attacks
+      Only the server can read/write this cookie
+    - path: '/'  // Cookie is sent with requests to ALL paths on this domain
+      '/' → Cookie sent to /, /api/login, /profile, etc. (everywhere)
+    - secure
+      secure: true   // Cookie ONLY sent over HTTPS (encrypted connections)
+      secure: false  // Cookie sent over HTTP or HTTPS
+
+      In production (live website):
+      NODE_ENV = 'production' → secure: true → Only HTTPS
+
+      In development (localhost):
+      NODE_ENV = 'development' → secure: false → HTTP is OK
+
+    - sameSite: 'lax'  // Balances security and usability
+      'strict': Cookie NEVER sent to cross-site requests (most secure, breaks some workflows)
+      'lax': Cookie sent on top-level navigation (GET requests), but not from other sites' forms/AJAX
+      'none': Cookie always sent (must also set secure: true)
+
+      User clicks link from external-site.com to your-site.com
+      ✓ Cookie IS sent (safe top-level navigation)
+
+      external-site.com has a form that POSTs to your-site.com
+      ✗ Cookie NOT sent (CSRF protection)
+
+      external-site.com makes AJAX call to your-site.com
+      ✗ Cookie NOT sent (CSRF protection)
+
+*/
