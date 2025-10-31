@@ -1,12 +1,7 @@
-import { prisma } from "../utils/prisma";
-import { Prisma } from "@prisma/client";
+import { prisma } from '../utils/prisma';
+import { Prisma } from '@prisma/client';
 
-export const createGame = async (
-  winner: number,
-  player1: string,
-  player2: string,
-  tournament: string | undefined,
-) => {
+export const createGame = async (winner: number, player1: string, player2: string, tournament: string | undefined) => {
   try {
     let winnerId: string;
     if (winner === 1) {
@@ -14,7 +9,7 @@ export const createGame = async (
     } else if (winner === 2) {
       winnerId = player2;
     } else {
-      throw new Error("Invalid winner");
+      throw new Error('Invalid winner');
     }
     const game = await prisma.game.create({
       data: {
@@ -48,12 +43,12 @@ export const createGame = async (
     return game;
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === "P2025") {
-        throw new Error("Invalid ID");
+      if (err.code === 'P2025') {
+        throw new Error('Invalid ID');
       } else {
-        throw new Error("Internal server error");
+        throw new Error('Internal server error');
       }
     }
-    throw new Error("Invalid winner");
+    throw new Error('Invalid winner');
   }
 };

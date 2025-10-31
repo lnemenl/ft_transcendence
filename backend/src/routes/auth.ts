@@ -20,26 +20,29 @@ const authRoutes = async (fastify: FastifyInstance) => {
   });
 
   fastify.post(
-    "/login/player2",
+    '/login/player2',
     {
       schema: loginSchema,
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
       try {
-        const { email, password } = request.body as {
-          email: string;
+        const loginBody = request.body as {
+          email?: string;
+          username?: string;
           password: string;
         };
-        const token = await loginUser(email, password, reply);
+        const { accessToken, refreshToken } = await loginUser(loginBody, reply);
 
-        reply.setCookie("player2_token", token, {
+        reply.setCookie('player2_token', accessToken, {
           httpOnly: true,
-          path: "/",
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
+          path: '/',
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
           maxAge: 60 * 60,
         });
+
+        revokeRefreshTokenByRaw(refreshToken);
 
         return reply.status(200).send({ ok: true });
       } catch (err) {

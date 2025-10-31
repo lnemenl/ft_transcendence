@@ -1,10 +1,10 @@
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
-    "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "avatarUrl" TEXT,
     "password" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
+    "avatarUrl" TEXT,
     "isTwoFactorEnabled" BOOLEAN NOT NULL DEFAULT false,
     "twoFactorSecret" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -42,6 +42,17 @@ CREATE TABLE "TournamentParticipant" (
 );
 
 -- CreateTable
+CREATE TABLE "RefreshToken" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "tokenHash" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" DATETIME NOT NULL,
+    "revoked" BOOLEAN NOT NULL DEFAULT false,
+    CONSTRAINT "RefreshToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
 CREATE TABLE "_UserGames" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
@@ -51,6 +62,9 @@ CREATE TABLE "_UserGames" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RefreshToken_tokenHash_key" ON "RefreshToken"("tokenHash");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_UserGames_AB_unique" ON "_UserGames"("A", "B");

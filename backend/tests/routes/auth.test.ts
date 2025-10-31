@@ -55,12 +55,8 @@ describe('Authentication System', () => {
 
   // LOGIN
   describe('Login', () => {
-    let cookie: string;
     beforeEach(async () => {
-      const res = await request(app.server).post('/api/register').send(testUsers.alice);
-      expect(res).toBe(201);
-      expect(res.headers).toHaveProperty("set-cookie");
-      cookie = res.headers["set-cookie"];
+      await request(app.server).post('/api/register').send(testUsers.alice);
     });
 
     it('succeeds with valid email and password', async () => {
@@ -120,14 +116,10 @@ describe('Authentication System', () => {
     });
 
     it('POST /api/login/player2 should allow a second user to log in', async () => {
-      const player2 = {
-        email: 'player2@example.com',
-        password: 'Password123!',
-        username: 'Player2',
-      };
-      await request(app.server).post('/api/register').send(player2).expect(201);
+      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
 
-      const result = await request(app.server).post('/api/login/player2').set('Cookie', cookie).send(player2);
+      const result = await request(app.server).post('/api/login/player2').set('Cookie', cookies).send(testUsers.bob);
 
       expect(result.status).toBe(200);
       const setCookieHeader = result.headers['set-cookie'];
@@ -137,16 +129,20 @@ describe('Authentication System', () => {
     });
 
     it('POST /api/login/player2 without logged in to the app should fail', async () => {
-      const player2 = { email: 'player2@example.com', password: 'Password123!' };
-      const result = await request(app.server).post('/api/login/player2').send(player2);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+      const result = await request(app.server).post('/api/login/player2').send(testUsers.bob);
 
       expect(result.status).toBe(401);
       expect(result.body.error).toBeDefined();
     });
 
     it('POST /api/login/player2 with invalid credentials should fail', async () => {
-      const player2 = { email: 'player2@example.com', password: 'Invalid!' };
-      const result = await request(app.server).post('/api/login/player2').set('Cookie', cookie).send(player2);
+      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+      const result = await request(app.server).post('/api/login/player2').set('Cookie', cookies).send({
+        email: testUsers.bob.email,
+        password: 'Invalid!',
+      });
 
       expect(result.status).toBe(401);
       expect(result.body.error).toBeDefined();

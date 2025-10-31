@@ -1,11 +1,11 @@
-import { FastifyInstance } from "fastify";
-import { createGame } from "../services/game.service";
-import schemas from "./schema.json";
-import { prisma } from "../utils/prisma";
+import { FastifyInstance } from 'fastify';
+import { createGame } from '../services/game.service';
+import schemas from './schema.json';
+import { prisma } from '../utils/prisma';
 
 const gameRoutes = async (fastify: FastifyInstance) => {
   fastify.post(
-    "/games",
+    '/games',
     {
       schema: schemas.newGame,
       preHandler: [fastify.authenticate],
@@ -17,24 +17,24 @@ const gameRoutes = async (fastify: FastifyInstance) => {
         try {
           player = fastify.jwt.verify(player2_token);
         } catch (_err) {
-          return reply.status(400).send({ error: "Player 2 Unauthorized" });
+          return reply.status(400).send({ error: 'Player 2 Unauthorized' });
         }
       } else {
         return reply.status(200).send({ ok: true });
       }
       try {
-        const player1 = (request.user as { sub: string }).sub;
+        const player1 = (request.user as { id: string }).id;
         const { winner, tournamentId } = request.body as {
           winner: number;
           tournamentId: string;
         };
-        const player2 = (player as { sub: string }).sub;
+        const player2 = (player as { id: string }).id;
         const game = await createGame(winner, player1, player2, tournamentId);
         return reply.status(201).send(game);
       } catch (err) {
-        if ((err as Error).message === "Invalid ID") {
+        if ((err as Error).message === 'Invalid ID') {
           return reply.status(404).send({ error: (err as Error).message });
-        } else if ((err as Error).message === "Internal server error") {
+        } else if ((err as Error).message === 'Internal server error') {
           return reply.status(500).send({ error: (err as Error).message });
         }
         return reply.status(400).send({ error: (err as Error).message });
@@ -43,7 +43,7 @@ const gameRoutes = async (fastify: FastifyInstance) => {
   );
 
   fastify.get(
-    "/games",
+    '/games',
     {
       schema: schemas.getGames,
       preHandler: [fastify.authenticate],
@@ -78,7 +78,7 @@ const gameRoutes = async (fastify: FastifyInstance) => {
   );
 
   fastify.get(
-    "/games/:id",
+    '/games/:id',
     {
       schema: schemas.getGameById,
       preHandler: [fastify.authenticate],
@@ -109,7 +109,7 @@ const gameRoutes = async (fastify: FastifyInstance) => {
         });
 
         if (!game) {
-          return reply.status(400).send({ error: "Invalid game id" });
+          return reply.status(400).send({ error: 'Invalid game id' });
         }
         return reply.status(200).send(game);
       } catch (err) {
@@ -119,14 +119,14 @@ const gameRoutes = async (fastify: FastifyInstance) => {
   );
 
   fastify.get(
-    "/games/me",
+    '/games/me',
     {
       schema: schemas.getGames,
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
       try {
-        const userId = (request.user as { sub: string }).sub;
+        const userId = (request.user as { id: string }).id;
         const games = await prisma.user.findUnique({
           where: { id: userId },
           select: {
@@ -153,24 +153,24 @@ const gameRoutes = async (fastify: FastifyInstance) => {
           },
         });
         if (!games) {
-          return reply.status(404).send({ error: "User not found" });
+          return reply.status(404).send({ error: 'User not found' });
         }
         return reply.status(200).send(games.games);
       } catch (_err) {
-        return reply.status(500).send({ error: "Internal server error" });
+        return reply.status(500).send({ error: 'Internal server error' });
       }
     },
   );
 
   fastify.get(
-    "/games/me/won",
+    '/games/me/won',
     {
       schema: schemas.getGames,
       preHandler: [fastify.authenticate],
     },
     async (request, reply) => {
       try {
-        const userId = (request.user as { sub: string }).sub;
+        const userId = (request.user as { id: string }).id;
         const games = await prisma.user.findUnique({
           where: { id: userId },
           select: {
@@ -197,11 +197,11 @@ const gameRoutes = async (fastify: FastifyInstance) => {
           },
         });
         if (!games) {
-          return reply.status(404).send({ error: "User not found" });
+          return reply.status(404).send({ error: 'User not found' });
         }
         return reply.status(200).send(games.gamesWon);
       } catch (_err) {
-        return reply.status(500).send({ error: "Internal server error" });
+        return reply.status(500).send({ error: 'Internal server error' });
       }
     },
   );
