@@ -7,6 +7,7 @@
         if (!supportedLanguages.includes(locale)) {
             locale = "en";
             localStorage.setItem("ft_transcendence:lang", "en");
+            console.log("Unsupported language. Defaulting to English.");
         }
         document.documentElement.lang = locale;
     </script>
