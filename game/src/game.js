@@ -107,6 +107,11 @@ function movePlayers(G, delta_ms, keys_down) {
 
 function update(G, delta_ms, keys_down) {
     switch (G.state) {
+    case STATES.START:
+        if (keys_down.has("Space")) {
+            onThree(G);
+        }
+        break;
     case STATES.WAITING:
         G.p1.roundsWon = 0;
         G.p2.roundsWon = 0;
@@ -188,7 +193,8 @@ function onThree(G) {
     G.state = STATES.WAITING;
     countdown(G);
 }
-const updateUI = createUI(canvas, STATES, onThree);
+
+const updateUI = createUI(canvas, STATES);
 function loop(current_time_ms) {
     const delta_ms = (current_time_ms - g_LAST_TIME_MS) / 1000;
     g_LAST_TIME_MS = current_time_ms;

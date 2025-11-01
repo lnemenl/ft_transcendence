@@ -1,6 +1,6 @@
 /*jslint browser */
 const createUI = Object.freeze(
-    function (canvas, STATES, onStartGame) {
+    function (canvas, STATES) {
         const container = document.createElement("div");
         Object.assign(container.style, {
             display: "inline-block",
@@ -27,36 +27,16 @@ const createUI = Object.freeze(
             top: "20px",
             transform: "translateX(-50%)"
         });
-        const startButton = document.createElement("button");
-        Object.assign(startButton.style, {
-            backgroundColor: "grey",
-            border: "1px solid white",
-            borderRadius: "7%",
-            color: "white",
-            fontFamily: "monospace",
-            fontSize: "4em",
-            left: "50%",
-            pointerEvents: "auto",
-            position: "absolute",
-            textAlign: "center",
-            top: "200px",
-            transform: "translateX(-50%)"
-        });
-        startButton.innerHTML = `Begin`;
-        startButton.onclick = function () {
-            onStartGame();
-        };
 
         canvas.parentNode.insertBefore(container, canvas);
         container.append(canvas, overlay);
         overlay.appendChild(scoreDisplay);
-        container.appendChild(startButton);
         function showScore(G) {
             switch (G.state) {
             case STATES.GAME_OVER:
                 return showScoreString(G);
             case STATES.START:
-                return `Controls: WS, IK`;
+                return `Controls: WS, IK. Space to begin.`;
             case STATES.PLAYING:
                 return `${G.p1.score} | ${G.p2.score}`;
             case STATES.WAITING:
@@ -70,12 +50,6 @@ const createUI = Object.freeze(
 
         return function updateUI(G) {
             scoreDisplay.textContent = showScore(G);
-            if (G.state === STATES.START || G.state === STATES.GAME_OVER) {
-                startButton.style.display = "block";
-            } else {
-                startButton.style.display = "none";
-            }
-            startButton.onclick = () => onStartGame(G);
         };
     }
 );
