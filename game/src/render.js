@@ -7,9 +7,11 @@ const createGround = B.MeshBuilder.CreateGround;
 const createSphere = B.MeshBuilder.CreateSphere;
 const createCapsule = B.MeshBuilder.CreateCapsule;
 const zeroVector = BABYLON.Vector3.Zero;
-const blue = new B.Color3(186/255, 187/255, 241/255);
-const pink = new B.Color3(244/255, 184/255, 228/255);
+function rgb(r,g,b) { return [r/255, g/255, b/255]; }
+const blue = new B.Color3(...rgb(137, 220, 235));
+const pink = new B.Color3(...rgb(136, 120, 239));
 const black = new B.Color3(1, 1, 1);
+const offwhite = new B.Color3(...rgb(245, 224, 220));
 
 function createScene(canvas, G) {
     const Engine = new B.Engine(canvas);
@@ -51,7 +53,7 @@ function createScene(canvas, G) {
     });
     S.lpaddle.material.emissiveColor = blue;
     S.rpaddle.material.emissiveColor = pink;
-    S.sphere.material.emissiveColor = black;
+    S.sphere.material.emissiveColor = offwhite;
     S.scoreSpheres = Array.from({length: 4}, function (ignore, i) {
         return createSphere(`scoreSphere${i + 1}`, {
             diameter: G.ball.diameter
