@@ -1,4 +1,6 @@
 /*jslint browser */
+import {t} from "./lang.js";
+
 const createUI = Object.freeze(
     function (canvas, STATES) {
         const container = document.createElement("div");
@@ -34,16 +36,16 @@ const createUI = Object.freeze(
         function showScore(G) {
             switch (G.state) {
             case STATES.GAME_OVER:
-                return showScoreString(G);
+                return t().score(G);
             case STATES.START:
-                return `Controls: WS, IK. Space to begin.`;
+                return t().controls;
             case STATES.PLAYING:
                 return `${G.p1.score} | ${G.p2.score}`;
             case STATES.WAITING:
                 return (
                     G.countdown > 0
                     ? `${G.countdown}`
-                    : "Get ready!"
+                    : t().ready
                 );
             }
         }
@@ -55,11 +57,3 @@ const createUI = Object.freeze(
 );
 
 export {createUI};
-
-function showScoreString(G) {
-    if (G.p1.roundsWon < G.p2.roundsWon) {
-        return `${G.p2.name} wins! ${G.p2.roundsWon} to ${G.p1.roundsWon}`;
-    } else {
-        return `${G.p1.name} wins! ${G.p1.roundsWon} to ${G.p2.roundsWon}`;
-    }
-}

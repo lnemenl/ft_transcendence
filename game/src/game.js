@@ -3,6 +3,7 @@
 
 import {createRenderer} from "./render.js";
 import {createUI} from "./ui.js";
+import {t} from "./lang.js";
 
 let g_LAST_TIME_MS = 0;
 
@@ -32,7 +33,7 @@ const G = {
     height: 15,
     p1: {
         height: 2.6,
-        name: "Player 1",
+        name: t().player1,
         roundsWon: 0,
         score: 0,
         speed: 20,
@@ -42,7 +43,7 @@ const G = {
     },
     p2: {
         height: 2.6,
-        name: "Player 2",
+        name: t().player2,
         roundsWon: 0,
         score: 0,
         speed: 20,

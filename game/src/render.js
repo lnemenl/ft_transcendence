@@ -7,11 +7,16 @@ const createGround = B.MeshBuilder.CreateGround;
 const createSphere = B.MeshBuilder.CreateSphere;
 const createCapsule = B.MeshBuilder.CreateCapsule;
 const zeroVector = BABYLON.Vector3.Zero;
-function rgb(r,g,b) { return [r/255, g/255, b/255]; }
+
+function rgb(r, g, b) {
+    return [r / 255, g / 255, b / 255];
+}
+
 const blue = new B.Color3(...rgb(137, 220, 235));
 const pink = new B.Color3(...rgb(136, 120, 239));
-const black = new B.Color3(1, 1, 1);
 const offwhite = new B.Color3(...rgb(245, 224, 220));
+const offblack = new B.Color3(0.08, 0.1, 0.15);
+const darkOffblack = new B.Color3(...rgb(35, 38, 52));
 
 function createScene(canvas, G) {
     const Engine = new B.Engine(canvas);
@@ -77,9 +82,9 @@ const createRenderer = Object.freeze(
             if (dark) {
                 S.glow.intensity = 0.5;
                 S.ballLight.intensity = 0.03;
-                S.ground.material.ambientColor = new B.Color3(0.08, 0.1, 0.15);
+                S.ground.material.ambientColor = offblack;
             } else {
-                S.ground.material.ambientColor = new B.Color3(35/255, 38/255, 52/255);
+                S.ground.material.ambientColor = darkOffblack;
                 S.glow.intensity = 0.3;
                 S.ballLight.intensity = 0.0;
             }
