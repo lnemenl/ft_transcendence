@@ -31,6 +31,32 @@ const table = Object.freeze(
                     return `${G.p1.name} l'emporte! ${G.p1.roundsWon} à ${G.p2.roundsWon}.`;
                 }
             }
+        },
+        "fi": {
+            controls: "Ohjaimet: WS, IK. Välilyönti aloittaa.",
+            player1: "Pelaaja 1",
+            player2: "Pelaaja 2",
+            ready: "Valmistaudu!",
+            score: function (G) {
+                if (G.p1.roundsWon < G.p2.roundsWon) {
+                    return `${G.p2.name} voittaa! ${G.p2.roundsWon}–${G.p1.roundsWon}.`;
+                } else {
+                    return `${G.p1.name} voittaa! ${G.p1.roundsWon}–${G.p2.roundsWon}.`;
+                }
+            }
+        },
+        "ru": {
+            controls: "Управление: WS, IK. Пробел для начала.",
+            player1: "Игрок 1",
+            player2: "Игрок 2",
+            ready: "Приготовьтесь!",
+            score: function (G) {
+                if (G.p1.roundsWon < G.p2.roundsWon) {
+                    return `${G.p2.name} побеждает! ${G.p2.roundsWon}:${G.p1.roundsWon}.`;
+                } else {
+                    return `${G.p1.name} побеждает! ${G.p1.roundsWon}:${G.p2.roundsWon}.`;
+                }
+            }
         }
     }
 );
