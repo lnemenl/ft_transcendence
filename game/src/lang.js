@@ -1,6 +1,11 @@
 /*jslint browser*/
+
 function t() {
+    const supportedLanguages = ["en", "fi", "fr", "ru"];
     let locale = document.documentElement.lang;
+    if (!supportedLanguages.includes(locale)) {
+        locale = "en";
+    }
     return table[locale];
 }
 
@@ -12,6 +17,8 @@ const table = Object.freeze(
             player2: "Player 2",
             ready: "Get ready!",
             score: function (G) {
+                G.p1.name = "Player 1";
+                G.p2.name = "Player 2";
                 if (G.p1.roundsWon < G.p2.roundsWon) {
                     return `${G.p2.name} wins! ${G.p2.roundsWon} to ${G.p1.roundsWon}.`;
                 } else {
@@ -25,6 +32,8 @@ const table = Object.freeze(
             player2: "Joueur 2",
             ready: "C'est parti !",
             score: function (G) {
+                G.p1.name = "Joueur 1";
+                G.p2.name = "Joueur 2";
                 if (G.p1.roundsWon < G.p2.roundsWon) {
                     return `${G.p2.name} l'emporte! ${G.p2.roundsWon} à ${G.p1.roundsWon}.`;
                 } else {
@@ -38,6 +47,8 @@ const table = Object.freeze(
             player2: "Pelaaja 2",
             ready: "Valmistaudu!",
             score: function (G) {
+                G.p1.name = "Pelaaja 1";
+                G.p2.name = "Pelaaja 2";
                 if (G.p1.roundsWon < G.p2.roundsWon) {
                     return `${G.p2.name} voittaa! ${G.p2.roundsWon}–${G.p1.roundsWon}.`;
                 } else {
@@ -51,6 +62,8 @@ const table = Object.freeze(
             player2: "Игрок 2",
             ready: "Приготовьтесь!",
             score: function (G) {
+                G.p1.name = "Игрок 1";
+                G.p2.name = "Игрок 2";
                 if (G.p1.roundsWon < G.p2.roundsWon) {
                     return `${G.p2.name} побеждает! ${G.p2.roundsWon}:${G.p1.roundsWon}.`;
                 } else {
