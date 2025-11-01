@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+        const supportedLanguages = ["en", "fi", "fr", "ru"];
+        let locale = localStorage.getItem("ft_transcendence:lang");
+        if (!supportedLanguages.includes(locale)) {
+            locale = "en";
+            localStorage.setItem("ft_transcendence:lang", "en");
+        }
+        document.documentElement.lang = locale;
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
