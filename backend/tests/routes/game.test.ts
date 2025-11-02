@@ -216,7 +216,7 @@ describe('Game tests', () => {
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
-    const requestBody = { winner: 2, tounamentId: undefined };
+    const requestBody = { winner: 2, tournamentId: undefined };
     const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
 
     expect(res.status).toBe(201);
