@@ -27,7 +27,7 @@ export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }:
     } else {
       const errorData = await res.json();
       console.log("Request failed:", res.status, errorData);
-      setError?.(errorData.message);
+      setError?.(errorData.error);
     }
   } catch (err) {
     console.error("Network or parsing error:", err);
