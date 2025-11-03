@@ -100,7 +100,15 @@ export const loginUser = async (body: loginBody, reply: FastifyReply) => {
 
   const refreshToken = await createRefreshToken(user.id);
 
-  return { accessToken, refreshToken };
+  const returnUser = {
+    id: user.id,
+    username: user.username,
+    avatarUrl: user.avatarUrl,
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+  };
+
+  return returnUser;
 };
 
 export const revokeRefreshTokenByRaw = async (raw: string) => {
