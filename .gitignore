@@ -27,6 +27,7 @@ database/
 *.db
 *.db-journal
 backend/database/*.db
+backend/prisma/migrations/
 
 
 # OS generated files
