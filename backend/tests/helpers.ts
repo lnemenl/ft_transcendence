@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { app, prisma } from './setup';
+import crypto from 'crypto';
 
 // Extract cookies from response headers as an array. Handling both string and array formats from supertest
 export const getCookies = (res: request.Response): string[] => {
@@ -24,6 +25,9 @@ export const hasCookie = (res: request.Response, name: string): boolean => {
   return getCookies(res).some((c) => c.startsWith(`${name}=`));
 };
 
+// Convenience test-only helper: get accessToken cookie value
+export const getAccessToken = (res: request.Response): string | undefined => getCookie(res, 'accessToken');
+
 // Register a new user and return the response
 export const registerUser = async (userData: { email: string; password: string; username: string }) => {
   return request(app.server).post('/api/register').send(userData);
@@ -31,15 +35,24 @@ export const registerUser = async (userData: { email: string; password: string; 
 
 // Register and login a user, returning cookies and user data
 export const createAuthenticatedUser = async (userData: { email: string; password: string; username: string }) => {
-  // Register
+  // Register the test user. Tests may call this helper multiple times for the same
+  // user, so allow the "already exists" case and fall through to login.
+  // This keeps the helper simple while still being idempotent(an operation that can be repeated multiple times
+  // without changing the result beyond the first time) for tests
   const regRes = await registerUser(userData);
-  if (regRes.status !== 201) throw new Error(`Registration failed: ${regRes.status}`);
+  if (regRes.status !== 201) {
+    const body = regRes.body as { error?: string } | undefined;
+    // If body is null/undefined → stop and return undefined
+    // Else if body.error is null/undefined → stop and return undefined
+    if (!body?.error?.match(/already exists|username already taken/i)) {
+      throw new Error(`Registration failed: ${regRes.status}`);
+    }
+  }
 
-  // Login
+  // Login and return cookies + user record. Tests rely on cookie-based auth.
   const loginRes = await request(app.server).post('/api/login').send(userData);
   if (loginRes.status !== 200) throw new Error(`Login failed: ${loginRes.status}`);
 
-  // Get user from DB
   const user = await prisma.user.findUnique({ where: { email: userData.email } });
   if (!user) throw new Error('User not found after registration');
 
@@ -72,7 +85,6 @@ export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve,
 
 // Create an expired refresh token in the database
 export const createExpiredRefreshToken = async (userId: string): Promise<string> => {
-  const crypto = await import('crypto');
   const raw = crypto.randomBytes(32).toString('base64url');
   const tokenHash = crypto.createHash('sha256').update(raw).digest('hex');
 

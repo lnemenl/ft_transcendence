@@ -121,6 +121,31 @@ describe('Authentication System', () => {
       expect(res.body.error).toMatch(/provide username or email/i);
     });
 
+    it('rejects Player 2 login if they have 2FA enabled', async () => {
+      // Import TOTP for this test
+      const { TOTP } = await import('otpauth');
+
+      // Enable 2FA for bob
+      const { cookies } = await createAuthenticatedUser(testUsers.bob);
+      const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret: string = gen.body.secret;
+      const token = new TOTP({ secret }).generate();
+      await request(app.server).post('/api/2fa/enable').set('Cookie', cookies).send({ secret, token }).expect(200);
+
+      // Now try to login as player2 with bob (who has 2FA enabled)
+      const aliceCookies = (await createAuthenticatedUser(testUsers.alice)).cookies;
+      const res = await request(app.server)
+        .post('/api/login/player2')
+        .set('Cookie', aliceCookies)
+        .send({ email: testUsers.bob.email, password: testUsers.bob.password })
+        .expect(400);
+
+      expect(res.body.error).toMatch(/2FA enabled.*local multiplayer/i);
+    });
+  });
+
+  // PLAYER 2 LOGIN
+  describe('Player 2 Login', () => {
     it('POST /api/login/player2 should allow a second user to log in', async () => {
       const { cookies } = await createAuthenticatedUser(testUsers.charlie);
       await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
@@ -128,8 +153,7 @@ describe('Authentication System', () => {
       const result = await request(app.server).post('/api/login/player2').set('Cookie', cookies).send(testUsers.bob);
 
       expect(result.status).toBe(200);
-      const setCookieHeader = result.headers['set-cookie'];
-      const cookieString = setCookieHeader.find((c: string) => c.startsWith('player2_token='));
+      const cookieString = getCookies(result).find((c) => c.startsWith('player2_token='));
       const token = cookieString?.split(';')[0].split('=')[1]; // token value
       expect(token).toBeDefined();
     });

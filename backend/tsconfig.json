@@ -1,12 +1,16 @@
 {
+  // This file narrows what's compiled for the app build
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
+    // Only compile app source files from src/ (tests are handled by Jest via tsconfig.test.json)
     "rootDir": "./src",
-    "types": ["node", "jest"],
-    "resolveJsonModule": true,
+    "types": ["node"],
+    // Allow importing JSON (e.g., route schema.json)
+    "resolveJsonModule": true
   },
   "files": ["src/types/fastify.d.ts"],
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  // App-only compilation scope → simpler, faster, and avoids TS6059 with tests outside rootDir
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

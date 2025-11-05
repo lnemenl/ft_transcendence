@@ -14,11 +14,11 @@ const hashRefreshToken = (raw: string) => {
   return crypto.createHash('sha256').update(raw).digest('hex');
 };
 
-const createRefreshToken = async (userId: string) => {
+export const createRefreshToken = async (userId: string) => {
   const days = 14;
   const raw = generateRawRefreshToken();
   const tokenHash = hashRefreshToken(raw);
-  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60);
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
   await prisma.refreshToken.create({
     data: {
@@ -78,7 +78,54 @@ interface loginBody {
   password: string;
 }
 
-export const loginUser = async (body: loginBody, reply: FastifyReply) => {
+type LoginSuccess = { accessToken: string; refreshToken: string };
+type LoginNeeds2FA = { twoFactorRequired: true; twoFactorToken: string };
+
+/**
+ * Log in a user
+ *
+ * This is the CRITICAL DECISION POINT for 2FA flow.
+ *
+ * Two possible outcomes:
+ * 1. User has NO 2FA → Issue tokens immediately (LoginSuccess)
+ * 2. User has 2FA → Issue temporary token, require 2FA code (LoginNeeds2FA)
+ *
+ * Flow for NO 2FA:
+ * ┌──────────────────────────────────────────────────┐
+ * │ 1. Verify password                               │
+ * │ 2. Check: user.isTwoFactorEnabled? → NO          │
+ * │ 3. Create access token (15 min)                  │
+ * │ 4. Create refresh token (14 days)                │
+ * │ 5. Return both tokens                            │
+ * │ 6. User is fully logged in                       │
+ * └──────────────────────────────────────────────────┘
+ *
+ * Flow for WITH 2FA:
+ * ┌──────────────────────────────────────────────────┐
+ * │ 1. Verify password                               │
+ * │ 2. Check: user.isTwoFactorEnabled? → YES         │
+ * │ 3. Create TEMPORARY token (5 min)                │
+ * │    - Contains: { id, twoFactor: true }           │
+ * │    - NOT an access token!                        │
+ * │    - Cannot be used for API calls                │
+ * │ 4. Return: twoFactorRequired + twoFactorToken    │
+ * │ 5. User NOT logged in yet                        │
+ * │ 6. Frontend shows "Enter 2FA code" screen        │
+ * │ 7. User enters code from authenticator app       │
+ * │ 8. Frontend calls /api/2fa/verify                │
+ * │ 9. /verify endpoint checks code                  │
+ * │ 10. If valid → Issue REAL tokens                 │
+ * │ 11. User is fully logged in                      │
+ * └──────────────────────────────────────────────────┘
+ *
+ *
+ *
+ * @param body - Login credentials (email/username + password)
+ * @param reply - Fastify reply object (needed to sign JWT)
+ * @returns Either full tokens (no 2FA) or temporary token (2FA required)
+ * @throws Error if credentials invalid
+ */
+export const loginUser = async (body: loginBody, reply: FastifyReply): Promise<LoginSuccess | LoginNeeds2FA> => {
   const email = body.email?.trim().toLowerCase();
   const username = body.username?.trim();
 
@@ -96,8 +143,30 @@ export const loginUser = async (body: loginBody, reply: FastifyReply) => {
   const isPasswordValid = bcrypt.compareSync(body.password, user.password);
   if (!isPasswordValid) throw new Error('Invalid email or password');
 
+  // If user has 2FA enabled, don't issue tokens yet
+  if (user.isTwoFactorEnabled) {
+    // User has 2FA enabled
+    // Do NOT issue access/refresh tokens yet
+    // Issue temporary token that proves password was correct
+    const twoFactorToken = await reply.jwtSign(
+      {
+        id: user.id,
+        twoFactor: true, // Special flag: This is NOT a regular access token
+      },
+      { expiresIn: '5m' }, // Short expiry: User must complete 2FA quickly
+    );
+
+    // Return special response indicating 2FA is required
+    return { twoFactorRequired: true, twoFactorToken };
+  }
+
+  // User does NOT have 2FA enabled
+  // Issue regular tokens immediately
+
+  // Create access token (JWT, short-lived: 15 minutes)
   const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
 
+  // Create refresh token (opaque token, long-lived: 14 days)
   const refreshToken = await createRefreshToken(user.id);
 
   const returnUser = {
