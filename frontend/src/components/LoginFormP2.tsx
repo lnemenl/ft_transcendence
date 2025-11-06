@@ -3,22 +3,28 @@ import { handleRequest } from "./AuthRequest";
 
 type LoginFormProps = {
   onBack: () => void;
-  onLogin: () => void;
 };
 
-export function LoginFormP1({ onBack, onLogin }: LoginFormProps) {
+export function LoginFormP2({ onBack }: LoginFormProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  const handleScroll = () => {
+		document.getElementById("game")?.scrollIntoView({
+			behavior: "smooth",
+		});
+	};
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     handleRequest({
       e,
-      endpoint: "login",
+      endpoint: "login/player2",
       data: { username, email, password },
       onSuccess: () => {
-        onLogin();
+        console.log("Player 2 logged in succesfully");
+        handleScroll();
       },
       setError,
     });
@@ -31,19 +37,19 @@ export function LoginFormP1({ onBack, onLogin }: LoginFormProps) {
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username">
             Username
           </label>
-          <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="username-p1" type="text" placeholder="Username" required/>
+          <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="username-p2" type="text" placeholder="Username" required/>
         </div>
         <div className="mb-4">
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="email">
             Email
           </label>
-          <input onChange={(e) => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="email-p1" type="email" value={email} placeholder="Email" required />
+          <input onChange={(e) => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="email-p2" type="email" value={email} placeholder="Email" required />
         </div>
         <div className="">
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password">
             Password
           </label>
-          <input onChange={(e) => setPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="password-p1" type="password" placeholder="Password" required/>
+          <input onChange={(e) => setPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="password-p2" type="password" placeholder="Password" required/>
         </div>
         <div className="flex flex-col items-center justify-center w-full max-w-sm">
           <div className="min-h-1 flex items-center justify-center mb-3">

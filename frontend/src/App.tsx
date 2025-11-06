@@ -4,14 +4,19 @@ import { Header } from "./components/Header";
 import { Game } from "./components/Game";
 import { DarkMode } from "./components/DarkMode";
 import { LoginRegister } from "./components/LoginRegister";
+import { GetAuth } from "./components/GetAuth";
+import { LogButton } from "./components/LogButton"
 
 function App() {
   return <>
-    <Blobs />
-    <Header />
-    <DarkMode />
-    <LoginRegister />
-    <Game />
+    <GetAuth>
+      <Blobs />
+      <Header />
+      <DarkMode />
+      <LogButton />
+      <LoginRegister />
+      <Game />
+    </GetAuth>
   </>;
 }
 
