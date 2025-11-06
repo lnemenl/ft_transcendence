@@ -316,5 +316,50 @@
         }
       }
     }
-  } 
+  },
+  
+  "createTournament": {
+    "description": "Create a tournament",
+    "tags": ["Tournament"],
+    "body": {
+      "type": "object",
+      "required": ["participants"],
+      "properties": {
+        "participants": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "response": {
+      "201": {
+        "description": "Tountament created successfully",
+        "type": "object",
+        "properties": {
+          "tournamentId": { "type": "string" }
+        }
+      },
+      "400": {
+        "description": "Bad request, e.g., player not found",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "500": {
+        "description": "Internal server error",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  }
 }
