@@ -3,10 +3,10 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node"],
+    "types": ["node", "jest"],
     "resolveJsonModule": true,
   },
   "files": ["src/types/fastify.d.ts"],
-  "include": ["src/**/*.ts", "tests/refreshToken/refresh.test.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

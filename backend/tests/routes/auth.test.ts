@@ -66,6 +66,9 @@ describe('Authentication System', () => {
         .expect(200);
 
       expect(res.body).toHaveProperty('accessToken');
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('username');
+      expect(res.body).toHaveProperty('avatarUrl');
       expect(hasCookie(res, 'accessToken')).toBe(true);
       expect(hasCookie(res, 'refreshToken')).toBe(true);
     });
@@ -77,6 +80,9 @@ describe('Authentication System', () => {
         .expect(200);
 
       expect(res.body).toHaveProperty('accessToken');
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('username');
+      expect(res.body).toHaveProperty('avatarUrl');
       expect(hasCookie(res, 'accessToken')).toBe(true);
       expect(hasCookie(res, 'refreshToken')).toBe(true);
     });
@@ -113,6 +119,39 @@ describe('Authentication System', () => {
       const res = await request(app.server).post('/api/login').send({ password: testUsers.alice.password }).expect(401);
 
       expect(res.body.error).toMatch(/provide username or email/i);
+    });
+
+    it('POST /api/login/player2 should allow a second user to log in', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+
+      const result = await request(app.server).post('/api/login/player2').set('Cookie', cookies).send(testUsers.bob);
+
+      expect(result.status).toBe(200);
+      const setCookieHeader = result.headers['set-cookie'];
+      const cookieString = setCookieHeader.find((c: string) => c.startsWith('player2_token='));
+      const token = cookieString?.split(';')[0].split('=')[1]; // token value
+      expect(token).toBeDefined();
+    });
+
+    it('POST /api/login/player2 without logged in to the app should fail', async () => {
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+      const result = await request(app.server).post('/api/login/player2').send(testUsers.bob);
+
+      expect(result.status).toBe(401);
+      expect(result.body.error).toBeDefined();
+    });
+
+    it('POST /api/login/player2 with invalid credentials should fail', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+      const result = await request(app.server).post('/api/login/player2').set('Cookie', cookies).send({
+        email: testUsers.bob.email,
+        password: 'Invalid!',
+      });
+
+      expect(result.status).toBe(401);
+      expect(result.body.error).toBeDefined();
     });
   });
 

@@ -8,7 +8,7 @@ export function LogButton() {
     });
   };
   return (
-    <div className="fixed top-28 right-22 flex items-center gap-3 z-50">
+    <div className="fixed top-12 right-38 flex items-center gap-3 z-50">
       {isLoggedIn ? (
         <button type="button" onClick={logout} className="bg-[#6688cc] hover:bg-[#24273a] text-white font-bold p-3 fixed rounded-2xl">
           Logout

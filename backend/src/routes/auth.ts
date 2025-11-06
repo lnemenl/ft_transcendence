@@ -19,6 +19,40 @@ const authRoutes = async (fastify: FastifyInstance) => {
     }
   });
 
+  fastify.post(
+    '/login/player2',
+    {
+      schema: loginSchema,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const loginBody = request.body as {
+          email?: string;
+          username?: string;
+          password: string;
+        };
+        const returnUser = await loginUser(loginBody, reply);
+
+        reply.setCookie('player2_token', returnUser.accessToken, {
+          httpOnly: true,
+          path: '/',
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60,
+        });
+
+        revokeRefreshTokenByRaw(returnUser.refreshToken);
+
+        const { refreshToken: _revokedToken, ...user } = returnUser;
+        return reply.status(200).send(user);
+      } catch (err) {
+        fastify.log.error(err);
+        return reply.status(401).send({ error: (err as Error).message });
+      }
+    },
+  );
+
   // POST /api/login
   fastify.post('/login', { schema: loginSchema }, async (request, reply) => {
     try {
@@ -28,9 +62,9 @@ const authRoutes = async (fastify: FastifyInstance) => {
         password: string;
       };
 
-      const { accessToken, refreshToken } = await loginUser(body, reply);
+      const returnUser = await loginUser(body, reply);
 
-      reply.setCookie('accessToken', accessToken, {
+      reply.setCookie('accessToken', returnUser.accessToken, {
         httpOnly: true,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
@@ -38,7 +72,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
         maxAge: 15 * 60, // 15 minutes
       });
 
-      reply.setCookie('refreshToken', refreshToken, {
+      reply.setCookie('refreshToken', returnUser.refreshToken, {
         httpOnly: true,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
@@ -46,7 +80,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
         maxAge: 14 * 24 * 60 * 60, // 14 days
       });
 
-      return reply.status(200).send({ accessToken });
+      const { refreshToken: _revokedToken, ...user } = returnUser;
+      return reply.status(200).send(user);
     } catch (err) {
       fastify.log.error(err);
       return reply.code(401).send({ error: (err as Error).message });

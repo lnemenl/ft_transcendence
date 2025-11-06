@@ -12,10 +12,6 @@ export function SignUpForm({ onBack }: SignUpFormProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  /*const handleScroll = () => {
-    document.getElementById("game")?.scrollIntoView({ behavior: "smooth" });
-  };*/
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     handleRequest({
       e,

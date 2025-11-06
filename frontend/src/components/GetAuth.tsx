@@ -1,4 +1,3 @@
-// src/auth/AuthProvider.tsx
 import { createContext, useContext, useState } from "react";
 
 type AuthContextValue = {
@@ -38,7 +37,7 @@ export function GetAuth({ children }: { children: React.ReactNode }) {
 }
 
 export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
-  return ctx;
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used inside <AuthProvider>");
+  return context;
 };

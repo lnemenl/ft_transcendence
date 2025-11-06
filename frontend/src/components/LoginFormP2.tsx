@@ -25,6 +25,7 @@ export function LoginFormP2({ onBack }: LoginFormProps) {
       onSuccess: () => {
         console.log("Player 2 logged in succesfully");
         handleScroll();
+        onBack();
       },
       setError,
     });

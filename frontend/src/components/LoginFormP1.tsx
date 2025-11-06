@@ -19,6 +19,7 @@ export function LoginFormP1({ onBack, onLogin }: LoginFormProps) {
       data: { username, email, password },
       onSuccess: () => {
         onLogin();
+        onBack();
       },
       setError,
     });
