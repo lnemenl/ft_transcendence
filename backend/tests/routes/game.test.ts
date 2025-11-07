@@ -356,4 +356,50 @@ describe('Game tests', () => {
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBe(0);
   });
+
+  // The only way to test for a database call failure is to mock a test fot that specifically
+  it('Internal server error for creating a game', async () => {
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+
+    expect(loginRes.status).toBe(200);
+    const cookie = [...cookie1, ...getCookies(loginRes)];
+    const requestBody = { winner: 1, tournamentId: undefined };
+    jest.spyOn(prisma.game, 'create').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Internal server error for getting a game by id', async () => {
+    jest.spyOn(prisma.game, 'findUnique').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).get(`/api/games/${gameId}`).set('Cookie', cookie1);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Internal server error for getting all games', async () => {
+    jest.spyOn(prisma.game, 'findMany').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).get('/api/games').set('Cookie', cookie1);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Internal server error for getting all user games', async () => {
+    jest.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).get('/api/games/me').set('Cookie', cookie1);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Internal server error for getting all user games won', async () => {
+    jest.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).get('/api/games/me/won').set('Cookie', cookie1);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
 });
