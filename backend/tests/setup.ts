@@ -6,6 +6,8 @@ const resetDb = async () => {
   try {
     await prisma.refreshToken.deleteMany({});
     await prisma.user.deleteMany({});
+    await prisma.game.deleteMany({});
+    await prisma.tournament.deleteMany({});
   } catch (err) {
     console.log('Error during DB reset:', err);
   }
@@ -23,7 +25,9 @@ afterAll(async () => {
   // Final cleanup: remove dependent rows first, then users
   try {
     await prisma.refreshToken.deleteMany({});
-    await prisma.user.deleteMany({}); // Final cleanup
+    await prisma.user.deleteMany({});
+    await prisma.game.deleteMany({});
+    await prisma.tournament.deleteMany({}); // Final cleanup
   } catch (err) {
     console.log('Error during final DB cleanup:', err);
   }
