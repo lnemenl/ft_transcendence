@@ -26,40 +26,44 @@ const twoFARoutes = async (fastify: FastifyInstance) => {
       // Convert the otpauth URL into a QR code image (as data URL)
       const qrCodeDataUrl = await generateQRCode(user.username, secret);
 
+      // Store the secret in the DB
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          twoFactorSecret: secret,
+        },
+      });
+
       return reply.status(200).send({
-        secret, // Must be sent back in /enable
+        secret, // Send secret so frontend can display it for manual entry
         otpauthUrl, // Optional, for debugging
         qrCodeDataUrl, // Display this to user as <img src="...">
       });
     },
   );
 
-  /**
-   * Frontend calls POST /api/2fa/generate (authenticated), once the user calls to ENABLE 2FA
-   * Server returns { secret, otpauthUrl, qrCodeDataUrl }
-   * Frontend:
-   * Displays qrCodeDataUrl for scanning
-   * Keeps secret only in memory (or ephemeral state)
-   * Shows instructions and an input for the 6-digit code (from the user’s app)
-   */
   fastify.post('/enable', { schema: twoFAEnableSchema, preHandler: [fastify.authenticate] }, async (request, reply) => {
     const userId = (request.user as { id: string }).id;
 
-    // Extract secret and SixDigitCode from request
-    const body = request.body as { secret: string; SixDigitCode: string };
+    const body = request.body as { SixDigitCode: string };
 
-    // Verify the 6-digit code using otpauth
-    const isValid = verify(body.secret, body.SixDigitCode);
+    // Fetch user and their 2FA secret from database
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.twoFactorSecret) {
+      return reply.status(400).send({ error: 'No 2FA secret found. Please call /generate first.' });
+    }
+
+    // Verify the 6-digit code using the stored secret
+    const isValid = verify(user.twoFactorSecret, body.SixDigitCode);
 
     if (!isValid) {
       return reply.status(401).send({ error: 'Invalid 2FA token' });
     }
 
-    // If code is valid -> save the secret to database and enable 2FA
+    // If code is valid -> enable 2FA (secret is already saved from /generate)
     await prisma.user.update({
       where: { id: userId },
       data: {
-        twoFactorSecret: body.secret, // Save the secret for future verifications
         isTwoFactorEnabled: true, // Enable 2FA flag
       },
     });

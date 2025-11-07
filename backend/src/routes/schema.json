@@ -349,14 +349,14 @@
       "tags": ["2FA"],
       "body": {
         "type": "object",
-        "required": ["secret", "SixDigitCode"],
+        "required": ["SixDigitCode"],
         "properties": {
-          "secret": { "type": "string" },
           "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
         }
       },
       "response": {
         "200": { "type": "object", "properties": { "enabled": { "type": "boolean" } } },
+        "400": { "type": "object", "properties": { "error": { "type": "string" } } },
         "401": { "type": "object", "properties": { "error": { "type": "string" } } }
       }
     },

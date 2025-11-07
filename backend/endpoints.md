@@ -176,14 +176,13 @@ Generate a new TOTP secret and QR code for setup.
 
 ### POST /api/2fa/enable
 
-Enable 2FA for the authenticated user by proving the frontend scanned the secret.
+Enable 2FA for the authenticated user by proving the frontend verified the secret.
 
 **Authentication**: Required
 
 **Request Body**
 ```json
 {
-  "secret": "string",   // secret returned by /api/2fa/generate
   "SixDigitCode": "string"     // current 6-digit TOTP code from authenticator app
 }
 ```
@@ -197,12 +196,24 @@ Enable 2FA for the authenticated user by proving the frontend scanned the secret
 }
 ```
 
+`400 Bad Request`
+```json
+{
+  "error": "No 2FA secret found. Please call /generate first."
+}
+```
+
 `401 Unauthorized`
 ```json
 {
   "error": "Invalid 2FA token"
 }
 ```
+
+**Notes**
+- The secret is automatically retrieved from the database (stored during `/api/2fa/generate`)
+- The frontend should have called `/api/2fa/generate` first to store the secret
+
 
 ### POST /api/2fa/verify
 

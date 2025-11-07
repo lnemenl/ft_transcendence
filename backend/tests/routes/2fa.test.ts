@@ -31,6 +31,17 @@ describe('Two-Factor Authentication (2FA)', () => {
       expect(res.body.qrCodeDataUrl).toMatch(/^data:image\//);
     });
 
+    it('stores the secret in the database when generating', async () => {
+      const { cookies, user } = await createAuthenticatedUser(testUsers.alice);
+      const res = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret = res.body.secret;
+
+      // Verify the secret is stored in the database
+      const userAfterGenerate = await prisma.user.findUnique({ where: { id: user.id } });
+      expect(userAfterGenerate?.twoFactorSecret).toBe(secret);
+      expect(userAfterGenerate?.isTwoFactorEnabled).toBe(false); // Not enabled yet
+    });
+
     it('returns an error if authenticated user no longer exists', async () => {
       const { cookies, user } = await createAuthenticatedUser(testUsers.alice);
       await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
@@ -46,16 +57,16 @@ describe('Two-Factor Authentication (2FA)', () => {
       // Step 1: Register and login to get authenticated cookies
       const { cookies } = await createAuthenticatedUser(testUsers.alice);
 
-      // Step 2: Generate a 2FA secret and QR code
+      // Step 2: Generate a 2FA secret and QR code (secret is stored in DB)
       const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
       const secret = genRes.body.secret;
 
-      // Step 3: Enable 2FA by sending the secret + a valid TOTP code
+      // Step 3: Enable 2FA by sending a valid TOTP code
       const validCode = totpGenerate(secret);
       await request(app.server)
         .post('/api/2fa/enable')
         .set('Cookie', cookies)
-        .send({ secret, SixDigitCode: validCode })
+        .send({ SixDigitCode: validCode })
         .expect(200);
 
       // Step 4: Verify in the database that 2FA is now enabled with the secret stored
@@ -66,14 +77,25 @@ describe('Two-Factor Authentication (2FA)', () => {
 
     it('rejects invalid TOTP codes during enable', async () => {
       const { cookies } = await createAuthenticatedUser(testUsers.alice);
-      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
-      const secret = genRes.body.secret;
+      await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
 
       await request(app.server)
         .post('/api/2fa/enable')
         .set('Cookie', cookies)
-        .send({ secret, SixDigitCode: '000000' })
+        .send({ SixDigitCode: '000000' })
         .expect(401);
+    });
+
+    it('returns 400 if /generate was not called first', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const res = await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', cookies)
+        .send({ SixDigitCode: '123456' })
+        .expect(400);
+
+      expect(res.body.error).toMatch(/generate first/i);
     });
   });
 
@@ -87,7 +109,7 @@ describe('Two-Factor Authentication (2FA)', () => {
       await request(app.server)
         .post('/api/2fa/enable')
         .set('Cookie', enableCookies)
-        .send({ secret, SixDigitCode: enableCode })
+        .send({ SixDigitCode: enableCode })
         .expect(200);
 
       // Step 2: Login alice - should require 2FA
@@ -148,7 +170,7 @@ describe('Two-Factor Authentication (2FA)', () => {
       await request(app.server)
         .post('/api/2fa/enable')
         .set('Cookie', enableCookies)
-        .send({ secret, SixDigitCode: enableCode })
+        .send({ SixDigitCode: enableCode })
         .expect(200);
 
       // Login and try invalid code
@@ -192,7 +214,7 @@ describe('Two-Factor Authentication (2FA)', () => {
       await request(app.server)
         .post('/api/2fa/enable')
         .set('Cookie', enableCookies)
-        .send({ secret, SixDigitCode: enableCode })
+        .send({ SixDigitCode: enableCode })
         .expect(200);
 
       // Step 2: Login alice - get twoFactorToken
@@ -220,7 +242,7 @@ describe('Two-Factor Authentication (2FA)', () => {
       await request(app.server)
         .post('/api/2fa/enable')
         .set('Cookie', enableCookies)
-        .send({ secret, SixDigitCode: enableCode })
+        .send({ SixDigitCode: enableCode })
         .expect(200);
 
       // Login and try invalid code
@@ -268,7 +290,7 @@ describe('Two-Factor Authentication (2FA)', () => {
       await request(app.server)
         .post('/api/2fa/enable')
         .set('Cookie', cookies)
-        .send({ secret, SixDigitCode: enableCode })
+        .send({ SixDigitCode: enableCode })
         .expect(200);
 
       // Step 2: Try disable with wrong code - should fail

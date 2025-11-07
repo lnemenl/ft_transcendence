@@ -53,7 +53,7 @@ describe('Profile Routes', () => {
       await request(app.server)
         .post('/api/2fa/enable')
         .set('Cookie', cookies)
-        .send({ secret, SixDigitCode: token })
+        .send({ SixDigitCode: token })
         .expect(200);
 
       // Check profile now shows 2FA enabled

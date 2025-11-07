@@ -133,7 +133,7 @@ describe('Authentication System', () => {
       await request(app.server)
         .post('/api/2fa/enable')
         .set('Cookie', cookies)
-        .send({ secret, SixDigitCode: token })
+        .send({ SixDigitCode: token })
         .expect(200);
 
       // Now try to login as player2 with bob (who has 2FA enabled)

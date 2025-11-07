@@ -65,23 +65,12 @@ export const createAuthenticatedUser = async (userData: { email: string; passwor
   };
 };
 
-/**
- * Helper: Enable 2FA for a user via the full API flow
- * 1. Creates authenticated user
- * 2. Generates 2FA secret
- * 3. Enables 2FA by verifying the secret with a valid code
- * Returns the secret and authenticated cookies for further tests
- */
 export const enableUser2FA = async (userData: { email: string; password: string; username: string }) => {
   const { cookies } = await createAuthenticatedUser(userData);
   const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
   const secret: string = genRes.body.secret;
   const code = totpGenerate(secret);
-  await request(app.server)
-    .post('/api/2fa/enable')
-    .set('Cookie', cookies)
-    .send({ secret, SixDigitCode: code })
-    .expect(200);
+  await request(app.server).post('/api/2fa/enable').set('Cookie', cookies).send({ SixDigitCode: code }).expect(200);
   return { cookies, secret };
 };
 
