@@ -16,7 +16,7 @@ const table = Object.freeze(
             player1: "Player 1",
             player2: "Player 2",
             ready: "Get ready!",
-            score: function (G) {
+            score: (G) => {
                 G.p1.name = "Player 1";
                 G.p2.name = "Player 2";
                 if (G.p1.roundsWon < G.p2.roundsWon) {
@@ -31,7 +31,7 @@ const table = Object.freeze(
             player1: "Joueur 1",
             player2: "Joueur 2",
             ready: "C'est parti !",
-            score: function (G) {
+            score: (G) => {
                 G.p1.name = "Joueur 1";
                 G.p2.name = "Joueur 2";
                 if (G.p1.roundsWon < G.p2.roundsWon) {
@@ -46,7 +46,7 @@ const table = Object.freeze(
             player1: "Pelaaja 1",
             player2: "Pelaaja 2",
             ready: "Valmistaudu!",
-            score: function (G) {
+            score: (G) => {
                 G.p1.name = "Pelaaja 1";
                 G.p2.name = "Pelaaja 2";
                 if (G.p1.roundsWon < G.p2.roundsWon) {
@@ -61,7 +61,7 @@ const table = Object.freeze(
             player1: "Игрок 1",
             player2: "Игрок 2",
             ready: "Приготовьтесь!",
-            score: function (G) {
+            score: (G) => {
                 G.p1.name = "Игрок 1";
                 G.p2.name = "Игрок 2";
                 if (G.p1.roundsWon < G.p2.roundsWon) {
