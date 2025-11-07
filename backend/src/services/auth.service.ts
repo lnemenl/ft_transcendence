@@ -78,54 +78,7 @@ interface loginBody {
   password: string;
 }
 
-type LoginSuccess = { accessToken: string; refreshToken: string };
-type LoginNeeds2FA = { twoFactorRequired: true; twoFactorToken: string };
-
-/**
- * Log in a user
- *
- * This is the CRITICAL DECISION POINT for 2FA flow.
- *
- * Two possible outcomes:
- * 1. User has NO 2FA → Issue tokens immediately (LoginSuccess)
- * 2. User has 2FA → Issue temporary token, require 2FA code (LoginNeeds2FA)
- *
- * Flow for NO 2FA:
- * ┌──────────────────────────────────────────────────┐
- * │ 1. Verify password                               │
- * │ 2. Check: user.isTwoFactorEnabled? → NO          │
- * │ 3. Create access token (15 min)                  │
- * │ 4. Create refresh token (14 days)                │
- * │ 5. Return both tokens                            │
- * │ 6. User is fully logged in                       │
- * └──────────────────────────────────────────────────┘
- *
- * Flow for WITH 2FA:
- * ┌──────────────────────────────────────────────────┐
- * │ 1. Verify password                               │
- * │ 2. Check: user.isTwoFactorEnabled? → YES         │
- * │ 3. Create TEMPORARY token (5 min)                │
- * │    - Contains: { id, twoFactor: true }           │
- * │    - NOT an access token!                        │
- * │    - Cannot be used for API calls                │
- * │ 4. Return: twoFactorRequired + twoFactorToken    │
- * │ 5. User NOT logged in yet                        │
- * │ 6. Frontend shows "Enter 2FA code" screen        │
- * │ 7. User enters code from authenticator app       │
- * │ 8. Frontend calls /api/2fa/verify                │
- * │ 9. /verify endpoint checks code                  │
- * │ 10. If valid → Issue REAL tokens                 │
- * │ 11. User is fully logged in                      │
- * └──────────────────────────────────────────────────┘
- *
- *
- *
- * @param body - Login credentials (email/username + password)
- * @param reply - Fastify reply object (needed to sign JWT)
- * @returns Either full tokens (no 2FA) or temporary token (2FA required)
- * @throws Error if credentials invalid
- */
-export const loginUser = async (body: loginBody, reply: FastifyReply): Promise<LoginSuccess | LoginNeeds2FA> => {
+export const loginUser = async (body: loginBody, reply: FastifyReply) => {
   const email = body.email?.trim().toLowerCase();
   const username = body.username?.trim();
 

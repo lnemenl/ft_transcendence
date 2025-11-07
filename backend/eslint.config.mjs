@@ -1,7 +1,6 @@
-// Minimal ESLint config for Node + TypeScript.
-// We lint .ts sources only; Prettier runs via npm scripts, not as an ESLint rule.
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import eslintPluginPrettier from 'eslint-plugin-prettier';
 
 export default tseslint.config([
   // Block 1: Global Ignores
@@ -14,7 +13,7 @@ export default tseslint.config([
 
   // Custom Project Configuration
   {
-  // Apply these settings to ALL TypeScript files in the project
+    // Apply these settings to ALL TypeScript files in the project
     files: ['**/*.ts'],
 
     languageOptions: {
@@ -24,7 +23,7 @@ export default tseslint.config([
     },
 
     rules: {
-      // Robust rule for unused variables (ignore prefixed by _)
+      // robust rule for handling unused variables
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -33,15 +32,28 @@ export default tseslint.config([
           caughtErrorsIgnorePattern: '^_',
         },
       ],
-      // Add more project-specific rules here as needed
-      // "no-console": "warn",
+      // If we need more rules, we put them here
+      //"no-console": "warn",
     },
   },
 
   // Prettier Integration (must be last)
   {
-    // Temporarily disable Prettier-as-ESLint-rule to avoid loading TS-based Prettier config.
-    // Prettier formatting can still be run via `npm run format`.
-    rules: {},
+    plugins: {
+      prettier: eslintPluginPrettier,
+    },
+    rules: {
+      'prettier/prettier': [
+        'error',
+        {},
+        {
+          usePrettierrc: true,
+          fileInfoOptions: {
+            configPath: './prettier.config.ts',
+            ignorePath: './.config/prettier/prettieringnore',
+          },
+        },
+      ],
+    },
   },
 ]);

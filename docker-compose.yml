@@ -1,41 +1,46 @@
+# Defines all the services (containers) for our application.
 services:
+  # The name of our service.
   backend:
+    # The base image. 'node:18-alpine' is smaller and more secure than 'slim', making it a professional choice for production.
     image: node:lts-slim
-
     container_name: ft_transcendence_backend
-
+    # This is optional but good practice for cross-platform teams (Apple Silicon, etc.).
     platform: linux/amd64
 
     ports:
       - "3011:3011"
-
-    # The default directory inside the container
+      
+    # The default directory inside the container.
     working_dir: /app
 
+    # Define how data is mounted into the container. This is a key improvement.
     volumes:
-      # This is the standard, elegant way to create a bind mount
-      # It maps './backend' on host to '/app' in the container
+      # This is the standard, elegant way to create a bind mount.
+      # It maps './backend' on your host to '/app' in the container. Your code is now available.
       - ./backend:/app
-
-      # This is the professional trick to solve the efficiency problem
-      # We tell Docker to create a separate, managed volume just for the node_modules directory
-      # This prevents the `npm install` from running every time and avoids OS-specific file conflicts
+      
+      # This is the professional trick to solve the efficiency problem.
+      # We tell Docker to create a separate, managed volume just for the node_modules directory.
+      # This prevents the `npm install` from running every time and avoids OS-specific file conflicts.
       - /app/node_modules
+
+      # Saving database file
 
     env_file:
       - ./backend/.env.docker
 
+    # The single command that orchestrates the entire setup, build, and run process.
     command: >
       bash -c "
         apt-get update -y &&
         apt-get install -y openssl &&
         apt-get install -y python3 make g++ &&
-        npm ci --include=dev &&
+        npm install --include=dev &&
         npm run clean:all &&
         npx prisma generate &&
         npm run dev
       "
-
   frontend:
     image: node:lts-slim
     container_name: ft_transcendence_frontend
@@ -48,11 +53,9 @@ services:
       - ./game:/app/public/game
       - /app/node_modules
     environment:
-      VITE_API_BASE_URL: "http://localhost:3011"
-    depends_on:
-      - backend
+      -VITE_API_BASE_URL: "http://localhost:3011"
     command: >
       bash -c "
-        npm ci &&
+        npm install &&
         npm run dev -- --host 0.0.0.0
         "

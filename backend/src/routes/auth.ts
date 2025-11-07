@@ -34,12 +34,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
         };
         const returnUser = await loginUser(loginBody, reply);
 
-        // Player 2 cannot use 2FA for local multiplayer games
-        // This is a design decision: local games are casual, 2FA would complicate the flow
         if ('twoFactorRequired' in returnUser) {
-          return reply.status(400).send({
-            error: 'Player 2 cannot have 2FA enabled for local multiplayer',
-          });
+          return reply.status(200).send({ twoFactorRequired: true, twoFactorToken: returnUser.twoFactorToken });
         }
 
         reply.setCookie('player2_token', returnUser.accessToken, {

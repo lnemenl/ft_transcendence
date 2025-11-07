@@ -15,7 +15,7 @@ const TOTP_CONFIG = {
   window: 1, // Validate current token plus ±1 time-step (±30s) during verification
 } as const;
 
-export function generateSecret(): string {
+export const generateSecret = () => {
   const totp = new TOTP({
     issuer: TOTP_CONFIG.issuer,
     label: 'temp',
@@ -24,9 +24,9 @@ export function generateSecret(): string {
     period: TOTP_CONFIG.period,
   });
   return totp.secret.base32;
-}
+};
 
-export async function generateQRCode(username: string, secret: string): Promise<string> {
+export const generateQRCode = (username: string, secret: string) => {
   const totp = new TOTP({
     issuer: TOTP_CONFIG.issuer,
     label: username,
@@ -38,9 +38,9 @@ export async function generateQRCode(username: string, secret: string): Promise<
   // getting the otpauth URI
   const otpauthUrl = totp.toString();
   return QRCode.toDataURL(otpauthUrl);
-}
+};
 
-export function verify(secret: string, token: string): boolean {
+export const verify = (secret: string, token: string) => {
   // The try catch block here is for treat bad input as invalid token rather than server error
   try {
     const totp = new TOTP({
@@ -54,10 +54,10 @@ export function verify(secret: string, token: string): boolean {
   } catch (_err) {
     return false;
   }
-}
+};
 
 // Produces the current 6-digit code for the given secret
-export function generate(secret: string): string {
+export const generate = (secret: string) => {
   const totp = new TOTP({
     secret,
     algorithm: TOTP_CONFIG.algorithm,
@@ -65,11 +65,11 @@ export function generate(secret: string): string {
     period: TOTP_CONFIG.period,
   });
   return totp.generate();
-}
+};
 
 // Builds the otpauth:// TOTP URI that authenticator apps understand
 // and basically binds the secret to a username for display/QR generation
-export function getOTPAuthUrl(username: string, secret: string): string {
+export const getOTPAuthUrl = (username: string, secret: string) => {
   const totp = new TOTP({
     issuer: TOTP_CONFIG.issuer,
     label: username,
@@ -79,4 +79,4 @@ export function getOTPAuthUrl(username: string, secret: string): string {
     period: TOTP_CONFIG.period,
   });
   return totp.toString();
-}
+};

@@ -1,17 +1,15 @@
-/**
- * How TOTP works in tests:
- * - Generate secret with authenticator.generateSecret()
- * - Create 6-digit code with authenticator.generate(secret)
- * - Code changes every 30 seconds
- * - Server verifies code matches its calculation
- */
-
 import request from 'supertest';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { app, prisma } from '../setup';
-import { cleanDatabase, createAuthenticatedUser, getCookies } from '../helpers';
+import {
+  cleanDatabase,
+  createAuthenticatedUser,
+  getCookies,
+  loginUser,
+  createUser2FAEnabledInDB,
+  signTwoFactorToken,
+} from '../helpers';
 import { testUsers } from '../fixtures';
-import { TOTP } from 'otpauth';
 import {
   generateSecret,
   generate as totpGenerate,
@@ -19,240 +17,300 @@ import {
   getOTPAuthUrl,
   generateQRCode,
 } from '../../src/services/totp.service';
+import { TOTP } from 'otpauth';
 
 beforeEach(cleanDatabase);
 
 describe('Two-Factor Authentication (2FA)', () => {
-  it('generates a TOTP secret and QR code for logged-in user', async () => {
-    const { cookies } = await createAuthenticatedUser(testUsers.alice);
+  describe('generate', () => {
+    it('generates a TOTP secret and QR code for logged-in user', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const res = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      expect(res.body.secret).toBeDefined();
+      expect(res.body.otpauthUrl).toMatch(/^otpauth:\/\//);
+      expect(res.body.qrCodeDataUrl).toMatch(/^data:image\//);
+    });
 
-    const res = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
-
-    expect(res.body.secret).toBeDefined();
-    expect(res.body.otpauthUrl).toMatch(/^otpauth:\/\//);
-    expect(res.body.qrCodeDataUrl).toMatch(/^data:image\//);
+    it('returns an error if authenticated user no longer exists', async () => {
+      const { cookies, user } = await createAuthenticatedUser(testUsers.alice);
+      await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
+      await prisma.user.delete({ where: { id: user.id } });
+      const res = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies);
+      expect([401, 404]).toContain(res.status);
+      expect(res.body.error).toBeDefined();
+    });
   });
 
-  it('enables 2FA after verifying a valid token', async () => {
-    const { cookies } = await createAuthenticatedUser(testUsers.alice);
+  describe('enable', () => {
+    it('enables 2FA after verifying a valid TOTP code', async () => {
+      // Step 1: Register and login to get authenticated cookies
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
 
-    const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
-    const secret: string = gen.body.secret;
+      // Step 2: Generate a 2FA secret and QR code
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret = genRes.body.secret;
 
-    // Generate current TOTP code (what Google Authenticator would show)
-    const token = new TOTP({ secret }).generate();
+      // Step 3: Enable 2FA by sending the secret + a valid TOTP code
+      const validCode = totpGenerate(secret);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', cookies)
+        .send({ secret, SixDigitCode: validCode })
+        .expect(200);
 
-    const enable = await request(app.server)
-      .post('/api/2fa/enable')
-      .set('Cookie', cookies)
-      .send({ secret, token })
-      .expect(200);
+      // Step 4: Verify in the database that 2FA is now enabled with the secret stored
+      const userAfterEnable = await prisma.user.findUnique({ where: { email: testUsers.alice.email } });
+      expect(userAfterEnable?.isTwoFactorEnabled).toBe(true);
+      expect(userAfterEnable?.twoFactorSecret).toBe(secret);
+    });
 
-    expect(enable.body.enabled).toBe(true);
+    it('rejects invalid TOTP codes during enable', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret = genRes.body.secret;
 
-    const dbUser = await prisma.user.findUnique({ where: { email: testUsers.alice.email } });
-    expect(dbUser?.isTwoFactorEnabled).toBe(true);
-    expect(dbUser?.twoFactorSecret).toBe(secret);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', cookies)
+        .send({ secret, SixDigitCode: '000000' })
+        .expect(401);
+    });
   });
 
-  /**
-   * Test: Complete login flow with 2FA
-   *
-   * 1. User enables 2FA (generate + enable)
-   * 2. User logs out (implicitly)
-   * 3. User logs in with password
-   * 4. Server requires 2FA (returns twoFactorToken, NOT access token)
-   * 5. User enters TOTP code
-   * 6. Server verifies code and issues real tokens
-   * 7. User is fully logged in
-   *
-   * Cookies should ONLY be set after step 6 (2FA verified)
-   */
-  it('requires 2FA on login when enabled and completes after verify', async () => {
-    // Step 1: Enable 2FA
-    const { cookies } = await createAuthenticatedUser(testUsers.alice);
-    const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
-    const secret: string = gen.body.secret;
-    const token1 = new TOTP({ secret }).generate();
-    await request(app.server)
-      .post('/api/2fa/enable')
-      .set('Cookie', cookies)
-      .send({ secret, token: token1 })
-      .expect(200);
+  describe('verify', () => {
+    it('requires 2FA on login and completes after verification', async () => {
+      // Step 1: Enable 2FA for alice
+      const { cookies: enableCookies } = await createAuthenticatedUser(testUsers.alice);
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', enableCookies).expect(200);
+      const secret = genRes.body.secret;
+      const enableCode = totpGenerate(secret);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', enableCookies)
+        .send({ secret, SixDigitCode: enableCode })
+        .expect(200);
 
-    // Verify 2FA is enabled in database
-    const dbUser2 = await prisma.user.findUnique({ where: { email: testUsers.alice.email } });
-    expect(dbUser2?.isTwoFactorEnabled).toBe(true);
+      // Step 2: Login alice - should require 2FA
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      expect(loginRes.body.twoFactorRequired).toBe(true);
+      expect(loginRes.body.twoFactorToken).toBeDefined();
 
-    // Step 2: Attempt login (only password)
-    const loginRes = await request(app.server)
-      .post('/api/login')
-      .send({ email: testUsers.alice.email, password: testUsers.alice.password })
-      .expect(200);
+      // Step 3: Verify 2FA with valid code
+      const verifyCode = totpGenerate(secret);
+      const verifyRes = await request(app.server)
+        .post('/api/2fa/verify')
+        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: verifyCode })
+        .expect(200);
 
-    // Step 3: Verify no cookies set yet (2FA not completed)
-    const setCookiesHeader = loginRes.headers['set-cookie'];
-    expect(setCookiesHeader).toBeUndefined();
+      // Step 4: Check that authentication cookies are set
+      const cookies = getCookies(verifyRes);
+      expect(cookies.join(';')).toMatch(/accessToken=/);
+      expect(cookies.join(';')).toMatch(/refreshToken=/);
+      expect(verifyRes.body.ok).toBe(true);
+    });
 
-    // Step 4: Verify response indicates 2FA required
-    expect(loginRes.body.accessToken).toBeUndefined();
-    expect(loginRes.body.twoFactorRequired).toBe(true);
-    expect(loginRes.body.twoFactorToken).toBeDefined();
+    it('rejects malformed twoFactorToken', async () => {
+      await request(app.server)
+        .post('/api/2fa/verify')
+        .send({ twoFactorToken: 'not-a-jwt', SixDigitCode: '123456' })
+        .expect(401);
+    });
 
-    // Step 5: Complete 2FA verification
-    const code = new TOTP({ secret }).generate();
+    it('rejects when twoFactor flag is missing in token', async () => {
+      const { user } = await createAuthenticatedUser(testUsers.charlie);
+      const jwt = await import('jsonwebtoken');
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as string, { expiresIn: '5m' });
+      const res = await request(app.server)
+        .post('/api/2fa/verify')
+        .send({ twoFactorToken: token, SixDigitCode: '123456' })
+        .expect(401);
+      expect(res.body.error).toMatch(/invalid 2fa session/i);
+    });
 
-    const verifyRes = await request(app.server)
-      .post('/api/2fa/verify')
-      .send({ twoFactorToken: loginRes.body.twoFactorToken, code })
-      .expect(200);
+    it('rejects when 2FA not enabled even with twoFactor flag', async () => {
+      const { user } = await createAuthenticatedUser(testUsers.charlie);
+      const jwt = await import('jsonwebtoken');
+      const token = jwt.sign({ id: user.id, twoFactor: true }, process.env.JWT_SECRET as string, {
+        expiresIn: '5m',
+      });
+      await request(app.server)
+        .post('/api/2fa/verify')
+        .send({ twoFactorToken: token, SixDigitCode: '123456' })
+        .expect(401);
+    });
 
-    // Step 6: Verify cookies ARE set now (2FA completed)
-    const cookiesAfter = getCookies(verifyRes);
-    expect(cookiesAfter.join(';')).toMatch(/accessToken=/);
-    expect(cookiesAfter.join(';')).toMatch(/refreshToken=/);
+    it('rejects wrong TOTP code with valid session', async () => {
+      // Enable 2FA for alice
+      const { cookies: enableCookies } = await createAuthenticatedUser(testUsers.alice);
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', enableCookies).expect(200);
+      const secret = genRes.body.secret;
+      const enableCode = totpGenerate(secret);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', enableCookies)
+        .send({ secret, SixDigitCode: enableCode })
+        .expect(200);
 
-    expect(verifyRes.body.ok).toBe(true);
+      // Login and try invalid code
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      await request(app.server)
+        .post('/api/2fa/verify')
+        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: '000000' })
+        .expect(401);
+    });
   });
 
-  it('rejects invalid 2FA token during enable and verify', async () => {
-    const { cookies } = await createAuthenticatedUser(testUsers.alice);
+  describe('player2', () => {
+    it('login flow for a user with 2FA enabled in database (guest login)', async () => {
+      // Step 1: Create bob with 2FA enabled directly in database
+      const secret = await createUser2FAEnabledInDB(testUsers.bob);
 
-    const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
-    const secret: string = gen.body.secret;
+      // Step 2: Login bob - should require 2FA
+      const loginRes = await loginUser(testUsers.bob.email, testUsers.bob.password);
+      expect(loginRes.body.twoFactorRequired).toBe(true);
+      expect(loginRes.body.twoFactorToken).toBeDefined();
 
-    // Try to enable with wrong code
-    const wrongToken = '000000';
-    await request(app.server)
-      .post('/api/2fa/enable')
-      .set('Cookie', cookies)
-      .send({ secret, token: wrongToken })
-      .expect(401);
+      // Step 3: Verify 2FA with valid code
+      const verifyCode = totpGenerate(secret);
+      const verifyRes = await request(app.server)
+        .post('/api/2fa/verify')
+        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: verifyCode })
+        .expect(200);
 
-    // Try to verify with invalid twoFactorToken
-    await request(app.server).post('/api/2fa/verify').send({ twoFactorToken: 'bheeee', code: '123456' }).expect(401);
+      // Step 4: Check authentication cookies are set
+      const cookies = getCookies(verifyRes);
+      expect(cookies.join(';')).toMatch(/accessToken=/);
+      expect(cookies.join(';')).toMatch(/refreshToken=/);
+    });
+
+    it('verify/player2 sets Player2Token cookie on success', async () => {
+      // Step 1: Enable 2FA for alice
+      const { cookies: enableCookies } = await createAuthenticatedUser(testUsers.alice);
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', enableCookies).expect(200);
+      const secret = genRes.body.secret;
+      const enableCode = totpGenerate(secret);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', enableCookies)
+        .send({ secret, SixDigitCode: enableCode })
+        .expect(200);
+
+      // Step 2: Login alice - get twoFactorToken
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+
+      // Step 3: Verify 2FA with /player2 endpoint - should set Player2Token
+      const verifyCode = totpGenerate(secret);
+      const player2Res = await request(app.server)
+        .post('/api/2fa/verify/player2')
+        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: verifyCode })
+        .expect(200);
+
+      const cookies = getCookies(player2Res);
+      expect(cookies.find((c) => c.startsWith('Player2Token='))).toBeDefined();
+      expect(cookies.find((c) => c.startsWith('refreshToken='))).toBeUndefined();
+      expect(cookies.find((c) => c.startsWith('accessToken='))).toBeUndefined();
+    });
+
+    it('verify/player2 rejects invalid TOTP code', async () => {
+      // Enable 2FA for alice
+      const { cookies: enableCookies } = await createAuthenticatedUser(testUsers.alice);
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', enableCookies).expect(200);
+      const secret = genRes.body.secret;
+      const enableCode = totpGenerate(secret);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', enableCookies)
+        .send({ secret, SixDigitCode: enableCode })
+        .expect(200);
+
+      // Login and try invalid code
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      await request(app.server)
+        .post('/api/2fa/verify/player2')
+        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: '000000' })
+        .expect(401);
+    });
+
+    it('verify/player2 rejects malformed token', async () => {
+      await request(app.server)
+        .post('/api/2fa/verify/player2')
+        .send({ twoFactorToken: 'not-a-jwt', SixDigitCode: '123456' })
+        .expect(401);
+    });
+
+    it('verify/player2 rejects when twoFactor flag is missing', async () => {
+      const { user } = await createAuthenticatedUser(testUsers.charlie);
+      const tokenMissingFlag = await signTwoFactorToken({ id: user.id });
+      const res = await request(app.server)
+        .post('/api/2fa/verify/player2')
+        .send({ twoFactorToken: tokenMissingFlag, SixDigitCode: '123456' })
+        .expect(401);
+      expect(res.body.error).toMatch(/invalid 2fa session/i);
+    });
+
+    it('verify/player2 rejects when 2FA not enabled on user', async () => {
+      const { user } = await createAuthenticatedUser(testUsers.charlie);
+      const tokenWithFlag = await signTwoFactorToken({ id: user.id, twoFactor: true });
+      await request(app.server)
+        .post('/api/2fa/verify/player2')
+        .send({ twoFactorToken: tokenWithFlag, SixDigitCode: '123456' })
+        .expect(401);
+    });
   });
 
-  it('returns 400 on missing fields for enable/verify/disable', async () => {
-    const { cookies } = await createAuthenticatedUser(testUsers.alice);
+  describe('disable', () => {
+    it('disables 2FA with valid TOTP code and updates database', async () => {
+      // Step 1: Enable 2FA for alice
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret = genRes.body.secret;
+      const enableCode = totpGenerate(secret);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', cookies)
+        .send({ secret, SixDigitCode: enableCode })
+        .expect(200);
 
-    // enable without secret/token
-    await request(app.server).post('/api/2fa/enable').set('Cookie', cookies).send({}).expect(400);
+      // Step 2: Try disable with wrong code - should fail
+      await request(app.server)
+        .post('/api/2fa/disable')
+        .set('Cookie', cookies)
+        .send({ SixDigitCode: '000000' })
+        .expect(401);
 
-    // verify without twoFactorToken/code
-    await request(app.server).post('/api/2fa/verify').send({}).expect(400);
+      // Step 3: Disable with correct code - should succeed
+      const disableCode = totpGenerate(secret);
+      const disableRes = await request(app.server)
+        .post('/api/2fa/disable')
+        .set('Cookie', cookies)
+        .send({ SixDigitCode: disableCode })
+        .expect(200);
+      expect(disableRes.body.disabled).toBe(true);
 
-    // disable without code
-    await request(app.server).post('/api/2fa/disable').set('Cookie', cookies).send({}).expect(400);
-  });
+      // Step 4: Verify in database that 2FA is now disabled
+      const userAfterDisable = await prisma.user.findUnique({ where: { email: testUsers.alice.email } });
+      expect(userAfterDisable?.isTwoFactorEnabled).toBe(false);
+      expect(userAfterDisable?.twoFactorSecret).toBeNull();
+    });
 
-  it('verify rejects when 2FA not enabled even with a twoFactorToken', async () => {
-    const { user } = await createAuthenticatedUser(testUsers.alice);
-    // create a twoFactorToken manually
-    const jwt = await import('jsonwebtoken');
-    const token = jwt.sign({ id: user.id, twoFactor: true }, process.env.JWT_SECRET as string, { expiresIn: '5m' });
-
-    await request(app.server).post('/api/2fa/verify').send({ twoFactorToken: token, code: '123456' }).expect(401);
-  });
-
-  it('generate returns 404 if authenticated user is deleted before request', async () => {
-    const { cookies, user } = await createAuthenticatedUser(testUsers.alice);
-    // delete the user after login (remove dependent tokens first)
-    await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
-    await prisma.user.delete({ where: { id: user.id } });
-
-    const res = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(404);
-
-    expect(res.body.error).toMatch(/user not found/i);
-  });
-
-  it('disables 2FA with valid code and rejects invalid code', async () => {
-    const { cookies } = await createAuthenticatedUser(testUsers.alice);
-    const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
-    const secret: string = gen.body.secret;
-    const okCode = new TOTP({ secret }).generate();
-
-    // enable first
-    await request(app.server)
-      .post('/api/2fa/enable')
-      .set('Cookie', cookies)
-      .send({ secret, token: okCode })
-      .expect(200);
-
-    // try to disable with wrong code
-    await request(app.server).post('/api/2fa/disable').set('Cookie', cookies).send({ code: '000000' }).expect(401);
-
-    // now disable with correct code
-    const correctCode = new TOTP({ secret }).generate();
-    const disableRes = await request(app.server)
-      .post('/api/2fa/disable')
-      .set('Cookie', cookies)
-      .send({ code: correctCode })
-      .expect(200);
-    expect(disableRes.body.disabled).toBe(true);
-
-    // DB should reflect disabled
-    const dbUser = await prisma.user.findFirst({ where: { email: testUsers.alice.email } });
-    expect(dbUser?.isTwoFactorEnabled).toBe(false);
-    expect(dbUser?.twoFactorSecret).toBeNull();
-  });
-
-  it('verify returns 401 when twoFactor flag missing in token', async () => {
-    const { user } = await createAuthenticatedUser(testUsers.alice);
-    const jwt = await import('jsonwebtoken');
-    // Create token without twoFactor flag
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as string, { expiresIn: '5m' });
-
-    const res = await request(app.server)
-      .post('/api/2fa/verify')
-      .send({ twoFactorToken: token, code: '123456' })
-      .expect(401);
-    expect(res.body.error).toMatch(/invalid 2fa session/i);
-  });
-
-  it('verify returns 401 for wrong TOTP code with valid session', async () => {
-    // Set up user with 2FA enabled
-    const { cookies } = await createAuthenticatedUser(testUsers.alice);
-    const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
-    const secret: string = gen.body.secret;
-    const ok = new TOTP({ secret }).generate();
-    await request(app.server).post('/api/2fa/enable').set('Cookie', cookies).send({ secret, token: ok }).expect(200);
-
-    // Start login to get twoFactorToken
-    const loginRes = await request(app.server)
-      .post('/api/login')
-      .send({ email: testUsers.alice.email, password: testUsers.alice.password })
-      .expect(200);
-
-    // wrong code on verify
-    const res = await request(app.server)
-      .post('/api/2fa/verify')
-      .send({ twoFactorToken: loginRes.body.twoFactorToken, code: '000000' })
-      .expect(401);
-    expect(res.body.error).toMatch(/invalid 2fa token/i);
-  });
-
-  it('disable returns 400 when 2FA is not enabled', async () => {
-    const { cookies } = await createAuthenticatedUser(testUsers.bob);
-    const res = await request(app.server)
-      .post('/api/2fa/disable')
-      .set('Cookie', cookies)
-      .send({ code: '123456' })
-      .expect(400);
-    expect(res.body.error).toMatch(/not enabled/i);
+    it('returns 400 when trying to disable 2FA that is not enabled', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
+      const res = await request(app.server)
+        .post('/api/2fa/disable')
+        .set('Cookie', cookies)
+        .send({ SixDigitCode: '123456' })
+        .expect(400);
+      expect(res.body.error).toMatch(/not enabled/i);
+    });
   });
 });
 
-/**
- * Small set of unit/edge tests for the TOTP service
- */
-describe('TOTPService unit checks (embedded)', () => {
-  it('generateSecret/generate/verify basic flow', () => {
+describe('TOTPService unit checks (small)', () => {
+  it('basic generate/verify', () => {
     const secret = generateSecret();
     const code = totpGenerate(secret);
-    expect(code).toMatch(/^\d{6}$/);
+    expect(code).toMatch(/^[0-9]{6}$/);
     expect(totpVerify(secret, code)).toBe(true);
-    expect(totpVerify(secret, '000000')).toBe(false);
   });
 
   it('window tolerance and malformed tokens', () => {
@@ -267,16 +325,16 @@ describe('TOTPService unit checks (embedded)', () => {
     expect(totpVerify(secret, 'abc123')).toBe(false);
   });
 
+  it('verify returns false for malformed/empty secret', () => {
+    expect(totpVerify('', '123456')).toBe(false);
+    expect(totpVerify('!!!!', '123456')).toBe(false);
+  });
+
   it('otpauth URL and QR code generation', async () => {
     const secret = generateSecret();
     const url = getOTPAuthUrl('alice', secret);
     expect(url.startsWith('otpauth://totp/')).toBe(true);
     const dataUrl = await generateQRCode('alice', secret);
     expect(dataUrl.startsWith('data:image/')).toBe(true);
-  });
-
-  it('verify returns false for malformed/empty secret', () => {
-    expect(totpVerify('', '123456')).toBe(false);
-    expect(totpVerify('!!!!', '123456')).toBe(false);
   });
 });

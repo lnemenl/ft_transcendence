@@ -121,7 +121,7 @@ describe('Authentication System', () => {
       expect(res.body.error).toMatch(/provide username or email/i);
     });
 
-    it('rejects Player 2 login if they have 2FA enabled', async () => {
+    it('Player 2 login if they have 2FA enabled', async () => {
       // Import TOTP for this test
       const { TOTP } = await import('otpauth');
 
@@ -130,7 +130,11 @@ describe('Authentication System', () => {
       const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
       const secret: string = gen.body.secret;
       const token = new TOTP({ secret }).generate();
-      await request(app.server).post('/api/2fa/enable').set('Cookie', cookies).send({ secret, token }).expect(200);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', cookies)
+        .send({ secret, SixDigitCode: token })
+        .expect(200);
 
       // Now try to login as player2 with bob (who has 2FA enabled)
       const aliceCookies = (await createAuthenticatedUser(testUsers.alice)).cookies;
@@ -138,9 +142,10 @@ describe('Authentication System', () => {
         .post('/api/login/player2')
         .set('Cookie', aliceCookies)
         .send({ email: testUsers.bob.email, password: testUsers.bob.password })
-        .expect(400);
+        .expect(200);
 
-      expect(res.body.error).toMatch(/2FA enabled.*local multiplayer/i);
+      expect(res.body.twoFactorRequired).toBe(true);
+      expect(typeof res.body.twoFactorToken).toBe('string');
     });
   });
 

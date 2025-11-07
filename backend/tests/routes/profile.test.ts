@@ -50,7 +50,11 @@ describe('Profile Routes', () => {
       const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
       const secret: string = gen.body.secret;
       const token = new TOTP({ secret }).generate();
-      await request(app.server).post('/api/2fa/enable').set('Cookie', cookies).send({ secret, token }).expect(200);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', cookies)
+        .send({ secret, SixDigitCode: token })
+        .expect(200);
 
       // Check profile now shows 2FA enabled
       const res = await request(app.server).get('/api/profile').set('Cookie', cookies).expect(200);

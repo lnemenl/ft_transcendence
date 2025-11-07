@@ -349,10 +349,10 @@
       "tags": ["2FA"],
       "body": {
         "type": "object",
-        "required": ["secret", "token"],
+        "required": ["secret", "SixDigitCode"],
         "properties": {
           "secret": { "type": "string" },
-          "token": { "type": "string", "pattern": "^[0-9]{6}$" }
+          "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
         }
       },
       "response": {
@@ -364,10 +364,10 @@
       "tags": ["2FA"],
       "body": {
         "type": "object",
-        "required": ["twoFactorToken", "code"],
+        "required": ["twoFactorToken", "SixDigitCode"],
         "properties": {
           "twoFactorToken": { "type": "string" },
-          "code": { "type": "string", "pattern": "^[0-9]{6}$" }
+          "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
         }
       },
       "response": {
@@ -379,9 +379,9 @@
       "tags": ["2FA"],
       "body": {
         "type": "object",
-        "required": ["code"],
+        "required": ["SixDigitCode"],
         "properties": {
-          "code": { "type": "string", "pattern": "^[0-9]{6}$" }
+          "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
         }
       },
       "response": {

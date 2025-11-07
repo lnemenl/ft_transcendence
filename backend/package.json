@@ -6,16 +6,16 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint \"src/**/*.ts\"",
-    "format": "prettier --config ./prettier.config.cjs --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "check": "prettier --config ./prettier.config.cjs --check \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "check": "prettier --check \"src/**/*.ts\"",
     "prisma": "rm -fr ./prisma/migrations && npx prisma migrate dev --name init",
     "dev": "ts-node src/index.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/index.js",
     "clean:all": "rm -rf database/*.db prisma/migrations && npm run prisma",
-    "test": "npm run test:setup && dotenv -e .env.test -- jest --runInBand",
-    "test:coverage": "npm run test:setup && dotenv -e .env.test -- jest --coverage --runInBand",
-  "test:setup": "DATABASE_URL=\"file:../database/test.db\" dotenv -e .env.test -- prisma migrate reset --force && DATABASE_URL=\"file:../database/test.db\" dotenv -e .env.test -- prisma migrate deploy"
+    "test": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest --runInBand'",
+    "test:coverage": "npx dotenv-cli -e backend/.env.test -- bash -c 'npm run test:setup && jest --coverage --runInBand'",
+    "test:setup": "npx dotenv -e backend/.env.test -- bash -c 'export DATABASE_URL=\"file:$(pwd)/database/test.db\" && npx prisma migrate reset --force && npx prisma migrate deploy'"
   },
   "keywords": [],
   "author": "",

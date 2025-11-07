@@ -184,7 +184,7 @@ Enable 2FA for the authenticated user by proving the frontend scanned the secret
 ```json
 {
   "secret": "string",   // secret returned by /api/2fa/generate
-  "token": "string"     // current 6-digit TOTP code from authenticator app
+  "SixDigitCode": "string"     // current 6-digit TOTP code from authenticator app
 }
 ```
 
@@ -214,7 +214,7 @@ Verify a two-factor code during login and complete authentication by issuing acc
 ```json
 {
   "twoFactorToken": "string", // temporary JWT returned by /api/login when 2FA is required
-  "code": "string"            // current 6-digit TOTP code from authenticator app
+  "SixDigitCode": "string"            // current 6-digit TOTP code from authenticator app
 }
 ```
 
@@ -255,7 +255,7 @@ Disable 2FA for the authenticated user (requires entering a current TOTP code).
 **Request Body**
 ```json
 {
-  "code": "string"  // current 6-digit TOTP code
+  "SixDigitCode": "string"  // current 6-digit TOTP code
 }
 ```
 

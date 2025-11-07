@@ -1,9 +1,10 @@
 import request from 'supertest';
 import { app, prisma } from './setup';
 import crypto from 'crypto';
+import { generateSecret, generate as totpGenerate } from '../src/services/totp.service';
 
 // Extract cookies from response headers as an array. Handling both string and array formats from supertest
-export const getCookies = (res: request.Response): string[] => {
+export const getCookies = (res: request.Response) => {
   const cookies = res.headers['set-cookie'];
   if (!cookies) return [];
   return Array.isArray(cookies) ? cookies : [cookies];
@@ -62,6 +63,60 @@ export const createAuthenticatedUser = async (userData: { email: string; passwor
     accessToken: getCookie(loginRes, 'accessToken'),
     refreshToken: getCookie(loginRes, 'refreshToken'),
   };
+};
+
+/**
+ * Helper: Enable 2FA for a user via the full API flow
+ * 1. Creates authenticated user
+ * 2. Generates 2FA secret
+ * 3. Enables 2FA by verifying the secret with a valid code
+ * Returns the secret and authenticated cookies for further tests
+ */
+export const enableUser2FA = async (userData: { email: string; password: string; username: string }) => {
+  const { cookies } = await createAuthenticatedUser(userData);
+  const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+  const secret: string = genRes.body.secret;
+  const code = totpGenerate(secret);
+  await request(app.server)
+    .post('/api/2fa/enable')
+    .set('Cookie', cookies)
+    .send({ secret, SixDigitCode: code })
+    .expect(200);
+  return { cookies, secret };
+};
+
+export const loginUser = async (email: string, password: string) => {
+  return request(app.server).post('/api/login').send({ email, password }).expect(200);
+};
+
+/**
+ * Helper: Verify 2FA with a valid TOTP code (part of login flow after 2FA is enabled)
+ * Takes the temporary twoFactorToken from login response and the user's secret
+ * Returns authenticated response with accessToken and refreshToken cookies
+ */
+export const verify2FAToken = async (twoFactorToken: string, secret: string) => {
+  const code = totpGenerate(secret);
+  return request(app.server).post('/api/2fa/verify').send({ twoFactorToken, SixDigitCode: code }).expect(200);
+};
+
+/**
+ * Helper: Create a user with 2FA already enabled in the database
+ * Returns the secret so tests can generate valid TOTP codes
+ */
+export const createUser2FAEnabledInDB = async (userData: { email: string; password: string; username: string }) => {
+  const { user } = await createAuthenticatedUser(userData);
+  const secret = generateSecret();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { isTwoFactorEnabled: true, twoFactorSecret: secret },
+  });
+  return secret;
+};
+
+// Sign a temporary two-factor JWT for tests (id + optional twoFactor flag)
+export const signTwoFactorToken = async (payload: { id: string; twoFactor?: boolean }) => {
+  const jwt = await import('jsonwebtoken');
+  return jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '5m' });
 };
 
 // export const cleanDatabase = async () => {
