@@ -511,5 +511,102 @@
         }
       }
     }
+  },
+
+  "updateTournamentById": {
+    "description": "Update tournament data",
+    "tags": ["Tournament"],
+    "body": {
+      "type": "object",
+      "required": ["winner"],
+      "properties": {
+        "winner": { "type": "string" }
+      }
+    },
+    "response": {
+      "200": {
+        "description": "Tournament data updated successfully",
+        "type": "object",
+        "properties": { 
+          "id": { "type": "string" },
+          "winner": {
+            "type": ["object", "null"],
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": {
+                "type": [ "string", "null" ],
+                "format": "uri"
+              }
+            }
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": {
+                  "type": [ "string", "null" ],
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "type": ["object", "null"],
+              "properties": { 
+                "id": { "type": "string" },
+                "winner": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "username": { "type": "string" },
+                    "avatarUrl": {
+                      "type": [ "string", "null" ],
+                      "format": "uri"
+                    }
+                  }
+                },
+                "players": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "username": { "type": "string" },
+                      "avatarUrl": {
+                        "type": [ "string", "null" ],
+                        "format": "uri"
+                      }
+                    }
+                  }
+                },
+                "createdAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "404": {
+        "description": "Bad request, e.g., player not found",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "500": {
+        "description": "Internal server error",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
   }
 }
