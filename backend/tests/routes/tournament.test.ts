@@ -3,7 +3,7 @@ import { expect } from '@jest/globals';
 import { jest } from '@jest/globals';
 import { app } from '../setup';
 import { prisma } from '../../src/utils/prisma';
-import { registerUser, createAuthenticatedUser } from '../helpers';
+import { createAuthenticatedUser } from '../helpers';
 import { testUsers } from '../fixtures';
 
 describe('Tournament creation', () => {
@@ -15,20 +15,38 @@ describe('Tournament creation', () => {
   let annaId: string;
 
   it('Creating a tournament with valid participants should pass', async () => {
-    const regResBob = await registerUser(testUsers.bob);
-    expect(regResBob.status).toBe(201);
-    expect(regResBob.body).toHaveProperty('id');
-    bobId = regResBob.body.id;
-    const regResCharlie = await registerUser(testUsers.charlie);
-    expect(regResCharlie.status).toBe(201);
-    expect(regResCharlie.body).toHaveProperty('id');
-    charlieId = regResCharlie.body.id;
-    const regResAnna = await registerUser(testUsers.anna);
-    expect(regResAnna.status).toBe(201);
-    expect(regResAnna.body).toHaveProperty('id');
-    annaId = regResAnna.body.id;
+    await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+    await request(app.server).post('/api/register').send(testUsers.charlie).expect(201);
+    await request(app.server).post('/api/register').send(testUsers.anna).expect(201);
     const { user, cookies } = await createAuthenticatedUser(testUsers.alice);
     aliceId = user.id;
+
+    const regResBob = await request(app.server)
+      .post('/api/login/tournament')
+      .set('Cookie', cookies)
+      .send(testUsers.bob);
+
+    expect(regResBob.status).toBe(200);
+    expect(regResBob.body).toHaveProperty('id');
+    bobId = await regResBob.body.id;
+
+    const regResCharlie = await request(app.server)
+      .post('/api/login/tournament')
+      .set('Cookie', cookies)
+      .send(testUsers.charlie);
+
+    expect(regResCharlie.status).toBe(200);
+    expect(regResCharlie.body).toHaveProperty('id');
+    charlieId = await regResCharlie.body.id;
+
+    const regResAnna = await request(app.server)
+      .post('/api/login/tournament')
+      .set('Cookie', cookies)
+      .send(testUsers.anna);
+
+    expect(regResAnna.status).toBe(200);
+    expect(regResAnna.body).toHaveProperty('id');
+    annaId = await regResAnna.body.id;
 
     const requestBody = { participants: [bobId, charlieId, aliceId, annaId] };
     const res = await request(app.server).post('/api/tournament').set('Cookie', cookies).send(requestBody);

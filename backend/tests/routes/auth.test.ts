@@ -121,6 +121,7 @@ describe('Authentication System', () => {
       expect(res.body.error).toMatch(/provide username or email/i);
     });
 
+    // LOGIN PLAYER 2
     it('POST /api/login/player2 should allow a second user to log in', async () => {
       const { cookies } = await createAuthenticatedUser(testUsers.charlie);
       await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
@@ -152,6 +153,32 @@ describe('Authentication System', () => {
 
       expect(result.status).toBe(401);
       expect(result.body.error).toBeDefined();
+    });
+
+    // LOGIN TOURNAMENT
+    it('POST /api/login/tournament with valid credetials should pass', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+
+      const result = await request(app.server).post('/api/login/tournament').set('Cookie', cookies).send(testUsers.bob);
+
+      expect(result.status).toBe(200);
+      expect(result.body).toHaveProperty('id');
+      expect(result.body).toHaveProperty('username');
+      expect(result.body).toHaveProperty('avatarUrl');
+    });
+
+    it('POST /api/login/tournament with invalid credetials should fail', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+
+      const result = await request(app.server).post('/api/login/tournament').set('Cookie', cookies).send({
+        email: testUsers.charlie.email,
+        password: 'Invalid!',
+      });
+
+      expect(result.status).toBe(401);
+      expect(result.body).toBeDefined();
     });
   });
 
