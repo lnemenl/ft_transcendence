@@ -54,7 +54,7 @@ const tournamentRoutes = async (fastify: FastifyInstance) => {
     },
     async (request, reply) => {
       const { participants } = request.body as { participants: string[] };
-      if (participants.length < 2) {
+      if (participants.length !== 4) {
         return reply.status(400).send({ error: 'Invalid number of participants' });
       }
 

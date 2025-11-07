@@ -12,6 +12,7 @@ describe('Tournament creation', () => {
   let bobId: string;
   let charlieId: string;
   let aliceId: string;
+  let annaId: string;
 
   it('Creating a tournament with valid participants should pass', async () => {
     const regResBob = await registerUser(testUsers.bob);
@@ -22,10 +23,14 @@ describe('Tournament creation', () => {
     expect(regResCharlie.status).toBe(201);
     expect(regResCharlie.body).toHaveProperty('id');
     charlieId = regResCharlie.body.id;
+    const regResAnna = await registerUser(testUsers.anna);
+    expect(regResAnna.status).toBe(201);
+    expect(regResAnna.body).toHaveProperty('id');
+    annaId = regResAnna.body.id;
     const { user, cookies } = await createAuthenticatedUser(testUsers.alice);
     aliceId = user.id;
 
-    const requestBody = { participants: [bobId, charlieId, aliceId] };
+    const requestBody = { participants: [bobId, charlieId, aliceId, annaId] };
     const res = await request(app.server).post('/api/tournament').set('Cookie', cookies).send(requestBody);
 
     expect(res.status).toBe(201);
@@ -35,7 +40,7 @@ describe('Tournament creation', () => {
   });
 
   it('Creating a tournament with invalid number of participants should fail', async () => {
-    const requestBody = { participants: [charlieId] };
+    const requestBody = { participants: [charlieId, bobId, annaId] };
     const res = await request(app.server).post('/api/tournament').set('Cookie', authCookies).send(requestBody);
 
     expect(res.status).toBe(400);
@@ -233,7 +238,7 @@ describe('Tournament creation', () => {
   });
 
   it('Internal server error for creating a tournament', async () => {
-    const requestBody = { participants: [bobId, charlieId, aliceId] };
+    const requestBody = { participants: [bobId, charlieId, aliceId, annaId] };
     jest.spyOn(prisma.tournament, 'create').mockRejectedValue(new Error('Internal server error'));
     const res = await request(app.server).post('/api/tournament').set('Cookie', authCookies).send(requestBody);
 
