@@ -185,7 +185,7 @@ describe('Tournament creation', () => {
   it('Adding a winner to the tournament', async () => {
     const requestBody = { winner: aliceId };
     const res = await request(app.server)
-      .put(`/api/tournament/${tournamentId}`)
+      .patch(`/api/tournament/${tournamentId}`)
       .set('Cookie', authCookies)
       .send(requestBody);
 
@@ -238,7 +238,7 @@ describe('Tournament creation', () => {
   it('Adding a winner with invalid id should fail', async () => {
     const requestBody = { winner: 'mowqmre1234' };
     const res = await request(app.server)
-      .put(`/api/tournament/${tournamentId}`)
+      .patch(`/api/tournament/${tournamentId}`)
       .set('Cookie', authCookies)
       .send(requestBody);
 
@@ -268,7 +268,7 @@ describe('Tournament creation', () => {
     const requestBody = { winner: bobId };
     jest.spyOn(prisma.tournament, 'update').mockRejectedValue(new Error('Internal server error'));
     const res = await request(app.server)
-      .put(`/api/tournament/${tournamentId}`)
+      .patch(`/api/tournament/${tournamentId}`)
       .set('Cookie', authCookies)
       .send(requestBody);
 

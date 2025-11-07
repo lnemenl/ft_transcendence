@@ -121,7 +121,7 @@ const tournamentRoutes = async (fastify: FastifyInstance) => {
     },
   );
 
-  fastify.put(
+  fastify.patch(
     '/tournament/:id',
     {
       schema: schemas.updateTournamentById,

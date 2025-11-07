@@ -772,7 +772,7 @@ This endpoint is for fetching tournament data by the tournament id
 }
 ```
 
-### PUT /api/tournament/:id
+### PATCH /api/tournament/:id
 
 This endpoint will timestamp the tournament as finished and requires a winner in the body
 
