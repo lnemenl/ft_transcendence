@@ -2,7 +2,7 @@
 import {t} from "./lang.js";
 
 const createUI = Object.freeze(
-    function (canvas, STATES) {
+    (canvas, STATES) => {
         const container = document.createElement("div");
         Object.assign(container.style, {
             display: "inline-block",
