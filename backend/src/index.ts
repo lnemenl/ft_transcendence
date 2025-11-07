@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
 import userRoutes from './routes/user';
 import gameRoutes from './routes/game';
+import tournamentRoutes from './routes/tournament';
 
 /* istanbul ignore next */
 if (process.env.NODE_ENV !== 'test') {
@@ -33,6 +34,7 @@ app.register(authRoutes, { prefix: '/api' });
 app.register(profileRoutes, { prefix: '/api' });
 app.register(userRoutes, { prefix: '/api/users' });
 app.register(gameRoutes, { prefix: '/api' });
+app.register(tournamentRoutes, { prefix: '/api' });
 
 // Define a basic "route". This tells the server what to do when it
 // receives a GET request to the main URL ("/").
