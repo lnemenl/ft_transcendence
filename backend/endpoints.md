@@ -335,10 +335,8 @@ Create a new game
 ```json
 {
   "winner": "number",
-  "tournamentId": "string",
 }
 ```
-- `tournamentId` is optional, required only when a game is part of a tournament
 - `winner` can be `1` or `2`
   - `1`: player 1 won the game
   - `2`: player 2 won the game

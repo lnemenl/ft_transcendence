@@ -158,8 +158,7 @@
       "type": "object",
       "required": ["winner"],
       "properties": {
-        "winner": { "type": "number" },
-        "tournamentId": { "type": "string" }
+        "winner": { "type": "number" }
       }
     },
     "response": {

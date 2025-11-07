@@ -24,12 +24,9 @@ const gameRoutes = async (fastify: FastifyInstance) => {
       }
       try {
         const player1 = (request.user as { id: string }).id;
-        const { winner, tournamentId } = request.body as {
-          winner: number;
-          tournamentId: string;
-        };
+        const { winner } = request.body as { winner: number };
         const player2 = (player as { id: string }).id;
-        const game = await createGame(winner, player1, player2, tournamentId);
+        const game = await createGame(winner, player1, player2, undefined);
         return reply.status(201).send(game);
       } catch (err) {
         if ((err as Error).message === 'Invalid ID') {
