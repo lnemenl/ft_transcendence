@@ -92,7 +92,8 @@
         "required": ["user"]
       },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "404": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
 
@@ -109,8 +110,9 @@
           "avatarUrl": { "type": ["string", "null"], "format": "uri" }
         }
       },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
       "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
 
@@ -133,8 +135,9 @@
           "avatarUrl": { "type": ["string", "null"], "format": "uri" }
         }
       },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
       "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
 
@@ -159,8 +162,9 @@
           "avatarUrl": { "type": ["string", "null"], "format": "uri" }
         }
       },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
       "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
 
@@ -342,7 +346,8 @@
             "qrCodeDataUrl": { "type": "string" }
           }
         },
-        "404": { "type": "object", "properties": { "error": { "type": "string" } } }
+        "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+        "500": { "type": "object", "properties": { "error": { "type": "string" } } }
       }
     },
     "twoFAEnableSchema": {
@@ -357,7 +362,8 @@
       "response": {
         "200": { "type": "object", "properties": { "enabled": { "type": "boolean" } } },
         "400": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+        "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+        "500": { "type": "object", "properties": { "error": { "type": "string" } } }
       }
     },
     "twoFAVerifySchema": {
@@ -372,7 +378,8 @@
       },
       "response": {
         "200": { "type": "object", "properties": { "ok": { "type": "boolean" } } },
-        "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+        "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+        "500": { "type": "object", "properties": { "error": { "type": "string" } } }
       }
     },
     "twoFADisableSchema": {

@@ -174,6 +174,13 @@ Generate a new TOTP secret and QR code for setup.
 }
 ```
 
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
+}
+```
+
 ### POST /api/2fa/enable
 
 Enable 2FA for the authenticated user by proving the frontend verified the secret.
@@ -207,6 +214,13 @@ Enable 2FA for the authenticated user by proving the frontend verified the secre
 ```json
 {
   "error": "Invalid 2FA token"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
 }
 ```
 
@@ -250,6 +264,13 @@ Sets HTTP-only cookies (`accessToken`, `refreshToken`) and returns:
 ```json
 {
   "error": "Invalid 2FA token"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
 }
 ```
 
@@ -347,6 +368,13 @@ Get the authenticated user's detailed profile.
 }
 ```
 
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
+}
+```
+
 ## User Management
 
 ### GET /api/users/me
@@ -378,6 +406,13 @@ Get the authenticated user's information.
 ```json
 {
   "error": "User not found"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
 }
 ```
 
@@ -427,6 +462,13 @@ At least one field required:
 }
 ```
 
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
+}
+```
+
 ### GET /api/users/:id
 
 Get a user's public profile by ID.
@@ -458,6 +500,13 @@ Get a user's public profile by ID.
 ```json
 {
   "error": "User not found"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
 }
 ```
 
