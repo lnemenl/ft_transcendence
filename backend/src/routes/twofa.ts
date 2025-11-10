@@ -197,7 +197,7 @@ const twoFARoutes = async (fastify: FastifyInstance) => {
         maxAge: 15 * 60,
       });
 
-      reply.status(200).send({ ok: true });
+      return reply.status(200).send({ ok: true });
     } catch (err) {
       fastify.log.error(err);
       return reply.status(500).send({ error: 'Internal server error' });
@@ -234,7 +234,7 @@ const twoFARoutes = async (fastify: FastifyInstance) => {
       }
 
       // Tournament players will not get an access/refresh token
-      reply.status(200).send({ id: user.id, username: user.username, avatarUrl: user.avatarUrl });
+      return reply.status(200).send({ id: user.id, username: user.username, avatarUrl: user.avatarUrl });
     } catch (err) {
       fastify.log.error(err);
       return reply.status(500).send({ error: 'Internal server error' });

@@ -45,7 +45,7 @@ export const createGame = async (winner: number, player1: string, player2: strin
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       throw new Error('Invalid ID');
     }
-    if ((err as Error).message == 'Invalid winner') {
+    if ((err as Error).message === 'Invalid winner') {
       throw new Error('Invalid winner');
     }
     throw new Error('Internal server error');
