@@ -139,6 +139,182 @@ Sets HTTP-only cookies:
 }
 ```
 
+## Two-Factor Authentication (2FA)
+
+These endpoints implement TOTP-based 2FA for user accounts. All tokens are time-based and codes rotate every 30 seconds.
+
+### POST /api/2fa/generate
+
+Generate a new TOTP secret and QR code for setup.
+
+**Authentication**: Required
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "secret": "string",          // Base32 secret (keep temporarily on frontend)
+  "otpauthUrl": "string",     // otpauth:// URI for QR generation (optional)
+  "qrCodeDataUrl": "string"   // data:image/png;base64,... (can be used directly in <img>)
+}
+```
+
+`404 Not Found`
+```json
+{
+  "error": "User not found"
+}
+```
+
+`401 Unauthorized`
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+### POST /api/2fa/enable
+
+Enable 2FA for the authenticated user by proving the frontend verified the secret.
+
+**Authentication**: Required
+
+**Request Body**
+```json
+{
+  "SixDigitCode": "string"     // current 6-digit TOTP code from authenticator app
+}
+```
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "enabled": true
+}
+```
+
+`400 Bad Request`
+```json
+{
+  "error": "No 2FA secret found. Please call /generate first."
+}
+```
+
+`401 Unauthorized`
+```json
+{
+  "error": "Invalid 2FA token"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+**Notes**
+- The secret is automatically retrieved from the database (stored during `/api/2fa/generate`)
+- The frontend should have called `/api/2fa/generate` first to store the secret
+
+
+### POST /api/2fa/verify
+
+Verify a two-factor code during login and complete authentication by issuing access/refresh cookies.
+
+**Authentication**: Not required — this uses a temporary `twoFactorToken` issued by `/api/login` when an account has 2FA enabled.
+
+**Request Body**
+```json
+{
+  "twoFactorToken": "string", // temporary JWT returned by /api/login when 2FA is required
+  "SixDigitCode": "string"            // current 6-digit TOTP code from authenticator app
+}
+```
+
+**Responses**
+
+`200 OK`
+Sets HTTP-only cookies (`accessToken`, `refreshToken`) and returns:
+```json
+{
+  "ok": true
+}
+```
+
+`401 Unauthorized`
+```json
+{
+  "error": "Invalid or expired 2FA session"
+}
+```
+
+`401 Unauthorized` (also used for other failures)
+```json
+{
+  "error": "Invalid 2FA token"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+Notes:
+- `/api/login` will return a short-lived `twoFactorToken` instead of full auth when the account has 2FA enabled. The frontend must call `/api/2fa/verify` with that token and the user-entered code to finish login.
+- The endpoint sets httpOnly cookies for browser use and returns `{ ok: true }` in JSON.
+
+### POST /api/2fa/disable
+
+Disable 2FA for the authenticated user (requires entering a current TOTP code).
+
+**Authentication**: Required
+
+**Request Body**
+```json
+{
+  "SixDigitCode": "string"  // current 6-digit TOTP code
+}
+```
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "disabled": true
+}
+```
+
+`400 Bad Request`
+```json
+{
+  "error": "2FA is not enabled"
+}
+```
+
+`401 Unauthorized`
+```json
+{
+  "error": "Invalid 2FA token"
+}
+```
+
+
 ### POST /api/logout
 
 Invalidate the current session and clear authentication cookies.
@@ -192,6 +368,13 @@ Get the authenticated user's detailed profile.
 }
 ```
 
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
+}
+```
+
 ## User Management
 
 ### GET /api/users/me
@@ -223,6 +406,13 @@ Get the authenticated user's information.
 ```json
 {
   "error": "User not found"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
 }
 ```
 
@@ -272,6 +462,13 @@ At least one field required:
 }
 ```
 
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
+}
+```
+
 ### GET /api/users/:id
 
 Get a user's public profile by ID.
@@ -303,6 +500,13 @@ Get a user's public profile by ID.
 ```json
 {
   "error": "User not found"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
 }
 ```
 

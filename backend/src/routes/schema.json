@@ -12,13 +12,26 @@
     },
     "response": {
       "200": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "username": { "type": "string" },
-          "avatarUrl": { "type": ["string", "null"], "format":"email" },
-          "accessToken": { "type": "string" }
-        }
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": { "type": ["string", "null"], "format": "uri" },
+              "accessToken": { "type": "string" }
+            },
+            "required": ["id", "username", "accessToken"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "twoFactorRequired": { "type": "boolean" },
+              "twoFactorToken": { "type": "string" }
+            },
+            "required": ["twoFactorRequired", "twoFactorToken"]
+          }
+        ]
       },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
@@ -79,7 +92,8 @@
         "required": ["user"]
       },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "404": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
 
@@ -96,8 +110,9 @@
           "avatarUrl": { "type": ["string", "null"], "format": "uri" }
         }
       },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
       "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
 
@@ -120,8 +135,9 @@
           "avatarUrl": { "type": ["string", "null"], "format": "uri" }
         }
       },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
       "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
 
@@ -146,8 +162,9 @@
           "avatarUrl": { "type": ["string", "null"], "format": "uri" }
         }
       },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
       "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
 
@@ -317,4 +334,67 @@
       }
     }
   } 
-}
+  ,
+    "twoFAGenerateSchema": {
+      "tags": ["2FA"],
+      "response": {
+        "200": {
+          "type": "object",
+          "properties": {
+            "secret": { "type": "string" },
+            "otpauthUrl": { "type": "string" },
+            "qrCodeDataUrl": { "type": "string" }
+          }
+        },
+        "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+        "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+      }
+    },
+    "twoFAEnableSchema": {
+      "tags": ["2FA"],
+      "body": {
+        "type": "object",
+        "required": ["SixDigitCode"],
+        "properties": {
+          "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+        }
+      },
+      "response": {
+        "200": { "type": "object", "properties": { "enabled": { "type": "boolean" } } },
+        "400": { "type": "object", "properties": { "error": { "type": "string" } } },
+        "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+        "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+      }
+    },
+    "twoFAVerifySchema": {
+      "tags": ["2FA"],
+      "body": {
+        "type": "object",
+        "required": ["twoFactorToken", "SixDigitCode"],
+        "properties": {
+          "twoFactorToken": { "type": "string" },
+          "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+        }
+      },
+      "response": {
+        "200": { "type": "object", "properties": { "ok": { "type": "boolean" } } },
+        "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+        "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+      }
+    },
+    "twoFADisableSchema": {
+      "tags": ["2FA"],
+      "body": {
+        "type": "object",
+        "required": ["SixDigitCode"],
+        "properties": {
+          "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+        }
+      },
+      "response": {
+        "200": { "type": "object", "properties": { "disabled": { "type": "boolean" } } },
+        "400": { "type": "object", "properties": { "error": { "type": "string" } } },
+        "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+      }
+    }
+  }

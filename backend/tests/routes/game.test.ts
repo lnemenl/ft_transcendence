@@ -130,7 +130,7 @@ describe('Game tests', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 1100));
 
-    const cookie = [...cookie1,`player2_token=${token}`];
+    const cookie = [...cookie1, `player2_token=${token}`];
     const requestBody = { winner: 2, tournamentId: undefined };
     const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
 

@@ -34,6 +34,10 @@ const authRoutes = async (fastify: FastifyInstance) => {
         };
         const returnUser = await loginUser(loginBody, reply);
 
+        if ('twoFactorRequired' in returnUser) {
+          return reply.status(200).send({ twoFactorRequired: true, twoFactorToken: returnUser.twoFactorToken });
+        }
+
         reply.setCookie('player2_token', returnUser.accessToken, {
           httpOnly: true,
           path: '/',
@@ -62,9 +66,15 @@ const authRoutes = async (fastify: FastifyInstance) => {
         password: string;
       };
 
-      const returnUser = await loginUser(body, reply);
+      const loginResult = await loginUser(body, reply);
 
-      reply.setCookie('accessToken', returnUser.accessToken, {
+      if ('twoFactorRequired' in loginResult) {
+        return reply.status(200).send({ twoFactorRequired: true, twoFactorToken: loginResult.twoFactorToken });
+      }
+
+      const { accessToken, refreshToken } = loginResult;
+
+      reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
@@ -72,7 +82,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
         maxAge: 15 * 60, // 15 minutes
       });
 
-      reply.setCookie('refreshToken', returnUser.refreshToken, {
+      reply.setCookie('refreshToken', refreshToken, {
         httpOnly: true,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
@@ -80,7 +90,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
         maxAge: 14 * 24 * 60 * 60, // 14 days
       });
 
-      const { refreshToken: _revokedToken, ...user } = returnUser;
+      const { refreshToken: _revokedToken, ...user } = loginResult;
       return reply.status(200).send(user);
     } catch (err) {
       fastify.log.error(err);
