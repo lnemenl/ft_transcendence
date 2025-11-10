@@ -37,8 +37,8 @@ services:
         apt-get install -y openssl &&
         apt-get install -y python3 make g++ &&
         npm install --include=dev &&
-        npx prisma migrate deploy --schema=./prisma/schema.prisma &&
-        npx prisma generate --schema=./prisma/schema.prisma &&
+        npm run clean:all &&
+        npx prisma generate &&
         npm run dev
       "
   frontend:
