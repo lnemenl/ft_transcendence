@@ -539,10 +539,8 @@ Create a new game
 ```json
 {
   "winner": "number",
-  "tournamentId": "string",
 }
 ```
-- `tournamentId` is optional, required only when a game is part of a tournament
 - `winner` can be `1` or `2`
   - `1`: player 1 won the game
   - `2`: player 2 won the game
@@ -578,7 +576,7 @@ Create a new game
       "avatarUrl": "string | null"
     }
   ],
-  "ceatedAt": "string"
+  "createdAt": "string"
 }
 ```
 
@@ -634,7 +632,7 @@ Sends an array of all games
           "avatarUrl": "string | null"
         }
       ],
-      "ceatedAt": "string"
+      "createdAt": "string"
     },
     {...}
   ]
@@ -680,7 +678,7 @@ Sends the game information found by `id`
       "avatarUrl": "string | null"
     }
   ],
-  "ceatedAt": "string"
+  "createdAt": "string"
 }
 ```
 
@@ -729,7 +727,7 @@ Sends an array of all games the user has participated in
           "avatarUrl": "string | null"
         }
       ],
-      "ceatedAt": "string"
+      "createdAt": "string"
     },
     {...}
   ]
@@ -781,10 +779,259 @@ Sends an array of all games the user has won
           "avatarUrl": "string | null"
         }
       ],
-      "ceatedAt": "string"
+      "createdAt": "string"
     },
     {...}
   ]
+}
+```
+
+`404 Not Found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+## Tournament
+
+### POST /api/tournament
+
+Create a tournament. Accepts 4 participants only
+
+**Authentication**: Required
+
+**Request Body**
+
+```json
+{
+  "participants": [ "string" ]
+}
+```
+
+- `participants` is an array of user id's
+
+**Responses**
+
+`201 Created`
+```json
+{
+  "tournamentId": "string",
+}
+```
+
+- `tournamentId` is the id of the tournament that can be used to add games to the tournament
+
+`400 Bad Request`
+```json
+{
+  "error": "string"
+}
+```
+
+`404 Not Found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### POST /api/tournament/game
+
+This endpoint is for tournament game creation. **Use this endpoint**
+
+**Authentication**: Required
+
+**Request Body**
+```json
+{
+  "winner": "number",
+  "players": "array",
+  "tournamentId": "string"
+}
+```
+
+- `tournamentId` is the id of the tournament the game is part of
+- `winner` can be `1` or `2`
+  - `1`: player 1 won the game
+  - `2`: player 2 won the game
+- `participants` is an array of user id's, **Only 2 is accepted**
+
+**Responses**:
+
+`201 Created`
+```json
+{
+  "id": "string",
+  "winner" {
+    "id": "string",
+    "username": "string",
+    "avatarUrl": "string | null"
+  },
+  "players": [
+    {
+      "id": "string",
+      "username": "string",
+      "avatarUrl": "string | null"
+    },
+    {
+      "id": "string",
+      "username": "string",
+      "avatarUrl": "string | null"
+    }
+  ],
+  "createdAt": "string"
+}
+```
+
+`400 Bad Request`
+```json
+{
+  "error": "string"
+}
+```
+
+`404 Not Found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### GET /api/tournament/:id
+
+This endpoint is for fetching tournament data by the tournament id
+
+**Authentication**: Required
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "winner": {
+    "id": "string",
+    "username": "string",
+    "avatarUrl": "string"
+  },
+  "participants": [
+    {
+      "id": "string",
+      "username": "string",
+      "avatarUrl": "string"
+    },
+    { ... },
+  ],
+  "games": [
+    {
+      "id": "string",
+      "winner": {
+        "id": "string",
+        "username": "string",
+        "avatarUrl": "string"
+      },
+      "players": [
+        {
+          "id": "string",
+          "username": "string",
+          "avatarUrl": "string"
+        },
+        { ... },
+      ],
+      "createdAt": "string"
+    },
+    { ... },
+  ],
+  "startDate": "string",
+  "endDate": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### PATCH /api/tournament/:id
+
+This endpoint will timestamp the tournament as finished and requires a winner in the body
+
+**Authentication**: Required
+
+**Request Body**
+```json
+{
+  "winner": "string"
+}
+```
+
+- `winner` is the user id of the participant who won the tournament
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "winner": {
+    "id": "string",
+    "username": "string",
+    "avatarUrl": "string"
+  },
+  "participants": [
+    {
+      "id": "string",
+      "username": "string",
+      "avatarUrl": "string"
+    },
+    { ... },
+  ],
+  "games": [
+    {
+      "id": "string",
+      "winner": {
+        "id": "string",
+        "username": "string",
+        "avatarUrl": "string"
+      },
+      "players": [
+        {
+          "id": "string",
+          "username": "string",
+          "avatarUrl": "string"
+        },
+        { ... },
+      ],
+      "createdAt": "string"
+    },
+    { ... },
+  ],
+  "startDate": "string",
+  "endDate": "string"
 }
 ```
 

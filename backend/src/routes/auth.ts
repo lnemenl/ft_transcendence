@@ -57,6 +57,36 @@ const authRoutes = async (fastify: FastifyInstance) => {
     },
   );
 
+  fastify.post(
+    '/login/tournament',
+    {
+      schema: loginSchema,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const loginBody = request.body as {
+          email?: string;
+          username?: string;
+          password: string;
+        };
+        const returnUser = await loginUser(loginBody, reply);
+
+        if ('twoFactorRequired' in returnUser) {
+          return reply.status(200).send({ twoFactorRequired: true, twoFactorToken: returnUser.twoFactorToken });
+        }
+
+        revokeRefreshTokenByRaw(returnUser.refreshToken);
+
+        const { refreshToken: _revokedToken, accessToken: _revokedAccessToken, ...user } = returnUser;
+        return reply.status(200).send(user);
+      } catch (err) {
+        fastify.log.error(err);
+        return reply.status(401).send({ error: (err as Error).message });
+      }
+    },
+  );
+
   // POST /api/login
   fastify.post('/login', { schema: loginSchema }, async (request, reply) => {
     try {

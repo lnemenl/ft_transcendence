@@ -21,7 +21,7 @@
               "avatarUrl": { "type": ["string", "null"], "format": "uri" },
               "accessToken": { "type": "string" }
             },
-            "required": ["id", "username", "accessToken"]
+            "required": ["id", "username", "avatarUrl"]
           },
           {
             "type": "object",
@@ -175,8 +175,7 @@
       "type": "object",
       "required": ["winner"],
       "properties": {
-        "winner": { "type": "number" },
-        "tournamentId": { "type": "string" }
+        "winner": { "type": "number" }
       }
     },
     "response": {
@@ -333,68 +332,383 @@
         }
       }
     }
-  } 
-  ,
-    "twoFAGenerateSchema": {
-      "tags": ["2FA"],
-      "response": {
-        "200": {
-          "type": "object",
-          "properties": {
-            "secret": { "type": "string" },
-            "otpauthUrl": { "type": "string" },
-            "qrCodeDataUrl": { "type": "string" }
-          }
-        },
-        "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+  },
+  
+  "createTournament": {
+    "description": "Create a tournament",
+    "tags": ["Tournament"],
+    "body": {
+      "type": "object",
+      "required": ["participants"],
+      "properties": {
+        "participants": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       }
     },
-    "twoFAEnableSchema": {
-      "tags": ["2FA"],
-      "body": {
+    "response": {
+      "201": {
+        "description": "Tournament created successfully",
         "type": "object",
-        "required": ["SixDigitCode"],
         "properties": {
-          "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+          "tournamentId": { "type": "string" }
         }
       },
-      "response": {
-        "200": { "type": "object", "properties": { "enabled": { "type": "boolean" } } },
-        "400": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "401": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "500": { "type": "object", "properties": { "error": { "type": "string" } } }
-      }
-    },
-    "twoFAVerifySchema": {
-      "tags": ["2FA"],
-      "body": {
+      "400": {
+        "description": "Bad request, e.g., player not found",
         "type": "object",
-        "required": ["twoFactorToken", "SixDigitCode"],
         "properties": {
-          "twoFactorToken": { "type": "string" },
-          "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+          "error": { "type": "string" }
         }
       },
-      "response": {
-        "200": { "type": "object", "properties": { "ok": { "type": "boolean" } } },
-        "401": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "500": { "type": "object", "properties": { "error": { "type": "string" } } }
-      }
-    },
-    "twoFADisableSchema": {
-      "tags": ["2FA"],
-      "body": {
+      "401": {
+        "description": "Unauthorized",
         "type": "object",
-        "required": ["SixDigitCode"],
         "properties": {
-          "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+          "error": { "type": "string" }
         }
       },
-      "response": {
-        "200": { "type": "object", "properties": { "disabled": { "type": "boolean" } } },
-        "400": { "type": "object", "properties": { "error": { "type": "string" } } },
-        "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "500": {
+        "description": "Internal server error",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
       }
     }
+  },
+
+  "newTournamentGame": {
+    "description": "Create a new game as part of a tournament",
+    "tags": ["Tournament"],
+    "body": {
+      "type": "object",
+      "required": ["winner", "players", "tournamentId"],
+      "properties": {
+        "winner": { "type": "number" },
+        "players": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tournamentId": { "type": "string" }
+      }
+    },
+    "response": {
+      "201": {
+        "description": "Game created successfully",
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "winner": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": { "type": [ "string", "null" ], "format": "uri" }
+            }
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": { "type": [ "string", "null" ], "format": "uri" }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "400": {
+        "description": "Bad request, e.g., player not found",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "500": {
+        "description": "Database error",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "getTournamentById": {
+    "description": "Get tournament by id",
+    "tags": ["Tournament"],
+    "response": {
+      "200": {
+        "description": "Tournament found successfully",
+        "type": "object",
+        "properties": { 
+          "id": { "type": "string" },
+          "winner": {
+            "type": ["object", "null"],
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": {
+                "type": [ "string", "null" ],
+                "format": "uri"
+              }
+            }
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": {
+                  "type": [ "string", "null" ],
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "type": ["object", "null"],
+              "properties": { 
+                "id": { "type": "string" },
+                "winner": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "username": { "type": "string" },
+                    "avatarUrl": {
+                      "type": [ "string", "null" ],
+                      "format": "uri"
+                    }
+                  }
+                },
+                "players": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "username": { "type": "string" },
+                      "avatarUrl": {
+                        "type": [ "string", "null" ],
+                        "format": "uri"
+                      }
+                    }
+                  }
+                },
+                "createdAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "400": {
+        "description": "Invalid id",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "500": {
+        "description": "Internal server error",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "updateTournamentById": {
+    "description": "Update tournament data",
+    "tags": ["Tournament"],
+    "body": {
+      "type": "object",
+      "required": ["winner"],
+      "properties": {
+        "winner": { "type": "string" }
+      }
+    },
+    "response": {
+      "200": {
+        "description": "Tournament data updated successfully",
+        "type": "object",
+        "properties": { 
+          "id": { "type": "string" },
+          "winner": {
+            "type": ["object", "null"],
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": {
+                "type": [ "string", "null" ],
+                "format": "uri"
+              }
+            }
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": {
+                  "type": [ "string", "null" ],
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "type": ["object", "null"],
+              "properties": { 
+                "id": { "type": "string" },
+                "winner": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "username": { "type": "string" },
+                    "avatarUrl": {
+                      "type": [ "string", "null" ],
+                      "format": "uri"
+                    }
+                  }
+                },
+                "players": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "username": { "type": "string" },
+                      "avatarUrl": {
+                        "type": [ "string", "null" ],
+                        "format": "uri"
+                      }
+                    }
+                  }
+                },
+                "createdAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "404": {
+        "description": "Bad request, e.g., player not found",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "500": {
+        "description": "Internal server error",
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "twoFAGenerateSchema": {
+    "tags": ["2FA"],
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "secret": { "type": "string" },
+          "otpauthUrl": { "type": "string" },
+          "qrCodeDataUrl": { "type": "string" }
+        }
+      },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+  "twoFAEnableSchema": {
+    "tags": ["2FA"],
+    "body": {
+      "type": "object",
+      "required": ["SixDigitCode"],
+      "properties": {
+        "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+      }
+    },
+    "response": {
+      "200": { "type": "object", "properties": { "enabled": { "type": "boolean" } } },
+      "400": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+  "twoFAVerifySchema": {
+    "tags": ["2FA"],
+    "body": {
+      "type": "object",
+      "required": ["twoFactorToken", "SixDigitCode"],
+      "properties": {
+        "twoFactorToken": { "type": "string" },
+        "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+      }
+    },
+    "response": {
+      "200": { "type": "object", "properties": { "ok": { "type": "boolean" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+  "twoFAVerifyTournamentSchema": {
+    "tags": ["2FA"],
+    "body": {
+      "type": "object",
+      "required": ["twoFactorToken", "SixDigitCode"],
+      "properties": {
+        "twoFactorToken": { "type": "string" },
+        "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+      }
+    },
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        }
+      },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+  "twoFADisableSchema": {
+    "tags": ["2FA"],
+    "body": {
+      "type": "object",
+      "required": ["SixDigitCode"],
+      "properties": {
+        "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+      }
+    },
+    "response": {
+      "200": { "type": "object", "properties": { "disabled": { "type": "boolean" } } },
+      "400": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
   }
+}

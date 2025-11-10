@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
 import userRoutes from './routes/user';
 import gameRoutes from './routes/game';
+import tournamentRoutes from './routes/tournament';
 import twoFARoutes from './routes/twofa';
 
 /* istanbul ignore next */
@@ -34,6 +35,7 @@ app.register(authRoutes, { prefix: '/api' });
 app.register(profileRoutes, { prefix: '/api' });
 app.register(userRoutes, { prefix: '/api/users' });
 app.register(gameRoutes, { prefix: '/api' });
+app.register(tournamentRoutes, { prefix: '/api' });
 app.register(twoFARoutes, { prefix: '/api/2fa' });
 
 // Define a basic "route". This tells the server what to do when it

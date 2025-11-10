@@ -147,6 +147,33 @@ describe('Authentication System', () => {
       expect(res.body.twoFactorRequired).toBe(true);
       expect(typeof res.body.twoFactorToken).toBe('string');
     });
+
+    it('Tournament login if they have 2FA enabled', async () => {
+      // Import TOTP for this test
+      const { TOTP } = await import('otpauth');
+
+      // Enable 2FA for bob
+      const { cookies } = await createAuthenticatedUser(testUsers.bob);
+      const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret: string = gen.body.secret;
+      const token = new TOTP({ secret }).generate();
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', cookies)
+        .send({ SixDigitCode: token })
+        .expect(200);
+
+      // Now try to login as player2 with bob (who has 2FA enabled)
+      const aliceCookies = (await createAuthenticatedUser(testUsers.alice)).cookies;
+      const res = await request(app.server)
+        .post('/api/login/tournament')
+        .set('Cookie', aliceCookies)
+        .send({ email: testUsers.bob.email, password: testUsers.bob.password })
+        .expect(200);
+
+      expect(res.body.twoFactorRequired).toBe(true);
+      expect(typeof res.body.twoFactorToken).toBe('string');
+    });
   });
 
   // PLAYER 2 LOGIN
@@ -181,6 +208,32 @@ describe('Authentication System', () => {
 
       expect(result.status).toBe(401);
       expect(result.body.error).toBeDefined();
+    });
+
+    // LOGIN TOURNAMENT
+    it('POST /api/login/tournament with valid credentials should pass', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+
+      const result = await request(app.server).post('/api/login/tournament').set('Cookie', cookies).send(testUsers.bob);
+
+      expect(result.status).toBe(200);
+      expect(result.body).toHaveProperty('id');
+      expect(result.body).toHaveProperty('username');
+      expect(result.body).toHaveProperty('avatarUrl');
+    });
+
+    it('POST /api/login/tournament with invalid credentials should fail', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+
+      const result = await request(app.server).post('/api/login/tournament').set('Cookie', cookies).send({
+        email: testUsers.charlie.email,
+        password: 'Invalid!',
+      });
+
+      expect(result.status).toBe(401);
+      expect(result.body).toBeDefined();
     });
   });
 
