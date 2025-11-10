@@ -21,7 +21,7 @@
               "avatarUrl": { "type": ["string", "null"], "format": "uri" },
               "accessToken": { "type": "string" }
             },
-            "required": ["id", "username", "accessToken"]
+            "required": ["id", "username", "avatarUrl"]
           },
           {
             "type": "object",

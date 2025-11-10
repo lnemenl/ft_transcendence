@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { expect } from '@jest/globals';
+import { expect, it, describe } from '@jest/globals';
 import { jest } from '@jest/globals';
 import { app } from '../setup';
 import { prisma } from '../../src/utils/prisma';
@@ -136,6 +136,14 @@ describe('Tournament creation', () => {
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error', 'Bad Request');
+  });
+
+  it('Creating a game with invalid winner should fail', async () => {
+    const requestBody = { winner: 3, players: [aliceId, bobId], tournamentId: tournamentId };
+    const res = await request(app.server).post('/api/tournament/game').set('Cookie', authCookies).send(requestBody);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error', 'Invalid winner');
   });
 
   it('Getting tournament data by tournament id', async () => {

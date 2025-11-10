@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { expect } from '@jest/globals';
+import { expect, it, describe, beforeAll, afterAll, jest } from '@jest/globals';
 import app from '../../src/index';
 import { prisma } from '../../src/utils/prisma';
 import { getCookies } from '../helpers';
