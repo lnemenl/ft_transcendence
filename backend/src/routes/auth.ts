@@ -72,6 +72,10 @@ const authRoutes = async (fastify: FastifyInstance) => {
         };
         const returnUser = await loginUser(loginBody, reply);
 
+        if ('twoFactorRequired' in returnUser) {
+          return reply.status(200).send({ twoFactorRequired: true, twoFactorToken: returnUser.twoFactorToken });
+        }
+
         revokeRefreshTokenByRaw(returnUser.refreshToken);
 
         const { refreshToken: _revokedToken, accessToken: _revokedAccessToken, ...user } = returnUser;

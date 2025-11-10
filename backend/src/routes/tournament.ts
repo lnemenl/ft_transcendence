@@ -90,7 +90,7 @@ const tournamentRoutes = async (fastify: FastifyInstance) => {
         return reply.status(201).send(game);
       } catch (err) {
         if ((err as Error).message === 'Invalid ID') {
-          reply.status(404).send({ error: (err as Error).message });
+          return reply.status(404).send({ error: (err as Error).message });
         }
         if ((err as Error).message === 'Internal server error') {
           return reply.status(500).send({ error: (err as Error).message });
@@ -145,9 +145,9 @@ const tournamentRoutes = async (fastify: FastifyInstance) => {
         return reply.status(200).send(tournament);
       } catch (err) {
         if (err instanceof Prisma.PrismaClientKnownRequestError) {
-          reply.status(404).send({ error: 'Invalid winner' });
+          return reply.status(404).send({ error: 'Invalid winner' });
         }
-        reply.status(500).send({ error: 'Internal server error' });
+        return reply.status(500).send({ error: 'Internal server error' });
       }
     },
   );

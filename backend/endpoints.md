@@ -576,7 +576,7 @@ Create a new game
       "avatarUrl": "string | null"
     }
   ],
-  "ceatedAt": "string"
+  "createdAt": "string"
 }
 ```
 
@@ -632,7 +632,7 @@ Sends an array of all games
           "avatarUrl": "string | null"
         }
       ],
-      "ceatedAt": "string"
+      "createdAt": "string"
     },
     {...}
   ]
@@ -678,7 +678,7 @@ Sends the game information found by `id`
       "avatarUrl": "string | null"
     }
   ],
-  "ceatedAt": "string"
+  "createdAt": "string"
 }
 ```
 
@@ -727,7 +727,7 @@ Sends an array of all games the user has participated in
           "avatarUrl": "string | null"
         }
       ],
-      "ceatedAt": "string"
+      "createdAt": "string"
     },
     {...}
   ]
@@ -779,7 +779,7 @@ Sends an array of all games the user has won
           "avatarUrl": "string | null"
         }
       ],
-      "ceatedAt": "string"
+      "createdAt": "string"
     },
     {...}
   ]
@@ -806,7 +806,7 @@ Sends an array of all games the user has won
 
 Create a tournament. Accepts 4 participants only
 
-**Authetication**: Required
+**Authentication**: Required
 
 **Request Body**
 
@@ -894,7 +894,7 @@ This endpoint is for tournament game creation. **Use this endpoint**
       "avatarUrl": "string | null"
     }
   ],
-  "ceatedAt": "string"
+  "createdAt": "string"
 }
 ```
 

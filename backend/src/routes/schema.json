@@ -349,7 +349,7 @@
     },
     "response": {
       "201": {
-        "description": "Tountament created successfully",
+        "description": "Tournament created successfully",
         "type": "object",
         "properties": {
           "tournamentId": { "type": "string" }
@@ -669,6 +669,29 @@
     },
     "response": {
       "200": { "type": "object", "properties": { "ok": { "type": "boolean" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+  "twoFAVerifyTournamentSchema": {
+    "tags": ["2FA"],
+    "body": {
+      "type": "object",
+      "required": ["twoFactorToken", "SixDigitCode"],
+      "properties": {
+        "twoFactorToken": { "type": "string" },
+        "SixDigitCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+      }
+    },
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        }
+      },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } },
       "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }

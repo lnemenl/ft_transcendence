@@ -345,7 +345,7 @@ describe('Game tests', () => {
     expect(res.body.length).toBe(0);
   });
 
-  // The only way to test for a database call failure is to mock a test fot that specifically
+  // The only way to test for a database call failure is to mock a test for that specifically
   it('Internal server error for creating a game', async () => {
     const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
 

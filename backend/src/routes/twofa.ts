@@ -1,7 +1,13 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../utils/prisma';
 import { getAccessTokenExpiresIn, getSecureCookies } from '../config';
-import { twoFAGenerateSchema, twoFAEnableSchema, twoFAVerifySchema, twoFADisableSchema } from './schema.json';
+import {
+  twoFAGenerateSchema,
+  twoFAEnableSchema,
+  twoFAVerifySchema,
+  twoFAVerifyTournamentSchema,
+  twoFADisableSchema,
+} from './schema.json';
 import { createRefreshToken } from '../services/auth.service';
 import { generateSecret, getOTPAuthUrl, generateQRCode, verify } from '../services/totp.service';
 
@@ -190,6 +196,45 @@ const twoFARoutes = async (fastify: FastifyInstance) => {
         sameSite: 'lax',
         maxAge: 15 * 60,
       });
+
+      reply.status(200).send({ ok: true });
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  fastify.post('/verify/tournament', { schema: twoFAVerifyTournamentSchema }, async (request, reply) => {
+    try {
+      const body = request.body as { twoFactorToken: string; SixDigitCode: string };
+
+      // Step 1: Verify the temporary 2FA token
+      let payload: { id?: string; twoFactor?: boolean } | null = null;
+      try {
+        payload = fastify.jwt.verify(body.twoFactorToken) as { id?: string; twoFactor?: boolean };
+      } catch (_e) {
+        return reply.status(401).send({ error: 'Invalid or expired 2FA session' });
+      }
+
+      // Validate token payload
+      if (!payload?.id || !payload?.twoFactor) {
+        return reply.status(401).send({ error: 'Invalid 2FA session' });
+      }
+
+      // Fetch user and secret
+      const user = await prisma.user.findUnique({ where: { id: payload.id } });
+      if (!user || !user.isTwoFactorEnabled || !user.twoFactorSecret) {
+        return reply.status(401).send({ error: '2FA not enabled' });
+      }
+
+      // Verify code
+      const isValid = verify(user.twoFactorSecret, body.SixDigitCode);
+      if (!isValid) {
+        return reply.status(401).send({ error: 'Invalid 2FA token' });
+      }
+
+      // Tournament players will not get an access/refresh token
+      reply.status(200).send({ id: user.id, username: user.username, avatarUrl: user.avatarUrl });
     } catch (err) {
       fastify.log.error(err);
       return reply.status(500).send({ error: 'Internal server error' });
