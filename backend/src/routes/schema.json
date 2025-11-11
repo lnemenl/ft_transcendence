@@ -116,6 +116,25 @@
     }
   },
 
+  "getAllUsersSchema": {
+    "description": "Fetch a public user profiles",
+    "tags": ["User"],
+    "response": {
+      "200": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "username": { "type": "string" },
+            "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+          }
+        }
+      },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
   "getUserSchema": {
     "description": "Fetch a public user profile by ID",
     "tags": ["User"],

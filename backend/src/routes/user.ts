@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../utils/prisma';
-import { updateUserSchema, getUserSchema, getMeSchema } from './schema.json';
+import { updateUserSchema, getAllUsersSchema, getUserSchema, getMeSchema } from './schema.json';
 
 const userRoutes = async (fastify: FastifyInstance) => {
   fastify.get(
@@ -56,6 +56,32 @@ const userRoutes = async (fastify: FastifyInstance) => {
           },
         });
         return reply.status(200).send(updatedUser);
+      } catch (err) {
+        fastify.log.error(err);
+        return reply.status(500).send({ error: 'Internal server error' });
+      }
+    },
+  );
+
+  fastify.get(
+    '/',
+    {
+      schema: getAllUsersSchema,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const userId = (request.user as { id: string }).id;
+        const users = await prisma.user.findMany({
+          where: { id: { not: userId } },
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        });
+
+        return reply.status(200).send(users);
       } catch (err) {
         fastify.log.error(err);
         return reply.status(500).send({ error: 'Internal server error' });

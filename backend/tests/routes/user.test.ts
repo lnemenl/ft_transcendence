@@ -1,6 +1,6 @@
 import request from 'supertest';
-import { describe, it, expect, beforeEach } from '@jest/globals';
-import { app } from '../setup';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { app, prisma } from '../setup';
 import { testUsers } from '../fixtures';
 import { cleanDatabase, createAuthenticatedUser } from '../helpers';
 
@@ -105,6 +105,39 @@ describe('User Profile Management', () => {
         .set('Cookie', cookies)
         .send({ avatarUrl: 'not-a-url' })
         .expect(400);
+    });
+  });
+
+  describe('GET /api/users/', () => {
+    it('returns public profile of all registered users', async () => {
+      await request(app.server).post('/api/register').send(testUsers.anna).expect(201);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+      await request(app.server).post('/api/register').send(testUsers.charlie).expect(201);
+      const { user, cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const res = await request(app.server).get('/api/users/').set('Cookie', cookies).expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      for (const profile of res.body) {
+        expect(profile).toHaveProperty('id');
+        expect(profile.id).not.toBe(user.id);
+        expect(profile).toHaveProperty('username');
+        expect(profile.username).not.toBe(user.username);
+        expect(profile).toHaveProperty('avatarUrl');
+        expect(profile).not.toHaveProperty('email');
+        expect(profile).not.toHaveProperty('password');
+      }
+    });
+
+    it('Internal server error for database call failure', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      jest.spyOn(prisma.user, 'findMany').mockRejectedValue(new Error('Internal server error'));
+
+      const res = await request(app.server).get('/api/users/').set('Cookie', cookies);
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
     });
   });
 
