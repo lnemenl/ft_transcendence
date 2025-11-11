@@ -3,6 +3,7 @@ export function LanguageSelect() {
         let locale = event.target.value;
         document.documentElement.lang = locale;
         window.localStorage.setItem('ft_transcendence:lang', locale);
+        window.dispatchEvent(new Event("languageChange"));
     };
     let locale = window.localStorage.getItem('ft_transcendence:lang');
     return (
