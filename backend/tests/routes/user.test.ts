@@ -14,11 +14,14 @@ describe('User Profile Management', () => {
 
       const res = await request(app.server).get('/api/users/me').set('Cookie', cookies).expect(200);
 
-      expect(res.body).toMatchObject({
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      });
+      expect(res.body).toBeDefined();
+      expect(res.body).toHaveProperty('id', user.id);
+      expect(res.body).toHaveProperty('email', testUsers.alice.email);
+      expect(res.body).toHaveProperty('username', testUsers.alice.username);
+      expect(res.body).toHaveProperty('isTwoFactorEnabled', false);
+      expect(res.body).toHaveProperty('createdAt');
+      expect(res.body).not.toHaveProperty('password');
+      expect(res.body).not.toHaveProperty('twoFactorSecret');
     });
 
     it('rejects request without authentication', async () => {

@@ -2,7 +2,6 @@ import Fastify from 'fastify';
 import dotenv from 'dotenv';
 import jwtPlugin from './plugins/jwt';
 import authRoutes from './routes/auth';
-import profileRoutes from './routes/profile';
 import userRoutes from './routes/user';
 import gameRoutes from './routes/game';
 import tournamentRoutes from './routes/tournament';
@@ -32,7 +31,6 @@ app.register(jwtPlugin);
 
 // Registering routes under /api
 app.register(authRoutes, { prefix: '/api' });
-app.register(profileRoutes, { prefix: '/api' });
 app.register(userRoutes, { prefix: '/api/users' });
 app.register(gameRoutes, { prefix: '/api' });
 app.register(tournamentRoutes, { prefix: '/api' });

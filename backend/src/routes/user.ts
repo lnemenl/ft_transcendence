@@ -19,6 +19,8 @@ const userRoutes = async (fastify: FastifyInstance) => {
             email: true,
             username: true,
             avatarUrl: true,
+            isTwoFactorEnabled: true,
+            createdAt: true,
           },
         });
 
