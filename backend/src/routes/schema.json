@@ -69,34 +69,6 @@
     }
   },
 
-  "getProfileSchema": {
-    "tags": ["User"],
-    "response": {
-      "200": {
-        "description": "Successful response with user profile",
-        "type": "object",
-        "properties": {
-          "user": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string" },
-              "email": { "type": "string", "format": "email" },
-              "username": { "type": "string" },
-              "isTwoFactorEnabled": { "type": "boolean" },
-              "createdAt": { "type": "string", "format": "date-time" },
-              "updatedAt": { "type": "string", "format": "date-time" }
-            },
-            "required": ["id", "email", "username", "isTwoFactorEnabled", "createdAt", "updatedAt"]
-          }
-        },
-        "required": ["user"]
-      },
-      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
-    }
-  },
-
   "getMeSchema": {
     "description": "Return the currently authenticated user's profile",
     "tags": ["User"],
