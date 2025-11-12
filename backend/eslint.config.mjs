@@ -1,7 +1,6 @@
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import eslintPluginPrettier from 'eslint-plugin-prettier';
-import { error } from 'console';
 
 export default tseslint.config([
   // Block 1: Global Ignores

@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { expect } from '@jest/globals';
+import { expect, it, describe, beforeAll, afterAll, jest } from '@jest/globals';
 import app from '../../src/index';
 import { prisma } from '../../src/utils/prisma';
 import { getCookies } from '../helpers';
@@ -79,7 +79,7 @@ describe('Game tests', () => {
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
-    const requestBody = { winner: 1, tournamentId: undefined };
+    const requestBody = { winner: 1 };
     const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
 
     expect(res.status).toBe(201);
@@ -110,7 +110,7 @@ describe('Game tests', () => {
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
-    const requestBody = { winner: undefined, tournamentId: undefined };
+    const requestBody = { winner: undefined };
     const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
 
     expect(res.status).toBe(400);
@@ -118,7 +118,7 @@ describe('Game tests', () => {
   });
 
   it('POST /games with no token for player 2 should pass', async () => {
-    const requestBody = { winner: 2, tournamentId: undefined };
+    const requestBody = { winner: 2 };
     const res = await request(app.server).post('/api/games').set('Cookie', cookie1).send(requestBody);
 
     expect(res.status).toBe(200);
@@ -130,8 +130,8 @@ describe('Game tests', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 1100));
 
-    const cookie = [...cookie1,`player2_token=${token}`];
-    const requestBody = { winner: 2, tournamentId: undefined };
+    const cookie = [...cookie1, `player2_token=${token}`];
+    const requestBody = { winner: 2 };
     const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
 
     expect(res.status).toBe(400);
@@ -143,29 +143,17 @@ describe('Game tests', () => {
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
-    const requestBody = { winner: 3, tournamentId: undefined };
+    const requestBody = { winner: 3 };
     const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
 
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error', 'Invalid winner');
   });
 
-  it('POST /games with invalid tournamentId should fail', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
-
-    expect(loginRes.status).toBe(200);
-    const cookie = [...cookie1, ...getCookies(loginRes)];
-    const requestBody = { winner: 2, tournamentId: '123' };
-    const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
-
-    expect(res.status).toBe(404);
-    expect(res.body).toHaveProperty('error', 'Invalid ID');
-  });
-
   it('POST /games with invalid player 2 should fail', async () => {
     const badToken = app.jwt.sign({ id: 'e124512wwdas' }, { expiresIn: '1m' });
     const cookie = [...cookie1, `player2_token=${badToken}`];
-    const requestBody = { winner: 2, tournamentId: undefined };
+    const requestBody = { winner: 2 };
     const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
 
     expect(res.status).toBe(404);
@@ -216,7 +204,7 @@ describe('Game tests', () => {
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
-    const requestBody = { winner: 2, tournamentId: undefined };
+    const requestBody = { winner: 2 };
     const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
 
     expect(res.status).toBe(201);
@@ -355,5 +343,51 @@ describe('Game tests', () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBe(0);
+  });
+
+  // The only way to test for a database call failure is to mock a test for that specifically
+  it('Internal server error for creating a game', async () => {
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+
+    expect(loginRes.status).toBe(200);
+    const cookie = [...cookie1, ...getCookies(loginRes)];
+    const requestBody = { winner: 1 };
+    jest.spyOn(prisma.game, 'create').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).post('/api/games').set('Cookie', cookie).send(requestBody);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Internal server error for getting a game by id', async () => {
+    jest.spyOn(prisma.game, 'findUnique').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).get(`/api/games/${gameId}`).set('Cookie', cookie1);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Internal server error for getting all games', async () => {
+    jest.spyOn(prisma.game, 'findMany').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).get('/api/games').set('Cookie', cookie1);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Internal server error for getting all user games', async () => {
+    jest.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).get('/api/games/me').set('Cookie', cookie1);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Internal server error for getting all user games won', async () => {
+    jest.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('Internal server error'));
+    const res = await request(app.server).get('/api/games/me/won').set('Cookie', cookie1);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
   });
 });

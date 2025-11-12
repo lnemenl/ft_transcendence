@@ -4,6 +4,11 @@ export const testUsers = {
     password: 'SecurePass123!',
     username: 'alice',
   },
+  anna: {
+    email: 'anna@example.com',
+    password: 'SecurePass123!',
+    username: 'anna',
+  },
   bob: {
     email: 'bob@example.com',
     password: 'SecurePass456!',

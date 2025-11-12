@@ -14,11 +14,11 @@ const hashRefreshToken = (raw: string) => {
   return crypto.createHash('sha256').update(raw).digest('hex');
 };
 
-const createRefreshToken = async (userId: string) => {
+export const createRefreshToken = async (userId: string) => {
   const days = 14;
   const raw = generateRawRefreshToken();
   const tokenHash = hashRefreshToken(raw);
-  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60);
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
   await prisma.refreshToken.create({
     data: {
@@ -96,8 +96,30 @@ export const loginUser = async (body: loginBody, reply: FastifyReply) => {
   const isPasswordValid = bcrypt.compareSync(body.password, user.password);
   if (!isPasswordValid) throw new Error('Invalid email or password');
 
+  // If user has 2FA enabled, don't issue tokens yet
+  if (user.isTwoFactorEnabled) {
+    // User has 2FA enabled
+    // Do NOT issue access/refresh tokens yet
+    // Issue temporary token that proves password was correct
+    const twoFactorToken = await reply.jwtSign(
+      {
+        id: user.id,
+        twoFactor: true, // Special flag: This is NOT a regular access token
+      },
+      { expiresIn: '5m' }, // Short expiry: User must complete 2FA quickly
+    );
+
+    // Return special response indicating 2FA is required
+    return { twoFactorRequired: true, twoFactorToken };
+  }
+
+  // User does NOT have 2FA enabled
+  // Issue regular tokens immediately
+
+  // Create access token (JWT, short-lived: 15 minutes)
   const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
 
+  // Create refresh token (opaque token, long-lived: 14 days)
   const refreshToken = await createRefreshToken(user.id);
 
   const returnUser = {

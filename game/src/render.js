@@ -53,27 +53,27 @@ function createScene(canvas, G) {
         }, S)
     });
 
-    [S.lpaddle, S.rpaddle, S.sphere].forEach(function (mesh) {
+    [S.lpaddle, S.rpaddle, S.sphere].forEach((mesh) => {
         mesh.material = new B.StandardMaterial(`${mesh.name}_mat`, S);
     });
     S.lpaddle.material.emissiveColor = blue;
     S.rpaddle.material.emissiveColor = pink;
     S.sphere.material.emissiveColor = offwhite;
-    S.scoreSpheres = Array.from({length: 4}, function (ignore, i) {
+    S.scoreSpheres = Array.from({length: 4}, (ignore, i) => {
         return createSphere(`scoreSphere${i + 1}`, {
             diameter: G.ball.diameter
         }, S);
     });
-    S.scoreSpheres.forEach(function (mesh) {
+    S.scoreSpheres.forEach((mesh) => {
         mesh.material = new B.StandardMaterial(`${mesh.name}_mat`, S);
     });
     return (S);
 }
 
 const createRenderer = Object.freeze(
-    function (canvas, G) {
+    (canvas, G) => {
         const S = createScene(canvas, G);
-        S.scoreSpheres.forEach(function (sphere) {
+        S.scoreSpheres.forEach((sphere) => {
             sphere.ratio = 0;
         });
 
