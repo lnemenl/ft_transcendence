@@ -161,6 +161,71 @@
     }
   },
 
+  "newFriendRequest": {
+    "description": "Send a friend request to another user",
+    "tags": ["FriendRequest"],
+    "params": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "response": {
+      "201": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        }
+      },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "acceptFriendRequest": {
+    "description": "Accept a friend request",
+    "tags": ["FriendRequest"],
+    "params": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        }
+      },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "declineFriendRequest": {
+    "description": "Decline a friend request",
+    "tags": ["FriendRequest"],
+    "params": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "response": {
+      "200": { "type": "object", "properties": { "ok": { "type": "boolean" } } },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
   "newGame": {
     "description": "Create a new game",
     "tags": ["Game"],
