@@ -1,3 +1,5 @@
+import { t } from "./lang";
+
 export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }: {
   e: React.FormEvent<HTMLFormElement>;
   endpoint: string;
@@ -31,6 +33,6 @@ export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }:
     }
   } catch (err) {
     console.error("Network or parsing error:", err);
-    setError?.("Could not connect to the server");
+    setError?.(t().couldNotConnectToServer);
   }
 };
