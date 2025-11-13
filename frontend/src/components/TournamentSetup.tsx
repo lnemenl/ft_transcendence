@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { TournamentLogin } from "./TournamentLogin"
-import { TournamentSignUp } from "./TournamentSignUp";
+import { SignUp } from "./SignUp";
 import { useGame } from "./GameContext";
+import { useAuth } from "./GetAuth";
 
-type Stage = "choose-size" | "login-players" | "ready"
+type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
 
 type Props = {
   onBack: () => void;
-  onSetStage: (stage: Stage) => void;
+  onSelectMode: (view: View) => void;
 }
 
 type Form = "unknown" | "signup" | "login"
 
-export const TournamentSetup: React.FC<Props> = ({ onBack, onSetStage }) => {
+export const TournamentSetup: React.FC<Props> = ({ onBack, onSelectMode }) => {
   const { currentPlayerIndex, totalPlayers } = useGame();
+  const { login } = useAuth();
   const [form, setForm] = useState<Form>("unknown");
   const handleForm = (form: Form) => setForm(form);
   const getBack = () => {
@@ -35,14 +37,14 @@ export const TournamentSetup: React.FC<Props> = ({ onBack, onSetStage }) => {
   else if (form === "signup") {
     return (
       <div className="min-h-full flex justify-center items-center p-6">
-        <TournamentSignUp getBack={ getBack } onSetStage={( onSetStage )}/>
+        <SignUp onBack={ getBack } onLogin={ login }onSelectMode={ onSelectMode } loginEndpoint="login/tournament"/>
       </div>
     )
   }
   else if (form === "login") {
     return (
       <div className="min-h-full flex justify-center items-center p-6">
-        <TournamentLogin getBack={ getBack } onSetStage={ onSetStage }/>
+        <TournamentLogin getBack={ getBack } onSelectMode={ onSelectMode }/>
       </div>
     )
   }

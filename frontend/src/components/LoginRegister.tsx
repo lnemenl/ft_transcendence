@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Choice } from "./Choice";
 import { LoginP1 } from "./LoginP1";
-import { SignUp } from "./SignUpP1";
+import { SignUp } from "./SignUp";
 import { GameMode } from "./GameMode";
 import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
@@ -38,7 +38,7 @@ export function LoginRegister() {
         <>
         <div className="flex w-[300%] h-full transition-transform duration-500 ease-in-out" style={{ transform: transformPage }}>
           <div className="w-[33.3333%] flex-shrink-0">
-            <SignUp onBack={handleBack} onLogin={login} onSelectMode={handleSelectMode}/>
+            <SignUp onBack={handleBack} onLogin={login} onSelectMode={handleSelectMode} loginEndpoint="login"/>
           </div>
           <div className="w-[33.3333%] flex-shrink-0">
             <Choice onSelectMode={handleSelectMode} />

@@ -17,19 +17,12 @@ export function LoginFormP2({ getBack, onSelectMode }: LoginFormProps) {
   const [error, setError] = useState("");
   const { saveCurrentPlayer, setReady } = useGame();
 
-  const handleScroll = () => {
-		document.getElementById("game")?.scrollIntoView({
-			behavior: "smooth",
-		});
-	};
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     handleRequest({
       e,
       endpoint: "login/player2",
       data: { username, email, password },
       onSuccess: () => {
-        handleScroll();
         saveCurrentPlayer(username);
         setReady(true);
         onSelectMode("choice");

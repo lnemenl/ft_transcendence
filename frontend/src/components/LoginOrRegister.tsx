@@ -2,6 +2,7 @@ import { useState } from "react";
 import { SignUp } from "./SignUp";
 import { LoginP2 } from "./LoginP2"
 import { useGame } from "./GameContext";
+import { useAuth } from "./GetAuth";
 
 type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
 
@@ -14,6 +15,7 @@ type Form = "unknown" | "signup" | "login"
 
 export const LoginOrRegister: React.FC<Props> = ({ onBack, onSelectMode }) => {
   const { currentPlayerIndex } = useGame();
+  const { login } = useAuth();
   const [form, setForm] = useState<Form>("unknown");
   const handleForm = (form: Form) => setForm(form);
   const getBack = () => {
@@ -35,7 +37,7 @@ export const LoginOrRegister: React.FC<Props> = ({ onBack, onSelectMode }) => {
   else if (form === "signup") {
     return (
       <div className="min-h-full flex justify-center items-center p-6">
-        <SignUp onBack={ getBack } onSelectMode={( onSelectMode )}/>
+        <SignUp onBack={ getBack } onLogin={login} onSelectMode={( onSelectMode )} loginEndpoint="login/player2"/>
       </div>
     )
   }

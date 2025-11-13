@@ -4,14 +4,12 @@ import { t } from "./lang";
 import { useLanguage } from "./useLanguage";
 import { useGame } from "./GameContext";
 
-type Stage = "choose-size" | "login-players" | "ready"
-
 type LoginFormProps = {
   getBack: () => void;
-  onSetStage: (stage: Stage) => void;
+  setMode: () => void;
 };
 
-export function TournamentLoginForm({ getBack, onSetStage }: LoginFormProps) {
+export function TournamentLoginForm({ getBack, setMode }: LoginFormProps) {
   useLanguage();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +25,7 @@ export function TournamentLoginForm({ getBack, onSetStage }: LoginFormProps) {
       onSuccess: () => {
         saveCurrentPlayer(username);
         if (currentPlayerIndex === totalPlayers - 1) {
-          onSetStage("ready");
+          setMode();
           setReady(true);
         }
         else {

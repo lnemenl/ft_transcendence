@@ -4,21 +4,20 @@ import { t } from "./lang";
 import { useLanguage } from "./useLanguage";
 import { useGame } from "./GameContext";
 
-type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
-
 type SignUpFormProps = {
   onBack: () => void;
+  setMode: () => void;
   onLogin: () => void;
-  onSelectMode: (view: View) => void;
+  loginEndpoint: string;
 };
 
-export function SignUpFormP1({ onBack, onLogin, onSelectMode }: SignUpFormProps) {
+export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFormProps) {
   useLanguage();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { setReady, saveCurrentPlayer } = useGame();
+  const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     handleRequest({
@@ -26,21 +25,28 @@ export function SignUpFormP1({ onBack, onLogin, onSelectMode }: SignUpFormProps)
       endpoint: "register",
       data: { username, email, password },
       onSuccess: () => {
-          handleRequest({
-            e,
-            endpoint: "login",
-            data: { username, email, password },
-            onSuccess: () => {
-              saveCurrentPlayer(username);
-              setReady(true);
-              onSelectMode("choice");
+        handleRequest({
+          e,
+          endpoint: loginEndpoint,
+          data: { username, email, password },
+          onSuccess: () => {
+            if (currentPlayerIndex === 0) {
               onLogin();
-              setUsername("");
-              setEmail("");
-              setPassword("");
-            },
-            setError,
-          })
+            }
+            saveCurrentPlayer(username);
+            if (currentPlayerIndex === totalPlayers - 1) {
+              setReady(true);
+              setMode();
+            }
+            else {
+              onBack();
+            }
+            setUsername("");
+            setEmail("");
+            setPassword("");
+          },
+          setError,
+        })
       },
       setError,
     })
