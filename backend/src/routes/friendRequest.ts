@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { Prisma } from '@prisma/client';
-import { newFriendRequest, acceptFriendRequest, declineFriendRequest } from './schema.json';
-import { createFriendRequest, acceptFriend, deleteRequest } from '../services/friendRequest.service';
+import { newFriendRequest, getFriendRequests, acceptFriendRequest, declineFriendRequest } from './schema.json';
+import { createFriendRequest, getUserFriendRequests, acceptFriend, deleteRequest } from '../services/friendRequest.service';
 
 const friendRequestRoutes = async (fastify: FastifyInstance) => {
   fastify.post(
@@ -15,8 +15,31 @@ const friendRequestRoutes = async (fastify: FastifyInstance) => {
         const senderId = (request.user as { id: string }).id;
         const receiverId = (request.params as { id: string }).id;
 
-        const { receiver } = await createFriendRequest(senderId, receiverId);
-        return reply.status(201).send(receiver);
+        const friendRequest = await createFriendRequest(senderId, receiverId);
+        return reply.status(201).send(friendRequest);
+      } catch (err) {
+        fastify.log.error(err);
+
+        if (err instanceof Prisma.PrismaClientKnownRequestError || (err as Error).message === 'User not found') {
+          return reply.status(404).send({ error: 'User not found' });
+        }
+        return reply.status(500).send({ error: 'Internal server error' });
+      }
+    },
+  );
+
+  fastify.get(
+    '/friend-request/me',
+    {
+      schema: getFriendRequests,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const userId = (request.user as { id: string }).id;
+
+        const friendRequests = await getUserFriendRequests(userId);
+        return reply.status(200).send(friendRequests);
       } catch (err) {
         fastify.log.error(err);
 

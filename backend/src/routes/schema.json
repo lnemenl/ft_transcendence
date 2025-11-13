@@ -176,8 +176,62 @@
         "type": "object",
         "properties": {
           "id": { "type": "string" },
-          "username": { "type": "string" },
-          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+          "receiver": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+            }
+          }
+        }
+      },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "getFriendRequests": {
+    "description": "Get my friend requests",
+    "tags": ["FriendRequest"],
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "sentFriendRequests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "receiver": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "username": { "type": "string" },
+                    "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+                  }
+                }
+              }
+            }
+          },
+          "receivedFriendRequests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "sender": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "username": { "type": "string" },
+                    "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+                  }
+                }
+              }
+            }
+          }
         }
       },
       "404": { "type": "object", "properties": { "error": { "type": "string" } } },

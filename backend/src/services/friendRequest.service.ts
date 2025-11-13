@@ -7,6 +7,7 @@ export const createFriendRequest = async (senderId: string, receiverId: string) 
       receiver: { connect: { id: receiverId } },
     },
     select: {
+      id: true,
       receiver: { select: { id: true, username: true, avatarUrl: true } },
     },
   });
@@ -14,6 +15,42 @@ export const createFriendRequest = async (senderId: string, receiverId: string) 
   if (!friendRequest) throw new Error('User not found');
 
   return friendRequest;
+};
+
+export const getUserFriendRequests = async (userId: string) => {
+  const friendRequests = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      sentFriendRequests: {
+        select: {
+          id: true,
+          receiver: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+      receivedFriendRequests: {
+        select: {
+          id: true,
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!friendRequests) throw new Error('User not found');
+
+  return friendRequests;
 };
 
 export const acceptFriend = async (id: string) => {
