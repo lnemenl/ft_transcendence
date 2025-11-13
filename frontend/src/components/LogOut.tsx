@@ -1,4 +1,5 @@
 import { t } from "./lang";
+import { useGame } from "./GameContext";
 import { useLanguage } from "./useLanguage";
 
 type Props = {
@@ -7,6 +8,7 @@ type Props = {
 };
 
 export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
+  const { resetGame, currentPlayerIndex } = useGame();
   useLanguage();
   const handleLogOut = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -19,6 +21,8 @@ export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
 
       if (res.ok) {
         console.log("Succesfull logout!");
+        resetGame();
+        console.log(currentPlayerIndex)
         onBack();
         onLogOut();
       }

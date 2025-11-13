@@ -22,6 +22,9 @@ export function SignUpForm({ onBack }: SignUpFormProps) {
       data: { username, email, password },
       onSuccess: () => {
           onBack();
+          setUsername("");
+          setEmail("");
+          setPassword("");
       },
       setError,
     })
@@ -34,19 +37,19 @@ export function SignUpForm({ onBack }: SignUpFormProps) {
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username-p1">
             {t().username}
           </label>
-          <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="username-p1" type="text" placeholder={t().username} required/>
+          <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={username} type="text" placeholder={t().username} required/>
         </div>
         <div className="mb-4">
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="email-p1">
             {t().email}
           </label>
-          <input onChange={(e) => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="email-p1" type="email" value={email} placeholder={t().email} required />
+          <input onChange={(e) => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={email} type="email" placeholder={t().email} required />
         </div>
         <div className="">
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password-p1">
             {t().password}
           </label>
-          <input onChange={(e) => setPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" id="password-p1" type="password" placeholder={t().password} required/>
+          <input onChange={(e) => setPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={password} type="password" placeholder={t().password} required/>
         </div>
         <div className="flex flex-col items-center justify-center w-full max-w-sm">
           <div className="min-h-1 flex items-center justify-center mb-3">

@@ -1,7 +1,10 @@
 import { useAuth } from "./GetAuth";
+import { useGame } from "./GameContext";
 
 export function LogButton() {
   const { isLoggedIn, logout } = useAuth();
+  const { resetGame } = useGame();
+  
   const handleScroll = () => {
     document.getElementById("login")?.scrollIntoView({ 
       behavior: "smooth" 
@@ -10,7 +13,7 @@ export function LogButton() {
   return (
     <div className="fixed top-12 right-38 flex items-center gap-3 z-50">
       {isLoggedIn ? (
-        <button type="button" onClick={logout} className="bg-[#6688cc] hover:bg-[#24273a] text-white font-bold p-3 fixed rounded-2xl">
+        <button type="button" onClick={() => {logout(); resetGame()}} className="bg-[#6688cc] hover:bg-[#24273a] text-white font-bold p-3 fixed rounded-2xl">
           Logout
         </button>
       ) : (

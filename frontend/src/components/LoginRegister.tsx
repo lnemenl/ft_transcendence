@@ -5,6 +5,7 @@ import { SignUp } from "./SignUp";
 import { GameMode } from "./GameMode";
 import { useAuth } from "./GetAuth";
 import { LoginP2 } from "./LoginP2";
+import { useGame } from "./GameContext";
 import { Tournament } from "./Tournament";
 
 type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
@@ -13,8 +14,12 @@ type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tourn
 export function LoginRegister() {
   const [currentView, setCurrentView] = useState<View>("choice");
   const handleSelectMode = (view: View) => setCurrentView(view);
-  const handleBack = () => setCurrentView("choice");
   const { isLoggedIn, login } = useAuth();
+  const { setMode } = useGame();
+  const handleBack = () => {
+    setCurrentView("choice");
+    setMode("unknown");
+  }
 
   const transformPage = useMemo(() => {
       if (["register", "multiplayer"].includes(currentView)) {

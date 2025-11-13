@@ -4,28 +4,31 @@ import { t } from "./lang";
 import { useLanguage } from "./useLanguage";
 import { useGame } from "./GameContext";
 
+type Stage = "choose-size" | "login-players" | "ready"
+
 type LoginFormProps = {
   onBack: () => void;
-  onLogin: () => void;
+  onSetStage: (stage: Stage) => void;
 };
 
-export function LoginFormP1({ onBack, onLogin }: LoginFormProps) {
+export function TournamentLoginForm({ onBack, onSetStage }: LoginFormProps) {
   useLanguage();
-  const [username, setUsername] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const { saveCurrentPlayer } = useGame();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const { saveCurrentPlayer, currentPlayerIndex, totalPlayers } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     handleRequest({
       e,
-      endpoint: "login",
+      endpoint: "login/tournament",
       data: { username, email, password },
       onSuccess: () => {
-        onLogin();
         saveCurrentPlayer(username);
-        onBack();
+        if (currentPlayerIndex === totalPlayers - 1) {
+          onSetStage("ready");
+        }
         setUsername("");
         setEmail("");
         setPassword("");
