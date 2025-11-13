@@ -29,8 +29,11 @@ const friendRequestRoutes = async (fastify: FastifyInstance) => {
       } catch (err) {
         fastify.log.error(err);
 
-        if (err instanceof Prisma.PrismaClientKnownRequestError || (err as Error).message === 'User not found') {
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
           return reply.status(404).send({ error: 'User not found' });
+        }
+        if ((err as Error).message === 'Friend request already exists') {
+          return reply.status(400).send({ error: (err as Error).message });
         }
         return reply.status(500).send({ error: 'Internal server error' });
       }
@@ -102,8 +105,8 @@ const friendRequestRoutes = async (fastify: FastifyInstance) => {
       } catch (err) {
         fastify.log.error(err);
 
-        if ((err as Error).message === 'Invalid id') {
-          return reply.status(404).send({ error: (err as Error).message });
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
+          return reply.status(404).send({ error: 'Invalid id' });
         }
         return reply.status(500).send({ error: 'Internal server error' });
       }

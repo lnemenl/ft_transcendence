@@ -1,6 +1,17 @@
 import { prisma } from '../utils/prisma';
 
 export const createFriendRequest = async (senderId: string, receiverId: string) => {
+  const exists = await prisma.friendRequest.findFirst({
+    where: {
+      OR: [
+        { senderId, receiverId },
+        { senderId: receiverId, receiverId: senderId },
+      ],
+    },
+  });
+
+  if (exists) throw new Error('Friend request already exists');
+
   const friendRequest = await prisma.friendRequest.create({
     data: {
       sender: { connect: { id: senderId } },
@@ -11,8 +22,6 @@ export const createFriendRequest = async (senderId: string, receiverId: string) 
       receiver: { select: { id: true, username: true, avatarUrl: true } },
     },
   });
-
-  if (!friendRequest) throw new Error('User not found');
 
   return friendRequest;
 };
@@ -82,8 +91,6 @@ export const acceptFriend = async (userId: string, friendRequestId: string) => {
 
 export const deleteRequest = async (id: string) => {
   const friendRequest = await prisma.friendRequest.delete({ where: { id } });
-
-  if (!friendRequest) throw new Error('Invalid id');
 
   return friendRequest;
 };

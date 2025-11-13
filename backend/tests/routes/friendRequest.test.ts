@@ -9,6 +9,7 @@ import { testUsers } from '../fixtures';
 describe('Friend request tests', () => {
   let bobId: string;
   let aliceId: string;
+  let charlieId: string;
   let friendRequestId: string;
   let authCookies: string[];
 
@@ -33,6 +34,13 @@ describe('Friend request tests', () => {
 
     friendRequestId = res.body.id;
     authCookies = cookies;
+  });
+
+  it('Sending another friend request to the same user should fail', async () => {
+    const res = await request(app.server).post(`/api/friend-request/${aliceId}`).set('Cookie', authCookies);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error', 'Friend request already exists');
   });
 
   it('Sending a friend request to an invalid user should fail', async () => {
@@ -76,7 +84,6 @@ describe('Friend request tests', () => {
     expect(res.body).toHaveProperty('receivedFriendRequests');
     expect(Array.isArray(res.body.sentFriendRequests)).toBe(true);
     expect(Array.isArray(res.body.receivedFriendRequests)).toBe(true);
-    console.log(res.body.receivedFriendRequests[0]);
     expect(res.body.receivedFriendRequests[0]).toHaveProperty('id', friendRequestId);
     expect(res.body.receivedFriendRequests[0]).toHaveProperty('sender');
     expect(res.body.receivedFriendRequests[0].sender).toHaveProperty('id', bobId);
@@ -108,7 +115,63 @@ describe('Friend request tests', () => {
     expect(res.body).toHaveProperty('avatarUrl');
   });
 
-  it('Database call is protected', async () => {
+  it('Receiver: Accepting an already accepted friend request should fail', async () => {
+    const res = await request(app.server).patch(`/api/friend-request/${friendRequestId}`).set('Cookie', authCookies);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error', 'Friend request already accepted');
+  });
+
+  it('Accepting an invalid friend request should fail', async () => {
+    const res = await request(app.server).patch('/api/friend-request/abcdefg123456').set('Cookie', authCookies);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('error', 'Invalid friend request');
+  });
+
+  it('Declining a valid friend request should pass', async () => {
+    const regCharlie = await request(app.server).post('/api/register').send(testUsers.charlie).expect(201);
+    expect(regCharlie.body).toHaveProperty('id');
+    charlieId = regCharlie.body.id;
+
+    const friendRequest = await request(app.server)
+      .post(`/api/friend-request/${charlieId}`)
+      .set('Cookie', authCookies)
+      .expect(201);
+
+    expect(friendRequest.body).toHaveProperty('id');
+    friendRequestId = friendRequest.body.id;
+    const loginCharlie = await request(app.server).post('/api/login').send(testUsers.charlie).expect(200);
+    authCookies = getCookies(loginCharlie);
+
+    const res = await request(app.server).delete(`/api/friend-request/${friendRequestId}`).set('Cookie', authCookies);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('ok', true);
+  });
+
+  it('Declining an invalid friend request should fail', async () => {
+    await request(app.server).post(`/api/friend-request/${aliceId}`).set('Cookie', authCookies).expect(201);
+
+    const loginAlice = await request(app.server).post('/api/login').send(testUsers.alice).expect(200);
+    authCookies = getCookies(loginAlice);
+
+    const res = await request(app.server).delete(`/api/friend-request/${friendRequestId}`).set('Cookie', authCookies);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('error', 'Invalid id');
+  });
+
+  it('Database call is protected when checking for an existing friend request', async () => {
+    jest.spyOn(prisma.friendRequest, 'findFirst').mockRejectedValue('Internal server error');
+
+    const res = await request(app.server).post(`/api/friend-request/${bobId}`).set('Cookie', authCookies);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Database call is protected when creating a friend request', async () => {
     jest.spyOn(prisma.friendRequest, 'create').mockRejectedValue('Internal server error');
 
     const res = await request(app.server).post(`/api/friend-request/${bobId}`).set('Cookie', authCookies);
@@ -117,10 +180,28 @@ describe('Friend request tests', () => {
     expect(res.body).toHaveProperty('error', 'Internal server error');
   });
 
-  it('Database call is protected', async () => {
+  it('Database call is protected when fetching friend requests', async () => {
     jest.spyOn(prisma.user, 'findUnique').mockRejectedValue('Internal server error');
 
-    const res = await request(app.server).post(`/api/friend-request/${bobId}`).set('Cookie', authCookies);
+    const res = await request(app.server).get(`/api/friend-request/me`).set('Cookie', authCookies);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Database call is protected when accepting a friend request', async () => {
+    jest.spyOn(prisma.friendRequest, 'findUnique').mockRejectedValue('Internal server error');
+
+    const res = await request(app.server).patch(`/api/friend-request/${friendRequestId}`).set('Cookie', authCookies);
+
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('error', 'Internal server error');
+  });
+
+  it('Database call is protected when declining a friend request', async () => {
+    jest.spyOn(prisma.friendRequest, 'delete').mockRejectedValue('Internal server error');
+
+    const res = await request(app.server).delete(`/api/friend-request/${friendRequestId}`).set('Cookie', authCookies);
 
     expect(res.status).toBe(500);
     expect(res.body).toHaveProperty('error', 'Internal server error');
