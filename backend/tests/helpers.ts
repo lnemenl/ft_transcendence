@@ -117,7 +117,13 @@ export const signTwoFactorToken = async (payload: { id: string; twoFactor?: bool
 export const cleanDatabase = async () => {
   try {
     // Use transaction to ensure atomicity
-    await prisma.$transaction([prisma.refreshToken.deleteMany({}), prisma.user.deleteMany({})]);
+    await prisma.$transaction([
+      prisma.friendRequest.deleteMany({}),
+      prisma.tournament.deleteMany({}),
+      prisma.game.deleteMany({}),
+      prisma.refreshToken.deleteMany({}),
+      prisma.user.deleteMany({}),
+    ]);
   } catch (error) {
     // Re-throw with context to help debugging
     throw new Error(`Database cleanup failed: ${(error as Error).message}`);

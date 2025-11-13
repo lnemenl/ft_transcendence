@@ -4,6 +4,7 @@ import { prisma } from '../src/utils/prisma';
 
 const resetDb = async () => {
   try {
+    await prisma.friendRequest.deleteMany({});
     await prisma.game.deleteMany({});
     await prisma.tournament.deleteMany({});
     await prisma.refreshToken.deleteMany({});
@@ -24,6 +25,7 @@ beforeAll(async () => {
 afterAll(async () => {
   // Final cleanup: remove dependent rows first, then users
   try {
+    await prisma.friendRequest.deleteMany({});
     await prisma.game.deleteMany({});
     await prisma.tournament.deleteMany({});
     await prisma.refreshToken.deleteMany({});

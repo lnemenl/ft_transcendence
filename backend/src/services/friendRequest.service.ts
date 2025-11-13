@@ -48,8 +48,6 @@ export const getUserFriendRequests = async (userId: string) => {
     },
   });
 
-  if (!friendRequests) throw new Error('User not found');
-
   return friendRequests;
 };
 

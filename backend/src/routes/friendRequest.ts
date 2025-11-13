@@ -1,7 +1,12 @@
 import { FastifyInstance } from 'fastify';
 import { Prisma } from '@prisma/client';
 import { newFriendRequest, getFriendRequests, acceptFriendRequest, declineFriendRequest } from './schema.json';
-import { createFriendRequest, getUserFriendRequests, acceptFriend, deleteRequest } from '../services/friendRequest.service';
+import {
+  createFriendRequest,
+  getUserFriendRequests,
+  acceptFriend,
+  deleteRequest,
+} from '../services/friendRequest.service';
 
 const friendRequestRoutes = async (fastify: FastifyInstance) => {
   fastify.post(
@@ -14,6 +19,10 @@ const friendRequestRoutes = async (fastify: FastifyInstance) => {
       try {
         const senderId = (request.user as { id: string }).id;
         const receiverId = (request.params as { id: string }).id;
+
+        if (senderId === receiverId) {
+          return reply.status(400).send({ error: 'Bad Request' });
+        }
 
         const friendRequest = await createFriendRequest(senderId, receiverId);
         return reply.status(201).send(friendRequest);
@@ -43,9 +52,6 @@ const friendRequestRoutes = async (fastify: FastifyInstance) => {
       } catch (err) {
         fastify.log.error(err);
 
-        if (err instanceof Prisma.PrismaClientKnownRequestError || (err as Error).message === 'User not found') {
-          return reply.status(404).send({ error: 'User not found' });
-        }
         return reply.status(500).send({ error: 'Internal server error' });
       }
     },
