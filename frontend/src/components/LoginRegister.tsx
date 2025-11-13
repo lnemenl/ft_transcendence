@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Choice } from "./Choice";
-import { LoginP1 } from "./LoginP1";
+import { Login } from "./Login";
 import { SignUp } from "./SignUp";
 import { GameMode } from "./GameMode";
 import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
 import { Tournament } from "./Tournament";
-import { LoginOrRegister } from "./LoginOrRegister";
+import { LoginOrRegister } from "./LoginOrRegisterP2";
 
 type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
 
@@ -44,7 +44,7 @@ export function LoginRegister() {
             <Choice onSelectMode={handleSelectMode} />
           </div>
           <div className="w-[33.3333%] flex-shrink-0">
-            <LoginP1 onBack={handleBack} onLogin={login} onSelectMode={handleSelectMode} />
+            <Login onBack={handleBack} onLogin={login} onSelectMode={handleSelectMode} loginEndpoint="login" />
           </div>
         </div>
         </>

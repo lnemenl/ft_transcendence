@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SignUp } from "./SignUp";
-import { LoginP2 } from "./LoginP2"
+import { Login } from "./Login"
 import { useGame } from "./GameContext";
 import { useAuth } from "./GetAuth";
 
@@ -44,7 +44,7 @@ export const LoginOrRegister: React.FC<Props> = ({ onBack, onSelectMode }) => {
   else if (form === "login") {
     return (
       <div className="min-h-full flex justify-center items-center p-6">
-        <LoginP2 getBack={ getBack } onSelectMode={ onSelectMode }/>
+        <Login onBack={ getBack } onLogin={ login } onSelectMode={ onSelectMode } loginEndpoint="login/player2"/>
       </div>
     )
   }

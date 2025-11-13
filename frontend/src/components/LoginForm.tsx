@@ -4,31 +4,39 @@ import { t } from "./lang";
 import { useLanguage } from "./useLanguage";
 import { useGame } from "./GameContext";
 
-type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
-
 type LoginFormProps = {
   onBack: () => void;
   onLogin: () => void;
-  onSelectMode: (view: View) => void;
+  setMode: () => void;
+  loginEndpoint: string;
 };
 
-export function LoginFormP1({ onBack, onLogin, onSelectMode }: LoginFormProps) {
+export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginFormProps) {
   useLanguage();
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const { saveCurrentPlayer } = useGame();
+  const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    console.log(loginEndpoint);
     handleRequest({
       e,
-      endpoint: "login",
+      endpoint: loginEndpoint,
       data: { username, email, password },
       onSuccess: () => {
-        onLogin();
+        if (currentPlayerIndex === 0) {
+          onLogin();
+        }
         saveCurrentPlayer(username);
-        onSelectMode("choice");
+        if (currentPlayerIndex === totalPlayers - 1) {
+            setReady(true);
+            setMode();
+        }
+        else {
+          onBack();
+        }
         setUsername("");
         setEmail("");
         setPassword("");
