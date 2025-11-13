@@ -59,9 +59,10 @@ const friendRequestRoutes = async (fastify: FastifyInstance) => {
     },
     async (request, reply) => {
       try {
+        const userId = (request.user as { id: string }).id;
         const friendRequestId = (request.params as { id: string }).id;
 
-        const sender = await acceptFriend(friendRequestId);
+        const sender = await acceptFriend(userId, friendRequestId);
         return reply.status(200).send(sender);
       } catch (err) {
         fastify.log.error(err);
@@ -69,7 +70,10 @@ const friendRequestRoutes = async (fastify: FastifyInstance) => {
         if ((err as Error).message === 'Invalid friend request') {
           return reply.status(404).send({ error: (err as Error).message });
         }
-        if ((err as Error).message === 'Friend request already accepted') {
+        if (
+          (err as Error).message === 'Friend request already accepted' ||
+          (err as Error).message === 'User cannot accept friend request'
+        ) {
           return reply.status(400).send({ error: (err as Error).message });
         }
         return reply.status(500).send({ error: 'Internal server error' });

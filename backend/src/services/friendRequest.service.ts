@@ -53,12 +53,14 @@ export const getUserFriendRequests = async (userId: string) => {
   return friendRequests;
 };
 
-export const acceptFriend = async (id: string) => {
-  const friendRequest = await prisma.friendRequest.findUnique({ where: { id } });
+export const acceptFriend = async (userId: string, friendRequestId: string) => {
+  const friendRequest = await prisma.friendRequest.findUnique({ where: { id: friendRequestId } });
 
   if (!friendRequest) throw new Error('Invalid friend request');
 
   if (friendRequest.accepted) throw new Error('Friend request already accepted');
+
+  if (friendRequest.senderId === userId) throw new Error('User cannot accept friend request');
 
   const [_updatedRequest, friend] = await prisma.$transaction([
     // Update the friend request status
