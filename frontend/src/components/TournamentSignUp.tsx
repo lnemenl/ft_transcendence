@@ -1,15 +1,15 @@
-import { SignUpFormP2 } from "./SignUpFormP2";
+import { TournamentSignUpForm } from "./TournamentSignUpForm";
 import { t } from "./lang";
 import { useLanguage } from "./useLanguage";
 
-type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
+type Stage = "choose-size" | "login-players" | "ready"
 
 type Props = {
-  onBack: () => void;
-  onSelectMode: (view: View) => void;
+  getBack: () => void;
+  onSetStage: (stage: Stage) => void;
 };
 
-export const SignUp: React.FC<Props> = ({ onBack, onSelectMode }) => {
+export const TournamentSignUp: React.FC<Props> = ({ getBack, onSetStage }) => {
   useLanguage();
   return (
     <div className="min-h-full flex flex-col justify-center items-center p-6">
@@ -17,7 +17,7 @@ export const SignUp: React.FC<Props> = ({ onBack, onSelectMode }) => {
         {t().createNewUser}
       </h2>
       <div className="flex flex-col items-center justify-center md:flex-row gap-6 w-full max-w-2xl">
-        <SignUpFormP2 onBack={ onBack } onSelectMode={ onSelectMode} />
+        <TournamentSignUpForm getBack={ getBack } onSetStage={ onSetStage } />
       </div>
     </div>
   );

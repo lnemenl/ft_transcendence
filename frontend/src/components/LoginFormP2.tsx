@@ -2,16 +2,20 @@ import { useState } from "react";
 import { handleRequest } from "./AuthRequest";
 import { useGame } from "./GameContext";
 
+type Form = "unknown" | "signup" | "login"
+type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" | "tournament";
+
 type LoginFormProps = {
-  onBack: () => void;
+  getBack: (form: Form) => void;
+  onSelectMode: (view: View) => void;
 };
 
-export function LoginFormP2({ onBack }: LoginFormProps) {
+export function LoginFormP2({ getBack, onSelectMode }: LoginFormProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { saveCurrentPlayer } = useGame();
+  const { saveCurrentPlayer, setReady } = useGame();
 
   const handleScroll = () => {
 		document.getElementById("game")?.scrollIntoView({
@@ -25,10 +29,10 @@ export function LoginFormP2({ onBack }: LoginFormProps) {
       endpoint: "login/player2",
       data: { username, email, password },
       onSuccess: () => {
-        console.log("Player 2 logged in succesfully");
         handleScroll();
         saveCurrentPlayer(username);
-        onBack();
+        setReady(true);
+        onSelectMode("choice");
         setUsername("");
         setEmail("");
         setPassword("");
@@ -38,7 +42,7 @@ export function LoginFormP2({ onBack }: LoginFormProps) {
   };
   
   return (
-  <div className="min-w-90 h-full">
+  <div className="min-w-90">
     <form onSubmit={handleSubmit} className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
         <div className="mb-4">
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username">
@@ -65,7 +69,7 @@ export function LoginFormP2({ onBack }: LoginFormProps) {
           <button type="submit" className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-4 py-2 text-white mb-4">
             Login
           </button>
-          <button type="button" onClick={onBack} className="text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700">
+          <button type="button" onClick={() => getBack("unknown")} className="text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700">
             Back
           </button>
       </div>

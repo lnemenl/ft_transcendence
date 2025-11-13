@@ -2,18 +2,23 @@ import { useState } from "react";
 import { handleRequest } from "./AuthRequest";
 import { t } from "./lang";
 import { useLanguage } from "./useLanguage";
+import { useGame } from "./GameContext";
+
+type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
 
 type SignUpFormProps = {
   onBack: () => void;
   onLogin: () => void;
+  onSelectMode: (view: View) => void;
 };
 
-export function SignUpForm({ onBack }: SignUpFormProps) {
+export function SignUpFormP1({ onBack, onLogin, onSelectMode }: SignUpFormProps) {
   useLanguage();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { setReady, saveCurrentPlayer } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     handleRequest({
@@ -21,10 +26,21 @@ export function SignUpForm({ onBack }: SignUpFormProps) {
       endpoint: "register",
       data: { username, email, password },
       onSuccess: () => {
-          onBack();
-          setUsername("");
-          setEmail("");
-          setPassword("");
+          handleRequest({
+            e,
+            endpoint: "login",
+            data: { username, email, password },
+            onSuccess: () => {
+              saveCurrentPlayer(username);
+              setReady(true);
+              onSelectMode("choice");
+              onLogin();
+              setUsername("");
+              setEmail("");
+              setPassword("");
+            },
+            setError,
+          })
       },
       setError,
     })

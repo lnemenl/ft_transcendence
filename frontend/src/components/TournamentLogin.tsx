@@ -5,11 +5,11 @@ import { useGame } from "./GameContext";
 type Stage = "choose-size" | "login-players" | "ready"
 
 type Props = {
-  onBack: () => void;
   onSetStage: (stage: Stage) => void;
+  getBack: () => void;
 };
 
-export const TournamentLogin: React.FC<Props> = ({ onBack, onSetStage }) => {
+export const TournamentLogin: React.FC<Props> = ({ getBack, onSetStage }) => {
   const { currentPlayerIndex, totalPlayers } = useGame();
 
   return (
@@ -17,7 +17,7 @@ export const TournamentLogin: React.FC<Props> = ({ onBack, onSetStage }) => {
       <h2 className="text-3xl font-extrabold text-[#6688cc] dark:text-[#cad3f5] mb-6">
         Login Player { currentPlayerIndex + 1 } / { totalPlayers}
       </h2>
-      <TournamentLoginForm onBack={ onBack } onSetStage={ onSetStage }/>
+      <TournamentLoginForm getBack={ getBack } onSetStage={ onSetStage }/>
     </div>
   );
 };

@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Choice } from "./Choice";
 import { LoginP1 } from "./LoginP1";
-import { SignUp } from "./SignUp";
+import { SignUp } from "./SignUpP1";
 import { GameMode } from "./GameMode";
 import { useAuth } from "./GetAuth";
-import { LoginP2 } from "./LoginP2";
 import { useGame } from "./GameContext";
 import { Tournament } from "./Tournament";
+import { LoginOrRegister } from "./LoginOrRegister";
 
 type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
 
@@ -38,7 +38,7 @@ export function LoginRegister() {
         <>
         <div className="flex w-[300%] h-full transition-transform duration-500 ease-in-out" style={{ transform: transformPage }}>
           <div className="w-[33.3333%] flex-shrink-0">
-            <SignUp onBack={handleBack} onLogin={login} />
+            <SignUp onBack={handleBack} onLogin={login} onSelectMode={handleSelectMode}/>
           </div>
           <div className="w-[33.3333%] flex-shrink-0">
             <Choice onSelectMode={handleSelectMode} />
@@ -51,7 +51,7 @@ export function LoginRegister() {
       ) : (
         <div className="flex w-[300%] h-full transition-transform duration-500 ease-in-out" style={{ transform: transformPage }}>
           <div className="w-[33.3333%] flex-shrink-0">
-            <LoginP2 onBack={handleBack} />
+            <LoginOrRegister onBack={handleBack} onSelectMode={handleSelectMode}/>
           </div>
           <div className="w-[33.3333%] flex-shrink-0">
             <GameMode onSelectMode={handleSelectMode} />
