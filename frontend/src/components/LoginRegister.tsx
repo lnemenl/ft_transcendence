@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Choice } from "./Choice";
 import { Login } from "./Login";
 import { SignUp } from "./SignUp";
@@ -16,6 +16,31 @@ export function LoginRegister() {
   const handleSelectMode = (view: View) => setCurrentView(view);
   const { isLoggedIn, login } = useAuth();
   const { setMode } = useGame();
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Check if user is already authenticated on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/profile", {
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          console.log("Auth check - profile data:", data);
+          login();
+        }
+      } catch (err) {
+        console.error("Auth check failed:", err);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkAuth();
+  }, [login]);
+
   const handleBack = () => {
     setCurrentView("choice");
     setMode("unknown");
@@ -30,6 +55,17 @@ export function LoginRegister() {
       }
       return "translateX(-33.3333%)"; 
     }, [currentView]);
+
+  // Show loading state while checking authentication
+  if (isChecking) {
+    return (
+      <div id="login" className="h-screen w-screen flex justify-center items-center">
+        <div className="w-full max-w-4xl h-[550px] bg-blue-50/50 dark:bg-[#24273a]/50 rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center">
+          <p className="text-gray-500 dark:text-[#cad3f5]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
   <div id="login" className="h-screen w-screen flex justify-center items-center">
