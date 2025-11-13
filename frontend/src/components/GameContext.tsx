@@ -1,8 +1,7 @@
-// GameContext.tsx
 import React, { createContext, useContext, useState } from "react";
 
 export type Player = {
-  id: number;
+  id: string;
   name: string;
   //avatar etc here
 };
@@ -13,7 +12,7 @@ type GameContextType = {
   mode: GameMode;
   setMode: (mode: GameMode) => void;
 
-  totalPlayers: number;           // 2 or 4 or 8
+  totalPlayers: number;
   setTotalPlayers: (n: number) => void;
 
   players: Player[];
@@ -22,7 +21,7 @@ type GameContextType = {
   currentPlayerIndex: number;
   setCurrentPlayerIndex: React.Dispatch<React.SetStateAction<number>>;
 
-  saveCurrentPlayer: (name: string) => void;
+  saveCurrentPlayer: (name: string, playeId: string) => void;
 
   resetGame: () => void;
 
@@ -51,7 +50,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
       if (copy.length < n) {
         for (let i = copy.length; i < n; i++) {
-          copy.push({ id: i + 1, name: "" });
+          copy.push({ id: "", name: "" });
         }
       } else if (copy.length > n) {
         copy.length = n;
@@ -61,16 +60,16 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     });
   };
 
-  const saveCurrentPlayer = (name: string) => {
+  const saveCurrentPlayer = (name: string, playerId: string) => {
     setPlayers((prev) => {
       const updated = [...prev];
       if (updated.length <= currentPlayerIndex) {
         for (let i = updated.length; i <= currentPlayerIndex; i++) {
-          updated.push({ id: i + 1, name: "" });
+          updated.push({ id: "", name: "" });
         }
       }
       updated[currentPlayerIndex] = {
-        id: currentPlayerIndex + 1,
+        id: playerId,
         name,
       };
       return updated;

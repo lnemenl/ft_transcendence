@@ -17,7 +17,7 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers } = useGame();
+  const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers, players } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     console.log(loginEndpoint);
@@ -25,14 +25,16 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
       e,
       endpoint: loginEndpoint,
       data: { username, email, password },
-      onSuccess: () => {
+      onSuccess: (response) => {
         if (currentPlayerIndex === 0) {
           onLogin();
         }
-        saveCurrentPlayer(username);
+        const id = response.id;
+        saveCurrentPlayer(username, id);
         if (currentPlayerIndex === totalPlayers - 1) {
             setReady(true);
             setMode();
+            console.log(players);
         }
         else {
           onBack();

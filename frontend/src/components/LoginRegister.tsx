@@ -6,7 +6,7 @@ import { GameMode } from "./GameMode";
 import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
 import { Tournament } from "./Tournament";
-import { LoginOrRegister } from "./LoginOrRegisterP2";
+import { LoginOrRegisterP2 } from "./LoginOrRegisterP2";
 
 type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
 
@@ -51,7 +51,7 @@ export function LoginRegister() {
       ) : (
         <div className="flex w-[300%] h-full transition-transform duration-500 ease-in-out" style={{ transform: transformPage }}>
           <div className="w-[33.3333%] flex-shrink-0">
-            <LoginOrRegister onBack={handleBack} onSelectMode={handleSelectMode}/>
+            <LoginOrRegisterP2 onBack={handleBack} onSelectMode={handleSelectMode}/>
           </div>
           <div className="w-[33.3333%] flex-shrink-0">
             <GameMode onSelectMode={handleSelectMode} />

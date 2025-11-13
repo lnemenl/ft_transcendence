@@ -13,7 +13,7 @@ type Props = {
 
 type Form = "unknown" | "signup" | "login"
 
-export const LoginOrRegister: React.FC<Props> = ({ onBack, onSelectMode }) => {
+export const LoginOrRegisterP2: React.FC<Props> = ({ onBack, onSelectMode }) => {
   const { currentPlayerIndex } = useGame();
   const { login } = useAuth();
   const [form, setForm] = useState<Form>("unknown");

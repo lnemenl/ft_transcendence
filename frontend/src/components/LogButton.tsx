@@ -3,7 +3,7 @@ import { useGame } from "./GameContext";
 
 export function LogButton() {
   const { isLoggedIn, logout } = useAuth();
-  const { resetGame, setReady, players } = useGame();
+  const { resetGame, setReady } = useGame();
   
   const handleScroll = () => {
     document.getElementById("login")?.scrollIntoView({ 
