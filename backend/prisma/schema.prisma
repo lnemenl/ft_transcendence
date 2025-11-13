@@ -26,6 +26,8 @@ model User {
   isTwoFactorEnabled Boolean @default(false)
   twoFactorSecret    String? //The '?' makes this field optional
 
+  googleId           String?   @unique // Google's unique user ID, must be unique
+
   createdAt DateTime @default(now()) // Automatically set the creation timestamp
   updatedAt DateTime @updatedAt    // Automatically update the timestamp on any change
 

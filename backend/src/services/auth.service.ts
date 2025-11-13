@@ -140,3 +140,44 @@ export const revokeRefreshTokenByRaw = async (raw: string) => {
     data: { revoked: true },
   });
 };
+
+// Handle Google OAuth user: find existing or create new
+export const handleGoogleUser = async (googleId: string, email: string, name: string) => {
+  // Check if user already exists by googleId
+  let user = await prisma.user.findUnique({
+    where: { googleId },
+  });
+
+  // If user exists, return them
+  if (user) {
+    return user;
+  }
+
+  // User doesn't exist, create new one
+  // Generate username from name: "John Doe" → "john_doe"
+  const baseUsername = name.toLowerCase().replace(/\s+/g, '_');
+
+  // Check if username exists, if yes add a number
+  let username = baseUsername;
+  let counter = 1;
+  while (await prisma.user.findUnique({ where: { username } })) {
+    username = `${baseUsername}_${counter}`;
+    counter++;
+  }
+
+  // Generate random password (Google users won't use this)
+  const randomPassword = crypto.randomBytes(32).toString('hex');
+  const hashedPassword = bcrypt.hashSync(randomPassword, SALT_ROUNDS);
+
+  // Create new user
+  user = await prisma.user.create({
+    data: {
+      email: email.toLowerCase(),
+      username,
+      password: hashedPassword,
+      googleId,
+    },
+  });
+
+  return user;
+};

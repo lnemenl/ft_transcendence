@@ -1,6 +1,16 @@
 import { FastifyInstance } from 'fastify';
-import { registerUser, loginUser, revokeRefreshTokenByRaw } from '../services/auth.service';
+import {
+  registerUser,
+  loginUser,
+  revokeRefreshTokenByRaw,
+  handleGoogleUser,
+  createRefreshToken,
+} from '../services/auth.service';
 import { loginSchema, logoutSchema, registerSchema } from './schema.json';
+import { oauth2Client } from '../services/google.service';
+import crypto from 'crypto';
+import { google } from 'googleapis';
+import { getAccessTokenExpiresIn } from '../config';
 
 const authRoutes = async (fastify: FastifyInstance) => {
   fastify.post('/register', { schema: registerSchema }, async (request, reply) => {
@@ -142,6 +152,90 @@ const authRoutes = async (fastify: FastifyInstance) => {
 
     reply.clearCookie('accessToken', { path: '/' });
     return reply.status(200).send({ ok: true });
+  });
+
+  fastify.get('/google/init', async (request, reply) => {
+    const state = crypto.randomBytes(32).toString('hex');
+
+    reply.setCookie('oauth_state', state, {
+      httpOnly: true,
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 10 * 60, // State expires in 10 minutes
+    });
+
+    const scopes = [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email',
+    ];
+
+    const authorizationUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+      include_granted_scopes: true,
+      state: state,
+    });
+
+    return reply.redirect(authorizationUrl);
+  });
+
+  fastify.get('/google/callback', async (request, reply) => {
+    // Parse the query parameters that Google sends back
+    const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
+
+    // Check if there was an error (user denied access)
+    if (error) {
+      return reply.send({ error: error });
+    }
+
+    // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
+    const storedState = request.cookies.oauth_state;
+    if (state !== storedState) {
+      return reply.send({ error: 'State mismatch' });
+    }
+
+    // Exchange authorization code for refresh and access tokens
+    if (!code) {
+      return reply.send({ error: 'No code provided' });
+    }
+
+    const response = await oauth2Client.getToken(code);
+    const tokens = response.tokens;
+    oauth2Client.setCredentials(tokens);
+
+    // Now that we have valid tokens, call the People API to get the user's profile
+    const people = google.people('v1');
+    const userProfile = await people.people.get({
+      auth: oauth2Client,
+      resourceName: 'people/me',
+      personFields: 'names,emailAddresses,photos',
+    });
+
+    // Extract the data we need from Google's response
+    // data is where Google puts the JSON payload returned by the API
+    const googleId = userProfile.data.resourceName?.split('/')?.pop() || '';
+    const email = userProfile.data.emailAddresses?.[0]?.value || '';
+    const name = userProfile.data.names?.[0]?.displayName || '';
+
+    // Get or create the user in our database
+    const user = await handleGoogleUser(googleId, email, name);
+
+    // Create JWT access token (15 minutes)
+    const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
+
+    // Create opaque refresh token (14 days)
+    const refreshToken = await createRefreshToken(user.id);
+
+    // Return user info with tokens
+    return reply.send({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      accessToken,
+      refreshToken,
+    });
   });
 };
 
