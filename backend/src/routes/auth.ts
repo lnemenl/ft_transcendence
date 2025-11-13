@@ -6,10 +6,10 @@ import {
   handleGoogleUser,
   createRefreshToken,
 } from '../services/auth.service';
-import { loginSchema, logoutSchema, registerSchema } from './schema.json';
-import { oauth2Client } from '../services/google.service';
+import { loginSchema, logoutSchema, registerSchema, googleInitSchema } from './schema.json';
+import { oauth2TournamentClient, oauth2Player2Client, oauth2MainClient } from '../services/google.service';
 import crypto from 'crypto';
-import { google } from 'googleapis';
+import { OAuth2Client } from 'google-auth-library';
 import { getAccessTokenExpiresIn } from '../config';
 
 const authRoutes = async (fastify: FastifyInstance) => {
@@ -154,8 +154,15 @@ const authRoutes = async (fastify: FastifyInstance) => {
     return reply.status(200).send({ ok: true });
   });
 
-  fastify.get('/google/init', async (request, reply) => {
+  fastify.get('/google/init', { schema: googleInitSchema }, async (request, reply) => {
     const state = crypto.randomBytes(32).toString('hex');
+
+    const { type } = request.query as { type: string };
+    let oauthClient: OAuth2Client;
+
+    if (type === 'main') oauthClient = oauth2MainClient;
+    else if (type === 'player2') oauthClient = oauth2Player2Client;
+    else oauthClient = oauth2TournamentClient;
 
     reply.setCookie('oauth_state', state, {
       httpOnly: true,
@@ -170,7 +177,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
       'https://www.googleapis.com/auth/userinfo.email',
     ];
 
-    const authorizationUrl = oauth2Client.generateAuthUrl({
+    const authorizationUrl = oauthClient.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
       include_granted_scopes: true,
@@ -200,32 +207,30 @@ const authRoutes = async (fastify: FastifyInstance) => {
       return reply.send({ error: 'No code provided' });
     }
 
-    const response = await oauth2Client.getToken(code);
-    const tokens = response.tokens;
-    oauth2Client.setCredentials(tokens);
-
-    // Now that we have valid tokens, call the People API to get the user's profile
-    const people = google.people('v1');
-    const userProfile = await people.people.get({
-      auth: oauth2Client,
-      resourceName: 'people/me',
-      personFields: 'names,emailAddresses,photos',
-    });
-
-    // Extract the data we need from Google's response
-    // data is where Google puts the JSON payload returned by the API
-    const googleId = userProfile.data.resourceName?.split('/')?.pop() || '';
-    const email = userProfile.data.emailAddresses?.[0]?.value || '';
-    const name = userProfile.data.names?.[0]?.displayName || '';
-
     // Get or create the user in our database
-    const user = await handleGoogleUser(googleId, email, name);
+    const user = await handleGoogleUser(code, oauth2MainClient);
 
     // Create JWT access token (15 minutes)
     const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
 
     // Create opaque refresh token (14 days)
     const refreshToken = await createRefreshToken(user.id);
+
+    reply.setCookie('accessToken', accessToken, {
+      httpOnly: true,
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60, // 15 minutes
+    });
+
+    reply.setCookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 14 * 24 * 60 * 60, // 14 days
+    });
 
     // Return user info with tokens
     return reply.send({
@@ -235,6 +240,80 @@ const authRoutes = async (fastify: FastifyInstance) => {
       avatarUrl: user.avatarUrl,
       accessToken,
       refreshToken,
+    });
+  });
+
+  fastify.get('/google/callback/player2', async (request, reply) => {
+    // Parse the query parameters that Google sends back
+    const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
+
+    // Check if there was an error (user denied access)
+    if (error) {
+      return reply.send({ error: error });
+    }
+
+    // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
+    const storedState = request.cookies.oauth_state;
+    if (state !== storedState) {
+      return reply.send({ error: 'State mismatch' });
+    }
+
+    // Exchange authorization code for refresh and access tokens
+    if (!code) {
+      return reply.send({ error: 'No code provided' });
+    }
+
+    // Get or create the user in our database
+    const user = await handleGoogleUser(code, oauth2Player2Client);
+
+    // Create JWT access token (15 minutes)
+    const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
+
+    reply.setCookie('player2_token', accessToken, {
+      httpOnly: true,
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60, // 15 minutes
+    });
+
+    // Return user info with tokens
+    return reply.send({
+      id: user.id,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      accessToken,
+    });
+  });
+
+  fastify.get('/google/callback/tournament', async (request, reply) => {
+    // Parse the query parameters that Google sends back
+    const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
+
+    // Check if there was an error (user denied access)
+    if (error) {
+      return reply.send({ error: error });
+    }
+
+    // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
+    const storedState = request.cookies.oauth_state;
+    if (state !== storedState) {
+      return reply.send({ error: 'State mismatch' });
+    }
+
+    // Exchange authorization code for refresh and access tokens
+    if (!code) {
+      return reply.send({ error: 'No code provided' });
+    }
+
+    // Get or create the user in our database
+    const user = await handleGoogleUser(code, oauth2TournamentClient);
+
+    // Return user info with tokens
+    return reply.send({
+      id: user.id,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
     });
   });
 };

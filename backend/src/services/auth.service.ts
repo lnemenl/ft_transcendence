@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 import { FastifyReply } from 'fastify';
 import crypto from 'crypto';
 import { getAccessTokenExpiresIn } from '../config';
+import { OAuth2Client } from 'google-auth-library';
+import { google } from 'googleapis';
 
 const SALT_ROUNDS = 10;
 
@@ -142,8 +144,27 @@ export const revokeRefreshTokenByRaw = async (raw: string) => {
 };
 
 // Handle Google OAuth user: find existing or create new
-export const handleGoogleUser = async (googleId: string, email: string, name: string) => {
+export const handleGoogleUser = async (code: string, oauth2Client: OAuth2Client) => {
   // Check if user already exists by googleId
+
+  const response = await oauth2Client.getToken(code);
+  const tokens = response.tokens;
+  oauth2Client.setCredentials(tokens);
+
+  // Now that we have valid tokens, call the People API to get the user's profile
+  const people = google.people('v1');
+  const userProfile = await people.people.get({
+    auth: oauth2Client,
+    resourceName: 'people/me',
+    personFields: 'names,emailAddresses,photos',
+  });
+
+  // Extract the data we need from Google's response
+  // data is where Google puts the JSON payload returned by the API
+  const googleId = userProfile.data.resourceName?.split('/')?.pop() || '';
+  const email = userProfile.data.emailAddresses?.[0]?.value || '';
+  const name = userProfile.data.names?.[0]?.displayName || '';
+
   let user = await prisma.user.findUnique({
     where: { googleId },
   });
