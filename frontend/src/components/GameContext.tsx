@@ -25,6 +25,9 @@ type GameContextType = {
   saveCurrentPlayer: (name: string) => void;
 
   resetGame: () => void;
+
+  ready: boolean;
+  setReady: (r: boolean) => void;
 };
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -38,6 +41,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const [totalPlayers, setTotalPlayersState] = useState<number>(0);
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [ready, setReady] = useState<boolean>(false);
 
   const setTotalPlayers = (n: number) => {
     setTotalPlayersState(n);
@@ -96,6 +100,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         setCurrentPlayerIndex,
         saveCurrentPlayer,
         resetGame,
+        ready,
+        setReady,
       }}
     >
       {children}

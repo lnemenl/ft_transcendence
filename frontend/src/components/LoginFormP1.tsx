@@ -4,12 +4,15 @@ import { t } from "./lang";
 import { useLanguage } from "./useLanguage";
 import { useGame } from "./GameContext";
 
+type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
+
 type LoginFormProps = {
   onBack: () => void;
   onLogin: () => void;
+  onSelectMode: (view: View) => void;
 };
 
-export function LoginFormP1({ onBack, onLogin }: LoginFormProps) {
+export function LoginFormP1({ onBack, onLogin, onSelectMode }: LoginFormProps) {
   useLanguage();
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -25,7 +28,7 @@ export function LoginFormP1({ onBack, onLogin }: LoginFormProps) {
       onSuccess: () => {
         onLogin();
         saveCurrentPlayer(username);
-        onBack();
+        onSelectMode("choice");
         setUsername("");
         setEmail("");
         setPassword("");

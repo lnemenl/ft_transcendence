@@ -44,7 +44,7 @@ export function LoginRegister() {
             <Choice onSelectMode={handleSelectMode} />
           </div>
           <div className="w-[33.3333%] flex-shrink-0">
-            <LoginP1 onBack={handleBack} onLogin={login} />
+            <LoginP1 onBack={handleBack} onLogin={login} onSelectMode={handleSelectMode} />
           </div>
         </div>
         </>
@@ -57,7 +57,7 @@ export function LoginRegister() {
             <GameMode onSelectMode={handleSelectMode} />
           </div>
           <div className="w-[33.3333%] flex-shrink-0">
-            <Tournament onBack={handleBack} />
+            <Tournament onBack={handleBack} onSelectMode={handleSelectMode} />
           </div>
         </div>
       )}

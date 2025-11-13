@@ -17,7 +17,7 @@ export function TournamentLoginForm({ onBack, onSetStage }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const { saveCurrentPlayer, currentPlayerIndex, totalPlayers } = useGame();
+  const { saveCurrentPlayer, currentPlayerIndex, totalPlayers, setReady } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     handleRequest({
@@ -28,6 +28,8 @@ export function TournamentLoginForm({ onBack, onSetStage }: LoginFormProps) {
         saveCurrentPlayer(username);
         if (currentPlayerIndex === totalPlayers - 1) {
           onSetStage("ready");
+          setReady(true);
+
         }
         setUsername("");
         setEmail("");
