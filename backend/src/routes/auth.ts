@@ -158,166 +158,182 @@ const authRoutes = async (fastify: FastifyInstance) => {
   });
 
   fastify.get('/google/init', { schema: googleInitSchema }, async (request, reply) => {
-    const state = crypto.randomBytes(32).toString('hex');
+    try {
+      const state = crypto.randomBytes(32).toString('hex');
 
-    const { type } = request.query as { type: string };
-    let oauthClient: OAuth2Client;
+      const { type } = request.query as { type: string };
+      let oauthClient: OAuth2Client;
 
-    if (type === 'main') oauthClient = oauth2MainClient;
-    else if (type === 'player2') oauthClient = oauth2Player2Client;
-    else oauthClient = oauth2TournamentClient;
+      if (type === 'main') oauthClient = oauth2MainClient;
+      else if (type === 'player2') oauthClient = oauth2Player2Client;
+      else oauthClient = oauth2TournamentClient;
 
-    reply.setCookie('oauth_state', state, {
-      httpOnly: true,
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 10 * 60, // State expires in 10 minutes
-    });
+      reply.setCookie('oauth_state', state, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 10 * 60, // State expires in 10 minutes
+      });
 
-    const scopes = [
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email',
-    ];
+      const scopes = [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+      ];
 
-    const authorizationUrl = oauthClient.generateAuthUrl({
-      access_type: 'offline',
-      scope: scopes,
-      include_granted_scopes: true,
-      state: state,
-    });
+      const authorizationUrl = oauthClient.generateAuthUrl({
+        access_type: 'offline',
+        scope: scopes,
+        include_granted_scopes: true,
+        state: state,
+      });
 
-    return reply.redirect(authorizationUrl);
+      return reply.redirect(authorizationUrl);
+    } catch (_error) {
+      return reply.code(400).send({ error: 'Failed to initialize Google sign-in' });
+    }
   });
 
   fastify.get('/google/callback', async (request, reply) => {
-    // Parse the query parameters that Google sends back
-    const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
+    try {
+      // Parse the query parameters that Google sends back
+      const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
 
-    // Check if there was an error (user denied access)
-    if (error) {
-      return reply.send({ error: error });
+      // Check if there was an error (user denied access)
+      if (error) {
+        return reply.send({ error: error });
+      }
+
+      // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
+      const storedState = request.cookies.oauth_state;
+      if (state !== storedState) {
+        return reply.send({ error: 'State mismatch' });
+      }
+
+      // Exchange authorization code for refresh and access tokens
+      if (!code) {
+        return reply.send({ error: 'No code provided' });
+      }
+
+      // Get or create the user in our database
+      const user = await handleGoogleUser(code, oauth2MainClient);
+
+      // Create JWT access token (15 minutes)
+      const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
+
+      // Create opaque refresh token (14 days)
+      const refreshToken = await createRefreshToken(user.id);
+
+      reply.setCookie('accessToken', accessToken, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60, // 15 minutes
+      });
+
+      reply.setCookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 14 * 24 * 60 * 60, // 14 days
+      });
+
+      // Return user info with tokens
+      return reply.send({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        accessToken,
+        refreshToken,
+      });
+    } catch (_error) {
+      return reply.code(400).send({ error: 'Failed to complete Google sign-in' });
     }
-
-    // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
-    const storedState = request.cookies.oauth_state;
-    if (state !== storedState) {
-      return reply.send({ error: 'State mismatch' });
-    }
-
-    // Exchange authorization code for refresh and access tokens
-    if (!code) {
-      return reply.send({ error: 'No code provided' });
-    }
-
-    // Get or create the user in our database
-    const user = await handleGoogleUser(code, oauth2MainClient);
-
-    // Create JWT access token (15 minutes)
-    const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
-
-    // Create opaque refresh token (14 days)
-    const refreshToken = await createRefreshToken(user.id);
-
-    reply.setCookie('accessToken', accessToken, {
-      httpOnly: true,
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60, // 15 minutes
-    });
-
-    reply.setCookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 14 * 24 * 60 * 60, // 14 days
-    });
-
-    // Return user info with tokens
-    return reply.send({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      avatarUrl: user.avatarUrl,
-      accessToken,
-      refreshToken,
-    });
   });
 
   fastify.get('/google/callback/player2', async (request, reply) => {
-    // Parse the query parameters that Google sends back
-    const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
+    try {
+      // Parse the query parameters that Google sends back
+      const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
 
-    // Check if there was an error (user denied access)
-    if (error) {
-      return reply.send({ error: error });
+      // Check if there was an error (user denied access)
+      if (error) {
+        return reply.send({ error: error });
+      }
+
+      // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
+      const storedState = request.cookies.oauth_state;
+      if (state !== storedState) {
+        return reply.send({ error: 'State mismatch' });
+      }
+
+      // Exchange authorization code for refresh and access tokens
+      if (!code) {
+        return reply.send({ error: 'No code provided' });
+      }
+
+      // Get or create the user in our database
+      const user = await handleGoogleUser(code, oauth2Player2Client);
+
+      // Create JWT access token (15 minutes)
+      const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
+
+      reply.setCookie('player2_token', accessToken, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60, // 15 minutes
+      });
+
+      // Return user info with tokens
+      return reply.send({
+        id: user.id,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+        accessToken,
+      });
+    } catch (_error) {
+      return reply.code(400).send({ error: 'Failed to complete Google sign-in' });
     }
-
-    // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
-    const storedState = request.cookies.oauth_state;
-    if (state !== storedState) {
-      return reply.send({ error: 'State mismatch' });
-    }
-
-    // Exchange authorization code for refresh and access tokens
-    if (!code) {
-      return reply.send({ error: 'No code provided' });
-    }
-
-    // Get or create the user in our database
-    const user = await handleGoogleUser(code, oauth2Player2Client);
-
-    // Create JWT access token (15 minutes)
-    const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
-
-    reply.setCookie('player2_token', accessToken, {
-      httpOnly: true,
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60, // 15 minutes
-    });
-
-    // Return user info with tokens
-    return reply.send({
-      id: user.id,
-      username: user.username,
-      avatarUrl: user.avatarUrl,
-      accessToken,
-    });
   });
 
   fastify.get('/google/callback/tournament', async (request, reply) => {
-    // Parse the query parameters that Google sends back
-    const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
+    try {
+      // Parse the query parameters that Google sends back
+      const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
 
-    // Check if there was an error (user denied access)
-    if (error) {
-      return reply.send({ error: error });
+      // Check if there was an error (user denied access)
+      if (error) {
+        return reply.send({ error: error });
+      }
+
+      // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
+      const storedState = request.cookies.oauth_state;
+      if (state !== storedState) {
+        return reply.send({ error: 'State mismatch' });
+      }
+
+      // Exchange authorization code for refresh and access tokens
+      if (!code) {
+        return reply.send({ error: 'No code provided' });
+      }
+
+      // Get or create the user in our database
+      const user = await handleGoogleUser(code, oauth2TournamentClient);
+
+      // Return user info with tokens
+      return reply.send({
+        id: user.id,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+      });
+    } catch (_error) {
+      return reply.code(400).send({ error: 'Failed to complete Google sign-in' });
     }
-
-    // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
-    const storedState = request.cookies.oauth_state;
-    if (state !== storedState) {
-      return reply.send({ error: 'State mismatch' });
-    }
-
-    // Exchange authorization code for refresh and access tokens
-    if (!code) {
-      return reply.send({ error: 'No code provided' });
-    }
-
-    // Get or create the user in our database
-    const user = await handleGoogleUser(code, oauth2TournamentClient);
-
-    // Return user info with tokens
-    return reply.send({
-      id: user.id,
-      username: user.username,
-      avatarUrl: user.avatarUrl,
-    });
   });
 };
 

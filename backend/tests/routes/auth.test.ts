@@ -305,4 +305,87 @@ describe('Authentication System', () => {
       expect(setCookies).not.toMatch(/refreshToken=;/);
     });
   });
+
+  describe('Google OAuth', () => {
+    describe('GET /google/init', () => {
+      it('redirects to Google auth URL for main client', async () => {
+        const res = await request(app.server).get('/api/google/init?type=main').expect(302);
+
+        expect(res.headers.location).toContain('accounts.google.com');
+        expect(hasCookie(res, 'oauth_state')).toBe(true);
+      });
+
+      it('redirects for player2 type', async () => {
+        const res = await request(app.server).get('/api/google/init?type=player2').expect(302);
+
+        expect(res.headers.location).toContain('accounts.google.com');
+      });
+
+      it('redirects for tournament type', async () => {
+        const res = await request(app.server).get('/api/google/init?type=tournament').expect(302);
+
+        expect(res.headers.location).toContain('accounts.google.com');
+      });
+    });
+
+    describe('GET /google/callback', () => {
+      it('returns 400 on database error', async () => {
+        const findSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+
+        const res = await request(app.server)
+          .get('/api/google/callback?code=test_code&state=test_state')
+          .set('Cookie', 'oauth_state=test_state')
+          .expect(400);
+
+        expect(res.body.error).toBe('Failed to complete Google sign-in');
+        findSpy.mockRestore();
+      });
+
+      it('returns 400 on state mismatch', async () => {
+        const res = await request(app.server)
+          .get('/api/google/callback?code=test_code&state=wrong_state')
+          .set('Cookie', 'oauth_state=correct_state')
+          .expect(200);
+
+        expect(res.body.error).toBe('State mismatch');
+      });
+
+      it('returns 400 on missing code', async () => {
+        const res = await request(app.server)
+          .get('/api/google/callback?state=test_state')
+          .set('Cookie', 'oauth_state=test_state')
+          .expect(200);
+
+        expect(res.body.error).toBe('No code provided');
+      });
+    });
+
+    describe('GET /google/callback/player2', () => {
+      it('returns 400 on database error', async () => {
+        const findSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+
+        const res = await request(app.server)
+          .get('/api/google/callback/player2?code=test_code&state=test_state')
+          .set('Cookie', 'oauth_state=test_state')
+          .expect(400);
+
+        expect(res.body.error).toBe('Failed to complete Google sign-in');
+        findSpy.mockRestore();
+      });
+    });
+
+    describe('GET /google/callback/tournament', () => {
+      it('returns 400 on database error', async () => {
+        const findSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+
+        const res = await request(app.server)
+          .get('/api/google/callback/tournament?code=test_code&state=test_state')
+          .set('Cookie', 'oauth_state=test_state')
+          .expect(400);
+
+        expect(res.body.error).toBe('Failed to complete Google sign-in');
+        findSpy.mockRestore();
+      });
+    });
+  });
 });
