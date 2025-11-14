@@ -76,11 +76,20 @@ export const acceptFriend = async (userId: string, friendRequestId: string) => {
       data: { accepted: true },
     }),
 
-    // Add the friend
+    // Add the friend on sender side
     prisma.user.update({
       where: { id: friendRequest.senderId },
       data: {
         friends: { connect: { id: friendRequest.receiverId } },
+      },
+      select: { id: true, username: true, avatarUrl: true },
+    }),
+
+    // Add the friend on receiver side
+    prisma.user.update({
+      where: { id: friendRequest.receiverId },
+      data: {
+        friends: { connect: { id: friendRequest.senderId } },
       },
       select: { id: true, username: true, avatarUrl: true },
     }),
@@ -93,4 +102,52 @@ export const deleteRequest = async (id: string) => {
   const friendRequest = await prisma.friendRequest.delete({ where: { id } });
 
   return friendRequest;
+};
+
+export const deleteFriend = async (userId: string, friendId: string) => {
+  const friendRequest = await prisma.friendRequest.findFirst({
+    where: {
+      OR: [
+        { senderId: userId, receiverId: friendId },
+        { senderId: friendId, receiverId: userId },
+      ],
+    },
+  });
+
+  if (!friendRequest) throw new Error('Friend record not found');
+
+  const [_deletedUserFriend, deletedFriend, _deletedFriendRequest] = await prisma.$transaction([
+    // Deleting friend relation from requesting user side
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        friends: { disconnect: { id: friendId } },
+        friendsOf: { disconnect: { id: userId } },
+      },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+      },
+    }),
+    // Deleting friend from friend user side
+    prisma.user.update({
+      where: { id: friendId },
+      data: {
+        friends: { disconnect: { id: userId } },
+        friendsOf: { disconnect: { id: friendId } },
+      },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+      },
+    }),
+    // Deleting friend request
+    prisma.friendRequest.delete({
+      where: { id: friendRequest.id },
+    }),
+  ]);
+
+  return deletedFriend;
 };

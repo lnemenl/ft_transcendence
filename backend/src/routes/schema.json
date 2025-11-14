@@ -81,7 +81,18 @@
           "username": { "type": "string" },
           "avatarUrl": { "type": ["string", "null"], "format": "uri" },
           "isTwoFactorEnabled": { "type": "boolean" },
-          "createdAt": { "type": "string", "format": "date-time" }
+          "createdAt": { "type": "string", "format": "date-time" },
+          "friends": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+              }
+            }
+          }
         }
       },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } },
