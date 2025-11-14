@@ -1,0 +1,153 @@
+import { prisma } from '../utils/prisma';
+
+export const createFriendRequest = async (senderId: string, receiverId: string) => {
+  const exists = await prisma.friendRequest.findFirst({
+    where: {
+      OR: [
+        { senderId, receiverId },
+        { senderId: receiverId, receiverId: senderId },
+      ],
+    },
+  });
+
+  if (exists) throw new Error('Friend request already exists');
+
+  const friendRequest = await prisma.friendRequest.create({
+    data: {
+      sender: { connect: { id: senderId } },
+      receiver: { connect: { id: receiverId } },
+    },
+    select: {
+      id: true,
+      receiver: { select: { id: true, username: true, avatarUrl: true } },
+    },
+  });
+
+  return friendRequest;
+};
+
+export const getUserFriendRequests = async (userId: string) => {
+  const friendRequests = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      sentFriendRequests: {
+        where: { accepted: false },
+        select: {
+          id: true,
+          receiver: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+      receivedFriendRequests: {
+        where: { accepted: false },
+        select: {
+          id: true,
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return friendRequests;
+};
+
+export const acceptFriend = async (userId: string, friendRequestId: string) => {
+  const friendRequest = await prisma.friendRequest.findUnique({ where: { id: friendRequestId } });
+
+  if (!friendRequest) throw new Error('Invalid friend request');
+
+  if (friendRequest.accepted) throw new Error('Friend request already accepted');
+
+  if (friendRequest.senderId === userId) throw new Error('User cannot accept friend request');
+
+  const [_updatedRequest, friend] = await prisma.$transaction([
+    // Update the friend request status
+    prisma.friendRequest.update({
+      where: { id: friendRequest.id },
+      data: { accepted: true },
+    }),
+
+    // Add the friend on sender side
+    prisma.user.update({
+      where: { id: friendRequest.senderId },
+      data: {
+        friends: { connect: { id: friendRequest.receiverId } },
+      },
+      select: { id: true, username: true, avatarUrl: true },
+    }),
+
+    // Add the friend on receiver side
+    prisma.user.update({
+      where: { id: friendRequest.receiverId },
+      data: {
+        friends: { connect: { id: friendRequest.senderId } },
+      },
+      select: { id: true, username: true, avatarUrl: true },
+    }),
+  ]);
+
+  return friend;
+};
+
+export const deleteRequest = async (id: string) => {
+  const friendRequest = await prisma.friendRequest.delete({ where: { id } });
+
+  return friendRequest;
+};
+
+export const deleteFriend = async (userId: string, friendId: string) => {
+  const friendRequest = await prisma.friendRequest.findFirst({
+    where: {
+      OR: [
+        { senderId: userId, receiverId: friendId },
+        { senderId: friendId, receiverId: userId },
+      ],
+    },
+  });
+
+  if (!friendRequest) throw new Error('Friend record not found');
+
+  const [_deletedUserFriend, deletedFriend, _deletedFriendRequest] = await prisma.$transaction([
+    // Deleting friend relation from requesting user side
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        friends: { disconnect: { id: friendId } },
+      },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+      },
+    }),
+    // Deleting friend from friend user side
+    prisma.user.update({
+      where: { id: friendId },
+      data: {
+        friends: { disconnect: { id: userId } },
+      },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+      },
+    }),
+    // Deleting friend request
+    prisma.friendRequest.delete({
+      where: { id: friendRequest.id },
+    }),
+  ]);
+
+  return deletedFriend;
+};

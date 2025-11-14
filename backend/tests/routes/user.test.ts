@@ -1,8 +1,8 @@
 import request from 'supertest';
-import { describe, it, expect, beforeEach } from '@jest/globals';
-import { app } from '../setup';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { app, prisma } from '../setup';
 import { testUsers } from '../fixtures';
-import { cleanDatabase, createAuthenticatedUser } from '../helpers';
+import { cleanDatabase, createAuthenticatedUser, getCookies } from '../helpers';
 
 beforeEach(cleanDatabase);
 
@@ -10,15 +10,35 @@ describe('User Profile Management', () => {
   // GET CURRENT USER
   describe('GET /api/users/me', () => {
     it('returns current user profile when authenticated', async () => {
-      const { cookies, user } = await createAuthenticatedUser(testUsers.alice);
+      const { user: bob } = await createAuthenticatedUser(testUsers.bob);
+      const { user: alice, cookies } = await createAuthenticatedUser(testUsers.alice);
 
-      const res = await request(app.server).get('/api/users/me').set('Cookie', cookies).expect(200);
+      const friendRequest = await request(app.server)
+        .post(`/api/friend-request/${bob.id}`)
+        .set('Cookie', cookies)
+        .expect(201);
 
-      expect(res.body).toMatchObject({
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      });
+      expect(friendRequest.body).toHaveProperty('id');
+      const friendRequestId = friendRequest.body.id;
+      const loginBob = await request(app.server).post('/api/login').send(testUsers.bob).expect(200);
+      const authCookies = getCookies(loginBob);
+      await request(app.server).patch(`/api/friend-request/${friendRequestId}`).set('Cookie', authCookies).expect(200);
+
+      const res = await request(app.server).get('/api/users/me').set('Cookie', authCookies).expect(200);
+
+      expect(res.body).toBeDefined();
+      expect(res.body).toHaveProperty('id', bob.id);
+      expect(res.body).toHaveProperty('email', testUsers.bob.email);
+      expect(res.body).toHaveProperty('username', testUsers.bob.username);
+      expect(res.body).toHaveProperty('isTwoFactorEnabled', false);
+      expect(res.body).toHaveProperty('createdAt');
+      expect(res.body).toHaveProperty('friends');
+      expect(Array.isArray(res.body.friends)).toBe(true);
+      expect(res.body.friends[0]).toHaveProperty('id', alice.id);
+      expect(res.body.friends[0]).toHaveProperty('username', alice.username);
+      expect(res.body.friends[0]).toHaveProperty('avatarUrl');
+      expect(res.body).not.toHaveProperty('password');
+      expect(res.body).not.toHaveProperty('twoFactorSecret');
     });
 
     it('rejects request without authentication', async () => {
@@ -108,6 +128,39 @@ describe('User Profile Management', () => {
     });
   });
 
+  describe('GET /api/users/', () => {
+    it('returns public profile of all registered users', async () => {
+      await request(app.server).post('/api/register').send(testUsers.anna).expect(201);
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+      await request(app.server).post('/api/register').send(testUsers.charlie).expect(201);
+      const { user, cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const res = await request(app.server).get('/api/users/').set('Cookie', cookies).expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      for (const profile of res.body) {
+        expect(profile).toHaveProperty('id');
+        expect(profile.id).not.toBe(user.id);
+        expect(profile).toHaveProperty('username');
+        expect(profile.username).not.toBe(user.username);
+        expect(profile).toHaveProperty('avatarUrl');
+        expect(profile).not.toHaveProperty('email');
+        expect(profile).not.toHaveProperty('password');
+      }
+    });
+
+    it('Internal server error for database call failure', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      jest.spyOn(prisma.user, 'findMany').mockRejectedValue(new Error('Internal server error'));
+
+      const res = await request(app.server).get('/api/users/').set('Cookie', cookies);
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+    });
+  });
+
   // VIEW OTHER USER
   describe('GET /api/users/:id', () => {
     it('returns public profile of another user', async () => {
@@ -132,6 +185,54 @@ describe('User Profile Management', () => {
 
       const nonExistentId = 'clxkq0000000008l9d9e6g3h1';
       await request(app.server).get(`/api/users/${nonExistentId}`).set('Cookie', cookies).expect(404);
+    });
+  });
+
+  describe('DELETE /api/users/me/friends/:id', () => {
+    let authCookies: string[];
+    let aliceId: string;
+    let bobId: string;
+
+    it('Deleting a valid user from friends should pass', async () => {
+      const { user: bob } = await createAuthenticatedUser(testUsers.bob);
+      bobId = bob.id;
+      const { user: alice, cookies } = await createAuthenticatedUser(testUsers.alice);
+      aliceId = alice.id;
+      authCookies = cookies;
+
+      const friendRequest = await request(app.server)
+        .post(`/api/friend-request/${bobId}`)
+        .set('Cookie', authCookies)
+        .expect(201);
+
+      expect(friendRequest.body).toHaveProperty('id');
+      const friendRequestId = friendRequest.body.id;
+      const loginBob = await request(app.server).post('/api/login').send(testUsers.bob).expect(200);
+      authCookies = getCookies(loginBob);
+      await request(app.server).patch(`/api/friend-request/${friendRequestId}`).set('Cookie', authCookies).expect(200);
+
+      const res = await request(app.server).delete(`/api/users/me/friends/${aliceId}`).set('Cookie', authCookies);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('id', aliceId);
+      expect(res.body).toHaveProperty('username', testUsers.alice.username);
+      expect(res.body).toHaveProperty('avatarUrl');
+    });
+
+    it('Trying to delete a non existing friend should fail', async () => {
+      const res = await request(app.server).delete(`/api/users/me/friends/${aliceId}`).set('Cookie', authCookies);
+
+      expect(res.status).toBe(404);
+      expect(res.body).toHaveProperty('error', 'Friend record not found');
+    });
+
+    it('Status should be 500 if database call is protected', async () => {
+      jest.spyOn(prisma.friendRequest, 'findFirst').mockRejectedValue('Internal server error');
+
+      const res = await request(app.server).delete(`/api/users/me/friends/${aliceId}`).set('Cookie', authCookies);
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
     });
   });
 });
