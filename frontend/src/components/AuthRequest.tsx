@@ -23,9 +23,9 @@ export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }:
     });
 
     if (res.ok) {
-      const result = await res.json();
-      console.log("SUCCESS!", result);
-      onSuccess?.(result);
+      const response = await res.json();
+      console.log("SUCCESS!", response);
+      onSuccess?.(response);
     } else {
       const errorData = await res.json();
       console.log("Request failed:", res.status, errorData);

@@ -4,19 +4,19 @@ import { t } from "./lang";
 import { useLanguage } from "./useLanguage";
 import { useGame } from "./GameContext";
 
-type SignUpFormProps = {
+type LoginFormProps = {
   onBack: () => void;
-  setMode: () => void;
   onLogin: () => void;
+  setMode: () => void;
   loginEndpoint: string;
 };
 
-export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFormProps) {
+export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginFormProps) {
   useLanguage();
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers, players } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -34,42 +34,34 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
 
     handleRequest({
       e,
-      endpoint: "register",
+      endpoint: loginEndpoint,
       data: { username, email, password },
-      onSuccess: () => {
-        handleRequest({
-          e,
-          endpoint: loginEndpoint,
-          data: { username, email, password },
-          onSuccess: (response) => {
-            if (currentPlayerIndex === 0) {
-              onLogin();
-            }
-            const id = response.id;
-            saveCurrentPlayer(username, id);
-            if (currentPlayerIndex === totalPlayers - 1) {
-              setReady(true);
-              setMode();
-            }
-            else {
-              onBack();
-            }
-            setUsername("");
-            setEmail("");
-            setPassword("");
-          },
-          setError,
-        })
+      onSuccess: (response) => {
+        if (currentPlayerIndex === 0) {
+          onLogin();
+        }
+        const id = response.id;
+        saveCurrentPlayer(username, id);
+        if (currentPlayerIndex === totalPlayers - 1) {
+            setReady(true);
+            setMode();
+        }
+        else {
+          onBack();
+        }
+        setUsername("");
+        setEmail("");
+        setPassword("");
       },
       setError,
-    })
+    });
   };
-
+  
   return (
-  <div className="min-w-90">
+  <div className="min-w-90 h-full">
     <form onSubmit={handleSubmit} className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
         <div className="mb-4">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username-p1">
+          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username">
             {t().username}
           </label>
           <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={username} type="text" placeholder={t().username} required/>
@@ -81,7 +73,7 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
           <input onChange={(e) => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={email} type="email" placeholder={t().email} required />
         </div>
         <div className="">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password-p1">
+          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password">
             {t().password}
           </label>
           <input onChange={(e) => setPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={password} type="password" placeholder={t().password} required/>
@@ -91,12 +83,12 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
             {error && (<p className="text-sm text-red-600 mt-2">{error}</p>)}
           </div>
           <button type="submit" className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-4 py-2 text-white mb-4">
-            {t().signUp}
+            {t().logIn}
           </button>
           <button type="button" onClick={onBack} className="text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700">
             {t().back}
           </button>
-        </div>
+      </div>
       </form>
   </div>
   );

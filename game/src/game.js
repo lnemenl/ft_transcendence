@@ -88,8 +88,15 @@ function collide(ball, p) {
 }
 
 const keys_down = new Set();
-document.addEventListener("keydown", (e) => keys_down.add(e.code));
-document.addEventListener("keyup", (e) => keys_down.delete(e.code));
+const handleKeyDown = (e) => keys_down.add(e.code);
+const handleKeyUp = (e) => keys_down.delete(e.code);
+document.addEventListener("keydown", handleKeyDown);
+document.addEventListener("keyup", handleKeyUp);
+
+function cleanup() {
+    document.removeEventListener("keydown", handleKeyDown);
+    document.removeEventListener("keyup", handleKeyUp);
+}
 
 function movePlayers(G, delta_ms, keys_down) {
     if (keys_down.has("KeyW") && G.p1.z > -5) {
@@ -196,7 +203,13 @@ function onThree(G) {
 }
 
 const updateUI = createUI(canvas, STATES);
+
 function loop(current_time_ms) {
+    if (!document.getElementById("canvas")) {
+        cleanup();
+        return;
+    }
+
     const delta_ms = (current_time_ms - g_LAST_TIME_MS) / 1000;
     g_LAST_TIME_MS = current_time_ms;
     update(G, delta_ms, keys_down);
