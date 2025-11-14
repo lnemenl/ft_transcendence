@@ -25,9 +25,9 @@ export const TournamentSize: React.FC<Props> = ({ onBack, onSetStage }) => {
             <label className="block text-2xl font-medium mb-3 text-[#2c3781] dark:text-[#cad3f5]">
               Tournament size
             </label>
-            <select className="w-full border text-[#2c3781] dark:text-[#cad3f5] rounded-lg px-3 py-2 focus:outline-none focus:ring" value={selectedSize} onChange={(e) => setSelectedSize(Number(e.target.value))}>
+            <select className="w-full border text-[#2c3781] dark:text-[#cad3f5] rounded-lg px-3 py-2 focus:outline-none focus:ring" value={selectedSize} onChange={(e) => setSelectedSize(Number(e.target.value))} required>
+              <option value="" hidden>Choose size</option>
               <option value={4}>4 players</option>
-              <option value={8}>8 players</option>
             </select>
           </div>
           <button type="submit" className="w-full py-2 rounded-xl font-semibold bg-[#6688cc] hover:bg-[#24273a] text-white hover:opacity-90">
