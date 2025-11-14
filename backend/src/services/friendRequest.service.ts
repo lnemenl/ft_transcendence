@@ -31,6 +31,7 @@ export const getUserFriendRequests = async (userId: string) => {
     where: { id: userId },
     select: {
       sentFriendRequests: {
+        where: { accepted: false },
         select: {
           id: true,
           receiver: {
@@ -43,6 +44,7 @@ export const getUserFriendRequests = async (userId: string) => {
         },
       },
       receivedFriendRequests: {
+        where: { accepted: false },
         select: {
           id: true,
           sender: {
@@ -122,7 +124,6 @@ export const deleteFriend = async (userId: string, friendId: string) => {
       where: { id: userId },
       data: {
         friends: { disconnect: { id: friendId } },
-        friendsOf: { disconnect: { id: userId } },
       },
       select: {
         id: true,
@@ -135,7 +136,6 @@ export const deleteFriend = async (userId: string, friendId: string) => {
       where: { id: friendId },
       data: {
         friends: { disconnect: { id: userId } },
-        friendsOf: { disconnect: { id: friendId } },
       },
       select: {
         id: true,
