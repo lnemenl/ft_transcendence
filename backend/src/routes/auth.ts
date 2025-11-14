@@ -190,7 +190,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
 
       return reply.redirect(authorizationUrl);
     } catch (_error) {
-      return reply.code(400).send({ error: 'Failed to initialize Google sign-in' });
+      fastify.log.error(_error);
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -201,18 +202,18 @@ const authRoutes = async (fastify: FastifyInstance) => {
 
       // Check if there was an error (user denied access)
       if (error) {
-        return reply.send({ error: error });
+        return reply.code(400).send({ error: error });
       }
 
       // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
       const storedState = request.cookies.oauth_state;
       if (state !== storedState) {
-        return reply.send({ error: 'State mismatch' });
+        return reply.code(400).send({ error: 'State mismatch' });
       }
 
       // Exchange authorization code for refresh and access tokens
       if (!code) {
-        return reply.send({ error: 'No code provided' });
+        return reply.code(400).send({ error: 'No code provided' });
       }
 
       // Get or create the user in our database
@@ -250,7 +251,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
         refreshToken,
       });
     } catch (_error) {
-      return reply.code(400).send({ error: 'Failed to complete Google sign-in' });
+      fastify.log.error(_error);
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -261,18 +263,18 @@ const authRoutes = async (fastify: FastifyInstance) => {
 
       // Check if there was an error (user denied access)
       if (error) {
-        return reply.send({ error: error });
+        return reply.code(400).send({ error: error });
       }
 
       // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
       const storedState = request.cookies.oauth_state;
       if (state !== storedState) {
-        return reply.send({ error: 'State mismatch' });
+        return reply.code(400).send({ error: 'State mismatch' });
       }
 
       // Exchange authorization code for refresh and access tokens
       if (!code) {
-        return reply.send({ error: 'No code provided' });
+        return reply.code(400).send({ error: 'No code provided' });
       }
 
       // Get or create the user in our database
@@ -297,7 +299,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
         accessToken,
       });
     } catch (_error) {
-      return reply.code(400).send({ error: 'Failed to complete Google sign-in' });
+      fastify.log.error(_error);
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 
@@ -308,18 +311,18 @@ const authRoutes = async (fastify: FastifyInstance) => {
 
       // Check if there was an error (user denied access)
       if (error) {
-        return reply.send({ error: error });
+        return reply.code(400).send({ error: error });
       }
 
       // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
       const storedState = request.cookies.oauth_state;
       if (state !== storedState) {
-        return reply.send({ error: 'State mismatch' });
+        return reply.code(400).send({ error: 'State mismatch' });
       }
 
       // Exchange authorization code for refresh and access tokens
       if (!code) {
-        return reply.send({ error: 'No code provided' });
+        return reply.code(400).send({ error: 'No code provided' });
       }
 
       // Get or create the user in our database
@@ -332,7 +335,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
         avatarUrl: user.avatarUrl,
       });
     } catch (_error) {
-      return reply.code(400).send({ error: 'Failed to complete Google sign-in' });
+      fastify.log.error(_error);
+      return reply.code(500).send({ error: 'Internal server error' });
     }
   });
 };

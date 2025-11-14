@@ -399,6 +399,13 @@ Redirects to Google's authorization endpoint with authorization URL containing:
 - OAuth consent screen (if user hasn't authorized before)
 - State parameter for CSRF protection (stored in httpOnly cookie)
 
+`500 Internal Server Error`
+```json
+{
+  "error": "Internal server error"
+}
+```
+
 **Notes**
 - Sets an `oauth_state` cookie that expires in 10 minutes for CSRF protection
 - The returned authorization URL redirects user to Google's login/consent page
@@ -430,7 +437,7 @@ Sets HTTP-only cookies:
 - `accessToken`: Expires in 15 minutes
 - `refreshToken`: Expires in 14 days
 
-`400 Bad Request`
+`400 Bad Request` (on validation failure)
 ```json
 {
   "error": "State mismatch"
@@ -442,11 +449,17 @@ OR
   "error": "No code provided"
 }
 ```
-
-`401 Unauthorized`
+OR
 ```json
 {
-  "error": "User denied access"
+  "error": "access_denied"
+}
+```
+
+`500 Internal Server Error` (on server error during Google exchange or token creation)
+```json
+{
+  "error": "Internal server error"
 }
 ```
 
@@ -478,7 +491,7 @@ Google OAuth callback for player 2 authentication.
 Sets HTTP-only cookie:
 - `player2_token`: Expires in 15 minutes
 
-`400 Bad Request`
+`400 Bad Request` (on validation failure)
 ```json
 {
   "error": "State mismatch"
@@ -490,11 +503,17 @@ OR
   "error": "No code provided"
 }
 ```
-
-`401 Unauthorized`
+OR
 ```json
 {
-  "error": "User denied access"
+  "error": "access_denied"
+}
+```
+
+`500 Internal Server Error` (on server error during Google exchange or token creation)
+```json
+{
+  "error": "Internal server error"
 }
 ```
 
@@ -524,7 +543,7 @@ Google OAuth callback for tournament mode authentication.
 
 No tokens are set for tournament mode.
 
-`400 Bad Request`
+`400 Bad Request` (on validation failure)
 ```json
 {
   "error": "State mismatch"
@@ -536,11 +555,17 @@ OR
   "error": "No code provided"
 }
 ```
-
-`401 Unauthorized`
+OR
 ```json
 {
-  "error": "User denied access"
+  "error": "access_denied"
+}
+```
+
+`500 Internal Server Error` (on server error during Google exchange)
+```json
+{
+  "error": "Internal server error"
 }
 ```
 
