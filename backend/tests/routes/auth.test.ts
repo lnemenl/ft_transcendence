@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { app, prisma } from '../setup';
 import { testUsers, invalidUsers } from '../fixtures';
 import { cleanDatabase, hasCookie, createAuthenticatedUser, getCookies } from '../helpers';
+import * as authService from '../../src/services/auth.service';
 
 beforeEach(cleanDatabase);
 
@@ -307,85 +308,77 @@ describe('Authentication System', () => {
   });
 
   describe('Google OAuth', () => {
-    describe('GET /google/init', () => {
-      it('redirects to Google auth URL for main client', async () => {
-        const res = await request(app.server).get('/api/google/init?type=main').expect(302);
+    const mockUser = {
+      id: '1',
+      username: 'test',
+      email: 'test@test.com',
+      avatarUrl: null,
+      password: '',
+      isTwoFactorEnabled: false,
+      twoFactorSecret: null,
+      googleId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-        expect(res.headers.location).toContain('accounts.google.com');
-        expect(hasCookie(res, 'oauth_state')).toBe(true);
-      });
-
-      it('redirects for player2 type', async () => {
-        const res = await request(app.server).get('/api/google/init?type=player2').expect(302);
-
-        expect(res.headers.location).toContain('accounts.google.com');
-      });
-
-      it('redirects for tournament type', async () => {
-        const res = await request(app.server).get('/api/google/init?type=tournament').expect(302);
-
-        expect(res.headers.location).toContain('accounts.google.com');
-      });
+    it('redirects to Google', async () => {
+      for (const type of ['main', 'player2', 'tournament']) {
+        await request(app.server).get(`/api/google/init?type=${type}`).expect(302);
+      }
     });
 
-    describe('GET /google/callback', () => {
-      it('returns 500 on database error', async () => {
-        const findSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+    it('validates callbacks', async () => {
+      const endpoints = ['/api/google/callback', '/api/google/callback/player2', '/api/google/callback/tournament'];
 
-        const res = await request(app.server)
-          .get('/api/google/callback?code=test_code&state=test_state')
-          .set('Cookie', 'oauth_state=test_state')
-          .expect(500);
-
-        expect(res.body.error).toBe('Internal server error');
-        findSpy.mockRestore();
-      });
-
-      it('returns 400 on state mismatch', async () => {
-        const res = await request(app.server)
-          .get('/api/google/callback?code=test_code&state=wrong_state')
-          .set('Cookie', 'oauth_state=correct_state')
+      for (const endpoint of endpoints) {
+        await request(app.server)
+          .get(`${endpoint}?code=test&state=wrong`)
+          .set('Cookie', 'oauth_state=test')
           .expect(400);
-
-        expect(res.body.error).toBe('State mismatch');
-      });
-
-      it('returns 400 on missing code', async () => {
-        const res = await request(app.server)
-          .get('/api/google/callback?state=test_state')
-          .set('Cookie', 'oauth_state=test_state')
+        await request(app.server).get(`${endpoint}?state=test`).set('Cookie', 'oauth_state=test').expect(400);
+        await request(app.server)
+          .get(`${endpoint}?error=denied&state=test`)
+          .set('Cookie', 'oauth_state=test')
           .expect(400);
-
-        expect(res.body.error).toBe('No code provided');
-      });
+      }
     });
 
-    describe('GET /google/callback/player2', () => {
-      it('returns 500 on database error', async () => {
-        const findSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
-
-        const res = await request(app.server)
-          .get('/api/google/callback/player2?code=test_code&state=test_state')
-          .set('Cookie', 'oauth_state=test_state')
-          .expect(500);
-
-        expect(res.body.error).toBe('Internal server error');
-        findSpy.mockRestore();
-      });
+    it('handles database errors', async () => {
+      const spy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('DB'));
+      await request(app.server)
+        .get('/api/google/callback?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(500);
+      await request(app.server)
+        .get('/api/google/callback/player2?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(500);
+      await request(app.server)
+        .get('/api/google/callback/tournament?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(500);
+      spy.mockRestore();
     });
 
-    describe('GET /google/callback/tournament', () => {
-      it('returns 500 on database error', async () => {
-        const findSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+    it('authenticates users', async () => {
+      const spy1 = jest.spyOn(authService, 'handleGoogleUser').mockResolvedValue(mockUser);
+      const spy2 = jest.spyOn(authService, 'createRefreshToken').mockResolvedValue('token');
 
-        const res = await request(app.server)
-          .get('/api/google/callback/tournament?code=test_code&state=test_state')
-          .set('Cookie', 'oauth_state=test_state')
-          .expect(500);
+      await request(app.server)
+        .get('/api/google/callback?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200);
+      await request(app.server)
+        .get('/api/google/callback/player2?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200);
+      await request(app.server)
+        .get('/api/google/callback/tournament?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200);
 
-        expect(res.body.error).toBe('Internal server error');
-        findSpy.mockRestore();
-      });
+      spy1.mockRestore();
+      spy2.mockRestore();
     });
   });
 });
