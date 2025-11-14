@@ -7,12 +7,11 @@ export function LanguageSelect() {
     };
     let locale = window.localStorage.getItem('ft_transcendence:lang');
     return (
-        <div className="m-5 z-50">
+        <div className="">
             <select
                 defaultValue={locale}
                 onChange={lang}
-                className="grid place-items-center h-11 w-9 hover:scale-150 transition text-xl cursor-pointer appearance-none border-none focus:outline-none"
-            >
+                className="appearance-none text-xl hover:scale-150 border-none focus:outline-none">
                 <option value="en">🇬🇧</option>
                 <option value="fi">🇫🇮</option>
                 <option value="fr">🇫🇷</option>
