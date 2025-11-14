@@ -150,6 +150,9 @@ const authRoutes = async (fastify: FastifyInstance) => {
       reply.clearCookie('refreshToken', { path: '/' });
     }
 
+    const player2_token = request.cookies?.player2_token;
+    if (player2_token) reply.clearCookie('player2_token', { path: '/' });
+
     reply.clearCookie('accessToken', { path: '/' });
     return reply.status(200).send({ ok: true });
   });
