@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../utils/prisma';
-import { updateUserSchema, getUserSchema, getMeSchema } from './schema.json';
+import { updateUserSchema, getAllUsersSchema, getUserSchema, getMeSchema } from './schema.json';
+import { deleteFriend } from '../services/friendRequest.service';
 
 const userRoutes = async (fastify: FastifyInstance) => {
   fastify.get(
@@ -19,6 +20,15 @@ const userRoutes = async (fastify: FastifyInstance) => {
             email: true,
             username: true,
             avatarUrl: true,
+            isTwoFactorEnabled: true,
+            createdAt: true,
+            friends: {
+              select: {
+                id: true,
+                username: true,
+                avatarUrl: true,
+              },
+            },
           },
         });
 
@@ -64,6 +74,32 @@ const userRoutes = async (fastify: FastifyInstance) => {
   );
 
   fastify.get(
+    '/',
+    {
+      schema: getAllUsersSchema,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const userId = (request.user as { id: string }).id;
+        const users = await prisma.user.findMany({
+          where: { id: { not: userId } },
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        });
+
+        return reply.status(200).send(users);
+      } catch (err) {
+        fastify.log.error(err);
+        return reply.status(500).send({ error: 'Internal server error' });
+      }
+    },
+  );
+
+  fastify.get(
     '/:id',
     {
       schema: getUserSchema,
@@ -85,6 +121,32 @@ const userRoutes = async (fastify: FastifyInstance) => {
         return reply.status(200).send(user);
       } catch (err) {
         fastify.log.error(err);
+        return reply.status(500).send({ error: 'Internal server error' });
+      }
+    },
+  );
+
+  fastify.delete(
+    '/me/friends/:id',
+    {
+      schema: getUserSchema,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const userId = (request.user as { id: string }).id;
+        const friendId = (request.params as { id: string }).id;
+
+        const deletedFriend = await deleteFriend(userId, friendId);
+
+        return reply.status(200).send(deletedFriend);
+      } catch (err) {
+        fastify.log.error(err);
+
+        if ((err as Error).message === 'Friend record not found') {
+          return reply.status(404).send({ error: (err as Error).message });
+        }
+
         return reply.status(500).send({ error: 'Internal server error' });
       }
     },

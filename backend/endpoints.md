@@ -681,7 +681,14 @@ At least one field required:
   "id": "string",
   "email": "string",
   "username": "string",
-  "avatarUrl": "string | null"
+  "avatarUrl": "string | null",
+  "friends": [
+    {
+      "id": "string",
+      "username": "string",
+      "avatarUrl": "string | null"
+    }
+  ]
 }
 ```
 
@@ -744,6 +751,202 @@ Get a user's public profile by ID.
 ```json
 {
   "error": "Internal server error"
+}
+```
+
+### DELETE /api/users/me/friends/:id
+
+Delete a friend by ID
+
+**Authentication**: Required
+
+**URL Parameters**
+- `id`: Friends user ID (string)
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "username": "string",
+  "avatarUrl": "string | null"
+}
+```
+- The user returned is the information about the deleted friend
+
+`404 Not Found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### POST /api/friend-request/:id
+
+Send a friend request to another user by ID
+
+**Authentication**: Required
+
+**URL Parameters**
+- `id`: User ID to whom the friend request will be sent to
+
+**Responses**
+
+`201 Created`
+```json
+{
+  "id": "string",
+  "receiver": {
+    "id": "string",
+    "username": "string",
+    "avatarUrl": "string | null"
+  }
+}
+```
+
+`400 Bad Request`
+```json
+{
+  "error": "string"
+}
+```
+
+`404 Not Found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### GET /api/friend-request/me
+
+Get all friend requests sent and received
+
+**Authentication**: Required
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "sentFriendRequests": [
+    {
+      "id": "string",
+      "receiver": {
+        "id": "string",
+        "username": "string"
+        "avatarUrl": "string | null"
+      }
+    },
+    { ... },
+  ],
+  "receivedFriendRequests": [
+    {
+      "id": "string",
+      "sender": {
+        "id": "string",
+        "username": "string"
+        "avatarUrl": "string | null"
+      }
+    },
+    { ... },
+  ]
+}
+```
+
+`500 Internal server error`
+```json
+{
+  "error": "string"
+}
+```
+
+### PATCH /api/friend-request/:id
+
+Accept the friend request received by ID
+
+**Authentication**: Required
+
+**URL Parameters**
+- `id`: The friend request ID
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "username": "string",
+  "avatarUrl": "string"
+}
+```
+- The sender of the friend request is returned
+
+`400 Bad Request`
+```json
+{
+  "error": "string"
+}
+```
+
+`404 Not Found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "string"
+}
+```
+
+### DELETE /api/friend-request/:id
+
+Decline the friend request received or delete friend request sent by ID
+
+**Authentication**: Required
+
+**URL Parameters**
+- `id`: The friend request ID
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "ok": "boolean"
+}
+```
+
+`404 Not Found`
+```json
+{
+  "error": "string"
+}
+```
+
+`500 Internal Server Error`
+```json
+{
+  "error": "string"
 }
 ```
 

@@ -69,34 +69,6 @@
     }
   },
 
-  "getProfileSchema": {
-    "tags": ["User"],
-    "response": {
-      "200": {
-        "description": "Successful response with user profile",
-        "type": "object",
-        "properties": {
-          "user": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string" },
-              "email": { "type": "string", "format": "email" },
-              "username": { "type": "string" },
-              "isTwoFactorEnabled": { "type": "boolean" },
-              "createdAt": { "type": "string", "format": "date-time" },
-              "updatedAt": { "type": "string", "format": "date-time" }
-            },
-            "required": ["id", "email", "username", "isTwoFactorEnabled", "createdAt", "updatedAt"]
-          }
-        },
-        "required": ["user"]
-      },
-      "401": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
-      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
-    }
-  },
-
   "getMeSchema": {
     "description": "Return the currently authenticated user's profile",
     "tags": ["User"],
@@ -107,11 +79,43 @@
           "id": { "type": "string" },
           "email": { "type": "string", "format": "email" },
           "username": { "type": "string" },
-          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" },
+          "isTwoFactorEnabled": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "friends": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "username": { "type": "string" },
+                "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+              }
+            }
+          }
         }
       },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } },
       "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "getAllUsersSchema": {
+    "description": "Fetch a public user profiles",
+    "tags": ["User"],
+    "response": {
+      "200": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "username": { "type": "string" },
+            "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+          }
+        }
+      },
       "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
   },
@@ -163,6 +167,127 @@
         }
       },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "newFriendRequest": {
+    "description": "Send a friend request to another user",
+    "tags": ["FriendRequest"],
+    "params": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "response": {
+      "201": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "receiver": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+            }
+          }
+        }
+      },
+      "400": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "getFriendRequests": {
+    "description": "Get my friend requests",
+    "tags": ["FriendRequest"],
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "sentFriendRequests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "receiver": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "username": { "type": "string" },
+                    "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+                  }
+                }
+              }
+            }
+          },
+          "receivedFriendRequests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "sender": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "username": { "type": "string" },
+                    "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "acceptFriendRequest": {
+    "description": "Accept a friend request",
+    "tags": ["FriendRequest"],
+    "params": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        }
+      },
+      "400": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "404": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "500": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "declineFriendRequest": {
+    "description": "Decline a friend request",
+    "tags": ["FriendRequest"],
+    "params": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "response": {
+      "200": { "type": "object", "properties": { "ok": { "type": "boolean" } } },
       "404": { "type": "object", "properties": { "error": { "type": "string" } } },
       "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
