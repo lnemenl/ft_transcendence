@@ -7,7 +7,7 @@ export function LanguageSelect() {
     };
     let locale = window.localStorage.getItem('ft_transcendence:lang');
     return (
-        <div className="fixed top-20 right-6 z-50">
+        <div className="m-5 z-50">
             <select
                 defaultValue={locale}
                 onChange={lang}

@@ -1,9 +1,10 @@
 import { useGame } from "./GameContext";
-import { LanguageSelect } from "./LanguageSelect";
+//import { LanguageSelect } from "./LanguageSelect";
 import { LoginRegister } from "./LoginRegister";
-import { LogButton } from "./LogButton"
+//import { LogButton } from "./LogButton"
 import { Game } from "./Game";
 import { useEffect } from "react";
+import { Menu } from "./Menu";
 
 export function AppContent() {
   const { ready } = useGame();
@@ -17,9 +18,8 @@ export function AppContent() {
   }, [ready]);
   return (
     <>
-      <LogButton />
+      <Menu />
       <LoginRegister />
-      <LanguageSelect />
       {ready && <Game />}
     </>
   );

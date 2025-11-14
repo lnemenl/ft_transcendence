@@ -1,7 +1,7 @@
 
 import { Blobs } from "./components/Blobs";
 import { Header } from "./components/Header";
-import { DarkMode } from "./components/DarkMode";
+//import { DarkMode } from "./components/DarkMode";
 import { GetAuth } from "./components/GetAuth";
 import { GameProvider } from "./components/GameContext";
 import { AppContent } from "./components/AppContent";
@@ -11,7 +11,6 @@ function App() {
     <GetAuth>
       <Blobs />
       <Header />
-      <DarkMode />
       <GameProvider>
         <AppContent />
       </GameProvider>
