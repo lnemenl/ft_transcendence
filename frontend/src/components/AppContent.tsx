@@ -18,7 +18,7 @@ export function AppContent() {
   return (
     <>
       <LogButton />
-      <LoginRegister />
+      {!ready && <LoginRegister />}
       <LanguageSelect />
       {ready && <Game />}
     </>
