@@ -1,6 +1,5 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../utils/prisma';
-import { Prisma } from '@prisma/client';
 import { updateUserSchema, getAllUsersSchema, getUserSchema, getMeSchema } from './schema.json';
 import { deleteFriend } from '../services/friendRequest.service';
 
