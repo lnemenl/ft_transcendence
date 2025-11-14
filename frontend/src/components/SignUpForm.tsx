@@ -20,6 +20,18 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
   const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers, players } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Check if username is already used by another player (case-sensitive to match backend)
+    const isDuplicate = players.some((player, index) =>
+      index < currentPlayerIndex && player.name === username
+    );
+
+    if (isDuplicate) {
+      setError(t().duplicateUser);
+      return;
+    }
+
     handleRequest({
       e,
       endpoint: "register",
