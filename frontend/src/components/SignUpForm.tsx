@@ -38,7 +38,6 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
             if (currentPlayerIndex === totalPlayers - 1) {
               setReady(true);
               setMode();
-              console.log(players)
             }
             else {
               onBack();

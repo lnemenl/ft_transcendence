@@ -20,7 +20,6 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
   const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers, players } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    console.log(loginEndpoint);
     handleRequest({
       e,
       endpoint: loginEndpoint,
@@ -34,7 +33,6 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
         if (currentPlayerIndex === totalPlayers - 1) {
             setReady(true);
             setMode();
-            console.log(players);
         }
         else {
           onBack();

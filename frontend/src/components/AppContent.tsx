@@ -15,6 +15,7 @@ export function AppContent() {
       });
     }
   }, [ready]);
+
   return (
     <>
       <LogButton />

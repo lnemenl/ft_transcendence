@@ -40,7 +40,11 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const [totalPlayers, setTotalPlayersState] = useState<number>(2);
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
-  const [ready, setReady] = useState<boolean>(false);
+  const [ready, setReadyState] = useState<boolean>(false);
+
+  const setReady = (r: boolean) => {
+    setReadyState(r);
+  };
 
   const setTotalPlayers = (n: number) => {
     setTotalPlayersState(n);
@@ -82,7 +86,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     setCurrentPlayerIndex(0);
     setTotalPlayersState(2);
     setMode("unknown");
-    console.log(currentPlayerIndex);
+    setReady(false);
   };
 
 
