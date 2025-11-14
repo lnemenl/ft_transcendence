@@ -92,53 +92,6 @@ Sets HTTP-only cookies:
 }
 ```
 
-### POST /api/login/player2
-
-Authenticate a user and receive access tokens. refresh token will get revoked immidiately upon creation.
-
-**Request Body**
-```json
-{
-  "email": "user@example.com",
-  "password": "string"
-}
-```
-
-OR
-
-```json
-{
-  "username": "string",
-  "password": "string"
-}
-```
-
-**Validation**
-- Either `email` or `username` must be provided
-- `password`: Required
-
-**Responses**
-
-`200 OK`
-```json
-{
-  "id": "string",
-  "username": "string",
-  "avatarUrl": "string | null",
-  "accessToken": "string"
-}
-```
-
-Sets HTTP-only cookies:
-- `accessToken`: Expires in 15 minutes
-
-`401 Unauthorized`
-```json
-{
-  "error": "Invalid email or password"
-}
-```
-
 ## Two-Factor Authentication (2FA)
 
 These endpoints implement TOTP-based 2FA for user accounts. All tokens are time-based and codes rotate every 30 seconds.
@@ -315,6 +268,286 @@ Disable 2FA for the authenticated user (requires entering a current TOTP code).
 ```
 
 
+### POST /api/login/player2
+
+Authenticate a user and receive an access token for player 2 mode. The refresh token is immediately revoked upon creation.
+
+**Authentication**: Required
+
+**Request Body**
+```json
+{
+  "email": "user@example.com",
+  "password": "string"
+}
+```
+
+OR
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+**Validation**
+- Either `email` or `username` must be provided
+- `password`: Required
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "username": "string",
+  "avatarUrl": "string | null",
+  "accessToken": "string"
+}
+```
+
+Sets HTTP-only cookie:
+- `player2_token`: Expires in 1 hour
+
+`200 OK` (when 2FA is enabled)
+```json
+{
+  "twoFactorRequired": true,
+  "twoFactorToken": "string"
+}
+```
+
+`401 Unauthorized`
+```json
+{
+  "error": "Invalid email or password"
+}
+```
+
+### POST /api/login/tournament
+
+Authenticate a user for tournament mode. The refresh token is immediately revoked upon creation.
+
+**Authentication**: Required
+
+**Request Body**
+```json
+{
+  "email": "user@example.com",
+  "password": "string"
+}
+```
+
+OR
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+**Validation**
+- Either `email` or `username` must be provided
+- `password`: Required
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "username": "string",
+  "avatarUrl": "string | null"
+}
+```
+
+No tokens are returned (they are not needed for tournament mode).
+
+`200 OK` (when 2FA is enabled)
+```json
+{
+  "twoFactorRequired": true,
+  "twoFactorToken": "string"
+}
+```
+
+`401 Unauthorized`
+```json
+{
+  "error": "Invalid email or password"
+}
+```
+
+## Google OAuth Authentication
+
+### GET /api/google/init
+
+Initiate Google OAuth authentication flow.
+
+**Query Parameters**
+- `type`: "main" | "player2" | "tournament" (required)
+  - `main`: Standard user authentication
+  - `player2`: Player 2 mode authentication
+  - `tournament`: Tournament mode authentication
+
+**Responses**
+
+`302 Found`
+Redirects to Google's authorization endpoint with authorization URL containing:
+- OAuth consent screen (if user hasn't authorized before)
+- State parameter for CSRF protection (stored in httpOnly cookie)
+
+**Notes**
+- Sets an `oauth_state` cookie that expires in 10 minutes for CSRF protection
+- The returned authorization URL redirects user to Google's login/consent page
+
+### GET /api/google/callback
+
+Google OAuth callback for main user authentication.
+
+**Query Parameters** (provided by Google)
+- `code`: Authorization code from Google (required)
+- `state`: State parameter for CSRF verification (required)
+- `error`: Error code if user denied access (optional)
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "username": "string",
+  "email": "string",
+  "avatarUrl": "string | null",
+  "accessToken": "string",
+  "refreshToken": "string"
+}
+```
+
+Sets HTTP-only cookies:
+- `accessToken`: Expires in 15 minutes
+- `refreshToken`: Expires in 14 days
+
+`400 Bad Request`
+```json
+{
+  "error": "State mismatch"
+}
+```
+OR
+```json
+{
+  "error": "No code provided"
+}
+```
+
+`401 Unauthorized`
+```json
+{
+  "error": "User denied access"
+}
+```
+
+**Notes**
+- If user doesn't exist, a new account is automatically created with data from Google
+- CSRF protection verified by comparing state parameter with stored cookie
+
+### GET /api/google/callback/player2
+
+Google OAuth callback for player 2 authentication.
+
+**Query Parameters** (provided by Google)
+- `code`: Authorization code from Google (required)
+- `state`: State parameter for CSRF verification (required)
+- `error`: Error code if user denied access (optional)
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "username": "string",
+  "avatarUrl": "string | null",
+  "accessToken": "string"
+}
+```
+
+Sets HTTP-only cookie:
+- `player2_token`: Expires in 15 minutes
+
+`400 Bad Request`
+```json
+{
+  "error": "State mismatch"
+}
+```
+OR
+```json
+{
+  "error": "No code provided"
+}
+```
+
+`401 Unauthorized`
+```json
+{
+  "error": "User denied access"
+}
+```
+
+**Notes**
+- If user doesn't exist, a new account is automatically created with data from Google
+- Only returns access token (refresh token is not used)
+
+### GET /api/google/callback/tournament
+
+Google OAuth callback for tournament mode authentication.
+
+**Query Parameters** (provided by Google)
+- `code`: Authorization code from Google (required)
+- `state`: State parameter for CSRF verification (required)
+- `error`: Error code if user denied access (optional)
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "id": "string",
+  "username": "string",
+  "avatarUrl": "string | null"
+}
+```
+
+No tokens are set for tournament mode.
+
+`400 Bad Request`
+```json
+{
+  "error": "State mismatch"
+}
+```
+OR
+```json
+{
+  "error": "No code provided"
+}
+```
+
+`401 Unauthorized`
+```json
+{
+  "error": "User denied access"
+}
+```
+
+**Notes**
+- If user doesn't exist, a new account is automatically created with data from Google
+- No authentication tokens are provided for tournament mode
+
 ### POST /api/logout
 
 Invalidate the current session and clear authentication cookies.
@@ -329,6 +562,10 @@ Invalidate the current session and clear authentication cookies.
   "ok": true
 }
 ```
+
+**Notes**
+- Clears `accessToken`, `refreshToken`, and `player2_token` cookies
+- Revokes the refresh token from the database
 
 ## User Profile
 
