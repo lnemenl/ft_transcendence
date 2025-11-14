@@ -849,7 +849,7 @@ Get all friend requests sent and received
       "id": "string",
       "receiver": {
         "id": "string",
-        "username": "string"
+        "username": "string",
         "avatarUrl": "string | null"
       }
     },
@@ -860,7 +860,7 @@ Get all friend requests sent and received
       "id": "string",
       "sender": {
         "id": "string",
-        "username": "string"
+        "username": "string",
         "avatarUrl": "string | null"
       }
     },

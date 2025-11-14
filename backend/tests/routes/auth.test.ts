@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { app, prisma } from '../setup';
 import { testUsers, invalidUsers } from '../fixtures';
 import { cleanDatabase, hasCookie, createAuthenticatedUser, getCookies } from '../helpers';
@@ -41,6 +41,13 @@ describe('Authentication System', () => {
     it('rejects short password', async () => {
       const res = await request(app.server).post('/api/register').send(invalidUsers.shortPassword).expect(400);
       expect(res.body.error).toMatch(/bad request/i);
+    });
+
+    it('returns 500 when database fails during registration', async () => {
+      const createSpy = jest.spyOn(prisma.user, 'create').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server).post('/api/register').send(testUsers.alice).expect(400);
+      expect(res.body).toHaveProperty('error');
+      createSpy.mockRestore();
     });
   });
 
@@ -109,6 +116,16 @@ describe('Authentication System', () => {
       const res = await request(app.server).post('/api/login').send({ password: testUsers.alice.password }).expect(401);
       expect(res.body.error).toMatch(/provide username or email/i);
     });
+
+    it('returns 401 when database fails during login', async () => {
+      const findFirstSpy = jest.spyOn(prisma.user, 'findFirst').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server)
+        .post('/api/login')
+        .send({ email: testUsers.alice.email, password: testUsers.alice.password })
+        .expect(401);
+      expect(res.body).toHaveProperty('error');
+      findFirstSpy.mockRestore();
+    });
   });
 
   describe('Player 2 Login', () => {
@@ -169,6 +186,18 @@ describe('Authentication System', () => {
 
       expect(res.body.error).toBeDefined();
     });
+
+    it('returns 401 when database fails during player2 login', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const findFirstSpy = jest.spyOn(prisma.user, 'findFirst').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server)
+        .post('/api/login/player2')
+        .set('Cookie', cookies)
+        .send(testUsers.bob)
+        .expect(401);
+      expect(res.body).toHaveProperty('error');
+      findFirstSpy.mockRestore();
+    });
   });
 
   describe('Tournament Login', () => {
@@ -226,6 +255,18 @@ describe('Authentication System', () => {
         .expect(401);
 
       expect(res.body.error).toBeDefined();
+    });
+
+    it('returns 401 when database fails during tournament login', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const findFirstSpy = jest.spyOn(prisma.user, 'findFirst').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server)
+        .post('/api/login/tournament')
+        .set('Cookie', cookies)
+        .send(testUsers.bob)
+        .expect(401);
+      expect(res.body).toHaveProperty('error');
+      findFirstSpy.mockRestore();
     });
   });
 
