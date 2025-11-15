@@ -11,7 +11,7 @@ export function LanguageSelect() {
       <select 
         defaultValue={locale}
         onChange={lang}
-        className="w-full bg-transparent text-white text-base cursor-pointer border-none focus:outline-none appearance-none p-1">
+        className="w-full bg-transparent text-white cursor-pointer border-none focus:outline-none appearance-none p-1">
         <option value="en">🇬🇧 ENG</option>
         <option value="fi">🇫🇮 FIN</option>
         <option value="fr">🇫🇷 FRA</option>
