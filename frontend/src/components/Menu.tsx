@@ -12,10 +12,7 @@ export const Menu: React.FC = () => {
   const { players } = useGame();
   const playerName = players[0]?.name ?? "";
 
-  const toggleMenu = () => {
-    console.log("menu open!");
-    setOpen((prev) => !prev);
-  }
+  const toggleMenu = () => setOpen((prev) => !prev);
 
   return (
     <div className="fixed top-4 right-4 z-50">
