@@ -52,6 +52,9 @@ export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
       <button onClick={handleLogOut} className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-4 py-2 text-white mb-4">
             {t.logOut}
       </button>
+      <button type="button" onClick={onBack} className="text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700">
+        {t.back}
+      </button>
     </div>
   );
 };
