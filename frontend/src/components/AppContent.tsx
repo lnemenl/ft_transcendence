@@ -18,6 +18,7 @@ export function AppContent() {
       });
     }
   }, [ready]);
+
   return (
     <>
       <Menu />
@@ -28,7 +29,7 @@ export function AppContent() {
             <>
               <Blobs />
               <Header />
-              <LoginRegister />
+              {!ready && <LoginRegister />}
               {ready && <Game />}
             </>
           } />

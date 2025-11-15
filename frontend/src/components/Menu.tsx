@@ -18,7 +18,7 @@ export const Menu: React.FC = () => {
   }
 
   return (
-  <div className="flex flex-col fixed top-12 right-20 w-25 z-50 bg-[#6688cc] rounded-2xl">
+  <div className="flex flex-col fixed top-10 right-15 w-22 z-50 bg-[#6688cc] rounded-2xl">
     { !isLoggedIn ? (
       <button onClick={ toggleMenu } className="hover:bg-[#24273a] text-white font-bold w-full p-3 rounded-2xl">
         Menu
@@ -34,7 +34,7 @@ export const Menu: React.FC = () => {
           <Link to="/profile" onClick={() => setOpen(false)} className="p-1 pt-2 hover:font-bold">
             Profile
           </Link>
-          <div className="p-1 hover:font-bold">
+          <div className="p-1 pt-2 hover:font-bold">
             <LanguageSelect />
           </div>
           <div className="flex justify-center p-1 hover:font-bold">
