@@ -57,6 +57,14 @@ describe('User Profile Management', () => {
         .set('Cookie', [`accessToken=${validToken}`])
         .expect(404);
     });
+
+    it('returns 500 when database fails during GET /me', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server).get('/api/users/me').set('Cookie', cookies).expect(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+      findUniqueSpy.mockRestore();
+    });
   });
 
   // UPDATE CURRENT USER
@@ -126,6 +134,18 @@ describe('User Profile Management', () => {
         .send({ avatarUrl: 'not-a-url' })
         .expect(400);
     });
+
+    it('returns 500 when database fails during PATCH /me', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const updateSpy = jest.spyOn(prisma.user, 'update').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server)
+        .patch('/api/users/me')
+        .set('Cookie', cookies)
+        .send({ username: 'test_new' })
+        .expect(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+      updateSpy.mockRestore();
+    });
   });
 
   describe('GET /api/users/', () => {
@@ -185,6 +205,15 @@ describe('User Profile Management', () => {
 
       const nonExistentId = 'clxkq0000000008l9d9e6g3h1';
       await request(app.server).get(`/api/users/${nonExistentId}`).set('Cookie', cookies).expect(404);
+    });
+
+    it('returns 500 when database fails during GET /api/users/:id', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const { user: bob } = await createAuthenticatedUser(testUsers.bob);
+      const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server).get(`/api/users/${bob.id}`).set('Cookie', cookies).expect(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+      findUniqueSpy.mockRestore();
     });
   });
 

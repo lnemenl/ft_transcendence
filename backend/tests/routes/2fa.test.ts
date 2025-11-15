@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { app, prisma } from '../setup';
 import {
   cleanDatabase,
@@ -50,6 +50,14 @@ describe('Two-Factor Authentication (2FA)', () => {
       expect([401, 404]).toContain(res.status);
       expect(res.body.error).toBeDefined();
     });
+
+    it('returns 500 when database fails during generate', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const updateSpy = jest.spyOn(prisma.user, 'update').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+      updateSpy.mockRestore();
+    });
   });
 
   describe('enable', () => {
@@ -96,6 +104,21 @@ describe('Two-Factor Authentication (2FA)', () => {
         .expect(400);
 
       expect(res.body.error).toMatch(/generate first/i);
+    });
+
+    it('returns 500 when database fails during enable', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret = genRes.body.secret;
+      const updateSpy = jest.spyOn(prisma.user, 'update').mockRejectedValueOnce(new Error('Database error'));
+      const code = totpGenerate(secret);
+      const res = await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', cookies)
+        .send({ SixDigitCode: code })
+        .expect(500);
+      expect(res.body).toHaveProperty('error');
+      updateSpy.mockRestore();
     });
   });
 
@@ -179,6 +202,19 @@ describe('Two-Factor Authentication (2FA)', () => {
         .post('/api/2fa/verify')
         .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: '000000' })
         .expect(401);
+    });
+
+    it('returns 500 when database fails during verify', async () => {
+      const secret = await createUser2FAEnabledInDB(testUsers.alice);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+      const code = totpGenerate(secret);
+      const res = await request(app.server)
+        .post('/api/2fa/verify')
+        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: code })
+        .expect(500);
+      expect(res.body).toHaveProperty('error');
+      findUniqueSpy.mockRestore();
     });
   });
 
@@ -277,6 +313,19 @@ describe('Two-Factor Authentication (2FA)', () => {
         .post('/api/2fa/verify/player2')
         .send({ twoFactorToken: tokenWithFlag, SixDigitCode: '123456' })
         .expect(401);
+    });
+
+    it('returns 500 when database fails during verify/player2', async () => {
+      const secret = await createUser2FAEnabledInDB(testUsers.alice);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+      const code = totpGenerate(secret);
+      const res = await request(app.server)
+        .post('/api/2fa/verify/player2')
+        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: code })
+        .expect(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+      findUniqueSpy.mockRestore();
     });
   });
 
@@ -378,6 +427,19 @@ describe('Two-Factor Authentication (2FA)', () => {
         .send({ twoFactorToken: tokenWithFlag, SixDigitCode: '123456' })
         .expect(401);
     });
+
+    it('returns 500 when database fails during verify/tournament', async () => {
+      const secret = await createUser2FAEnabledInDB(testUsers.alice);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+      const code = totpGenerate(secret);
+      const res = await request(app.server)
+        .post('/api/2fa/verify/tournament')
+        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: code })
+        .expect(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+      findUniqueSpy.mockRestore();
+    });
   });
 
   describe('disable', () => {
@@ -423,6 +485,27 @@ describe('Two-Factor Authentication (2FA)', () => {
         .send({ SixDigitCode: '123456' })
         .expect(400);
       expect(res.body.error).toMatch(/not enabled/i);
+    });
+
+    it('returns 500 when database fails during disable', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret = genRes.body.secret;
+      const enableCode = totpGenerate(secret);
+      await request(app.server)
+        .post('/api/2fa/enable')
+        .set('Cookie', cookies)
+        .send({ SixDigitCode: enableCode })
+        .expect(200);
+      const updateSpy = jest.spyOn(prisma.user, 'update').mockRejectedValueOnce(new Error('Database error'));
+      const code = totpGenerate(secret);
+      const res = await request(app.server)
+        .post('/api/2fa/disable')
+        .set('Cookie', cookies)
+        .send({ SixDigitCode: code })
+        .expect(500);
+      expect(res.body).toHaveProperty('error');
+      updateSpy.mockRestore();
     });
   });
 });
