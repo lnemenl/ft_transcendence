@@ -1,14 +1,19 @@
 import { GiMoon } from "react-icons/gi";
+import { useState } from "react";
 
 export function DarkMode() {
+  const [isDark, setIsDark] = useState(false);
+
 	const handleDark = () => {
 		document.documentElement.classList.toggle('dark');
+    setIsDark((prev) => !prev);
 	};
 	return (
-		<div className="fixed top-6 right-6 z-50">
-			<button onClick={handleDark} className="grid place-items-center h-11 w-11 rounded-full bg-white/70 backdrop-blur shadow hover:scale-105 transition">
-				<GiMoon size="2em" className="text-[#24273a] dark:text-[#f4dbd6] hover:text-[#8aadf4]" />
-			</button>
+		<div className="w-full">
+			<button onClick={ handleDark } className="flex w-full gap-2 p-1">
+        <GiMoon className="w-5 h-5 dark:text-[#24273a]"/>
+        <span>{isDark ? "ON" : "OFF"}</span>
+      </button>
 		</div>
 	);
 }

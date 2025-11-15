@@ -1,9 +1,12 @@
 import { useGame } from "./GameContext";
-import { LanguageSelect } from "./LanguageSelect";
 import { LoginRegister } from "./LoginRegister";
-import { LogButton } from "./LogButton"
+import { Blobs } from "./Blobs";
+import { Header } from "./Header";
 import { Game } from "./Game";
 import { useEffect } from "react";
+import { Menu } from "./Menu";
+import { Routes, Route } from "react-router-dom";
+import { Profile } from "./Profile";
 
 export function AppContent() {
   const { ready } = useGame();
@@ -18,10 +21,20 @@ export function AppContent() {
 
   return (
     <>
-      <LogButton />
-      {!ready && <LoginRegister />}
-      <LanguageSelect />
-      {ready && <Game />}
+      <Menu />
+      <Routes>
+        <Route 
+          path="/" 
+          element={
+            <>
+              <Blobs />
+              <Header />
+              {!ready && <LoginRegister />}
+              {ready && <Game />}
+            </>
+          } />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
     </>
   );
 };
