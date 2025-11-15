@@ -7,17 +7,17 @@ export function LogButton() {
   
   const handleScroll = () => {
     document.getElementById("login")?.scrollIntoView({ 
-      behavior: "smooth" 
+      behavior: "smooth",
     });
   };
   return (
-    <div className="">
+    <div>
       {isLoggedIn ? (
-        <button type="button" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="p-1 pb-2 hover:font-bold rounded-2xl">
+        <button type="button" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="p-1 w-full rounded-2xl">
           Logout
         </button>
       ) : (
-        <button type="button" onClick={handleScroll} className="p-1 pb-2 hover:font-bold rounded-2xl">
+        <button type="button" onClick={handleScroll} className="p-1 w-full rounded-2xl">
           Login
         </button>
       )}

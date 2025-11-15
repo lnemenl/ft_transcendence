@@ -10,7 +10,7 @@ export const Menu: React.FC = () => {
   const [open, setOpen] = useState<boolean>(false);
   const { isLoggedIn } = useAuth();
   const { players } = useGame();
-  const playerName = players[0]?.name ?? "Menu";
+  const playerName = players[0]?.name ?? "";
 
   const toggleMenu = () => {
     console.log("menu open!");
@@ -18,34 +18,44 @@ export const Menu: React.FC = () => {
   }
 
   return (
-  <div className="flex flex-col fixed top-10 right-15 w-22 z-50 bg-[#6688cc] rounded-2xl">
-    { !isLoggedIn ? (
-      <button onClick={ toggleMenu } className="hover:bg-[#24273a] text-white font-bold w-full p-3 rounded-2xl">
-        Menu
-      </button>
-    ) : (
-      <button onClick={ toggleMenu } className="hover:bg-[#24273a] text-white font-bold w-full p-3 rounded-2xl">
-          { playerName }
+    <div className="fixed top-4 right-4 z-50">
+      <div className="relative">
+        <button onClick={toggleMenu} className="flex items-center gap-2 rounded-full bg-[#6688cc] hover:bg-[#24273a] text-white font-semibold px-4 py-2 shadow-lg transition">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-sm font-bold">
+            {isLoggedIn ? playerName.charAt(0).toUpperCase() : "?"}
+          </span>
+          <span>
+            {isLoggedIn ? playerName : "Menu"}
+          </span>
+          <span className={`ml-1 transition-transform ${open ? "rotate-180" : ""}`}>
+            ▼
+          </span>
         </button>
-    )}
-    <div className="flex flex-col bg-[#6688cc] rounded-2xl">
-      {open && (
-        <div id="menu" className="text-white">
-          <Link to="/profile" onClick={() => setOpen(false)} className="p-1 pt-2 hover:font-bold">
-            Profile
-          </Link>
-          <div className="p-1 pt-2 hover:font-bold">
-            <LanguageSelect />
+        {open && (
+          <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#6688cc] text-white shadow-xl border border-white/10 py-2 flex flex-col">
+            <Link to="/profile" onClick={() => setOpen(false)} className="flex items-center gap-3 w-full px-4 py-2 text-sm hover:bg-white/10">
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-white/20 text-white font-bold">
+                {playerName ? playerName.charAt(0).toUpperCase() : "?"}
+              </div>
+              <span>
+                Profile
+              </span>
+            </Link>
+            <div className="w-full px-4 py-2 text-sm hover:bg-white/10">
+              <div className="flex w-full gap-2">
+                <LanguageSelect />
+              </div>
+            </div>
+            <div className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-white/10">
+              <DarkMode />
+            </div>
+            <div className="my-1 border-t border-white/10" />
+            <div className="w-full px-4 py-2 text-sm hover:bg-white/10">
+              <LogButton />
+            </div>
           </div>
-          <div className="flex justify-center p-1 hover:font-bold">
-            <DarkMode />
-          </div>
-          <div className="p-1 hover:font-bold">
-            <LogButton />
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
-  </div>
-  )
-}
+  );
+};

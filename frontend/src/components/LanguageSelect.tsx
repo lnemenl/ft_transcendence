@@ -8,16 +8,14 @@ export function LanguageSelect() {
     const storedLocale = window.localStorage.getItem('ft_transcendence:lang');
     const locale = storedLocale ?? "en";
     return (
-        <div className="">
-            <select
-                defaultValue={locale}
-                onChange={lang}
-                className="appearance-none hover:scale-110 border-none focus:outline-none">
-                <option value="en">🇬🇧 ENG</option>
-                <option value="fi">🇫🇮 FIN</option>
-                <option value="fr">🇫🇷 FRA</option>
-                <option value="ru">🇷🇺 RUS</option>
-            </select>
-        </div>
+      <select 
+        defaultValue={locale}
+        onChange={lang}
+        className="w-full bg-transparent text-white text-base cursor-pointer border-none focus:outline-none appearance-none p-1">
+        <option value="en">🇬🇧 ENG</option>
+        <option value="fi">🇫🇮 FIN</option>
+        <option value="fr">🇫🇷 FRA</option>
+        <option value="ru">🇷🇺 RUS</option>
+      </select>
     );
 }
