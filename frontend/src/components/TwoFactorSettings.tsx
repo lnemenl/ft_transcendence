@@ -25,14 +25,14 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/profile", {
+      const res = await fetch("/api/users/me", {
         credentials: "include",
       });
 
       if (res.ok) {
         const data = await res.json();
         console.log("Profile data:", data);
-        setIsTwoFactorEnabled(data.user.isTwoFactorEnabled);
+        setIsTwoFactorEnabled(data.isTwoFactorEnabled || false);
       } else {
         console.error("Failed to load profile, status:", res.status);
         setError(t.failedToLoadProfile);

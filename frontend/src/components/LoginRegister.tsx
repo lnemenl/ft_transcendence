@@ -22,7 +22,7 @@ export function LoginRegister() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/profile", {
+        const res = await fetch("/api/users/me", {
           credentials: "include",
         });
 
