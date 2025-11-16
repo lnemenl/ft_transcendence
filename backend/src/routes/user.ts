@@ -27,6 +27,7 @@ const userRoutes = async (fastify: FastifyInstance) => {
                 id: true,
                 username: true,
                 avatarUrl: true,
+                isOnline: true,
               },
             },
           },

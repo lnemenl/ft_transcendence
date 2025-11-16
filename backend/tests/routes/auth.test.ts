@@ -274,5 +274,15 @@ describe('Authentication System', () => {
       expect(setCookies).toMatch(/accessToken=;/);
       expect(setCookies).not.toMatch(/refreshToken=;/); // No refresh token to clear
     });
+
+    it('database call protected', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      jest.spyOn(prisma.user, 'update').mockRejectedValue(new Error('Internal server error'));
+
+      const res = await request(app.server).post('/api/logout').set('Cookie', cookies);
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+    });
   });
 });

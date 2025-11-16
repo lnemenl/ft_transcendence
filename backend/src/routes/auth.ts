@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { prisma } from '../utils/prisma';
 import { registerUser, loginUser, revokeRefreshTokenByRaw } from '../services/auth.service';
 import { loginSchema, logoutSchema, registerSchema } from './schema.json';
 
@@ -140,8 +141,31 @@ const authRoutes = async (fastify: FastifyInstance) => {
       reply.clearCookie('refreshToken', { path: '/' });
     }
 
+    const accessToken = request.cookies?.accessToken;
+    if (accessToken) {
+      try {
+        await request.jwtVerify();
+        const { id } = request.user as { id: string };
+        await prisma.user.update({ where: { id }, data: { isOnline: false } });
+      } catch (err) {
+        fastify.log.error(err);
+
+        return reply.status(500).send({ error: 'Internal server error' });
+      }
+    }
     reply.clearCookie('accessToken', { path: '/' });
+
     return reply.status(200).send({ ok: true });
+    /* reply.clearCookie('accessToken', { path: '/' });
+    try {
+      await prisma.user.update({ where: { id }, data: { isOnline: false } });
+
+      return reply.status(200).send({ ok: true });
+    } catch (err) {
+      fastify.log.error(err);
+
+      return reply.status(500).send({ error: 'Internal server error' });
+    } */
   });
 };
 
