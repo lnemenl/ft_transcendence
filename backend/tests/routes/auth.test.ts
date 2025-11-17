@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { describe, it, expect, beforeEach, jest, test } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { app, prisma } from '../setup';
 import { testUsers, invalidUsers } from '../fixtures';
 import { cleanDatabase, hasCookie, createAuthenticatedUser, getCookies } from '../helpers';
@@ -306,16 +306,6 @@ describe('Authentication System', () => {
       expect(res.status).toBe(500);
       expect(res.body).toHaveProperty('error', 'Internal server error');
     });
-
-    /* it('succeeds without cookies', async () => {
-      const res = await request(app.server).post('/api/logout').expect(200);
-
-      expect(res.body).toEqual({ ok: true });
-
-      const setCookies = getCookies(res).join(';');
-      expect(setCookies).toMatch(/accessToken=;/);
-      expect(setCookies).not.toMatch(/refreshToken=;/);
-    }); */
   });
 
   describe('Google OAuth', () => {
