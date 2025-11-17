@@ -1,23 +1,21 @@
 export function LanguageSelect() {
-    const lang = function (event) {
+    const lang = function (event: React.ChangeEvent<HTMLSelectElement>) {
         let locale = event.target.value;
         document.documentElement.lang = locale;
         window.localStorage.setItem('ft_transcendence:lang', locale);
         window.dispatchEvent(new Event("languageChange"));
     };
-    let locale = window.localStorage.getItem('ft_transcendence:lang');
+    const storedLocale = window.localStorage.getItem('ft_transcendence:lang');
+    const locale = storedLocale ?? "en";
     return (
-        <div className="fixed top-20 right-6 z-50">
-            <select
-                defaultValue={locale}
-                onChange={lang}
-                className="grid place-items-center h-11 w-9 hover:scale-150 transition text-xl cursor-pointer appearance-none border-none focus:outline-none"
-            >
-                <option value="en">🇬🇧</option>
-                <option value="fi">🇫🇮</option>
-                <option value="fr">🇫🇷</option>
-                <option value="ru">🇷🇺</option>
-            </select>
-        </div>
+      <select 
+        defaultValue={locale}
+        onChange={lang}
+        className="w-full bg-transparent text-white cursor-pointer border-none focus:outline-none appearance-none p-1">
+        <option value="en">🇬🇧 ENG</option>
+        <option value="fi">🇫🇮 FIN</option>
+        <option value="fr">🇫🇷 FRA</option>
+        <option value="ru">🇷🇺 RUS</option>
+      </select>
     );
 }

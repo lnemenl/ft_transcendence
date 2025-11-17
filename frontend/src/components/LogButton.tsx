@@ -33,13 +33,13 @@ export function LogButton() {
   }
 
   return (
-    <div className="fixed top-12 right-38 flex items-center gap-3 z-50">
+    <div>
       {isLoggedIn ? (
-        <button type="button" onClick={() => setShowLogoutScreen(true)} className="bg-[#6688cc] hover:bg-[#24273a] text-white font-bold p-3 fixed rounded-2xl">
+        <button type="button" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="p-1 w-full rounded-2xl">
           Logout
         </button>
       ) : (
-        <button type="button" onClick={handleScroll} className="bg-[#6688cc] hover:bg-[#24273a] text-white font-bold p-3 fixed rounded-2xl">
+        <button type="button" onClick={handleScroll} className="p-1 w-full rounded-2xl">
           Login
         </button>
       )}
