@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { LogButton } from "./LogButton";
 import { LanguageSelect } from "./LanguageSelect";
 import { DarkMode } from "./DarkMode";
@@ -11,12 +11,30 @@ export const Menu: React.FC = () => {
   const { isLoggedIn } = useAuth();
   const { players } = useGame();
   const playerName = players[0]?.name ?? "";
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const toggleMenu = () => setOpen((prev) => !prev);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
   return (
     <div className="fixed top-4 right-4 z-50">
-      <div className="relative">
+      <div className="relative" ref={menuRef}>
         <button onClick={toggleMenu} className="flex items-center gap-2 rounded-full bg-[#6688cc] hover:bg-[#24273a] text-white font-semibold px-4 py-2 shadow-lg transition">
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-sm font-bold">
             {isLoggedIn ? playerName.charAt(0).toUpperCase() : "?"}

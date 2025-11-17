@@ -173,10 +173,12 @@ function update(G, delta_ms, keys_down) {
         if (Math.max(G.p1.roundsWon, G.p2.roundsWon) >= G.bestOf / 2) {
             G.state = STATES.GAME_OVER;
             // setTimeout(() => G.state = STATES.START, 3000);
-            xhrPost("https://echo.free.beeceptor.com", {
-                P1: G.p1.roundsWon,
-                P2: G.p2.roundsWon
-            });
+            
+            // Determine winner (1 or 2)
+            const winner = G.p1.roundsWon > G.p2.roundsWon ? 1 : 2;
+            
+            // Post game result to backend
+            xhrPost("/api/games", { winner });
         }
         break;
     case STATES.GAME_OVER:
@@ -222,6 +224,8 @@ requestAnimationFrame(loop);
 
 function xhrPost(url, body) {
     const req = new XMLHttpRequest();
-    req.open("POST", url); // Nonblocking by default these days
+    req.open("POST", url);
+    req.withCredentials = true; // Include cookies for authentication
+    req.setRequestHeader("Content-Type", "application/json");
     req.send(JSON.stringify(body));
 }

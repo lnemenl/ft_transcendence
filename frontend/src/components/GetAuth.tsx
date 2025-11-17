@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 type AuthContextValue = {
   isLoggedIn: boolean;
@@ -10,19 +11,37 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function GetAuth({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
+  // Check if user is already logged in on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/users/me", {
+          credentials: "include",
+        });
+        if (res.ok) {
+          setIsLoggedIn(true);
+        }
+      } catch {
+        // User not logged in, keep isLoggedIn as false
+      }
+    };
+    checkAuth();
+  }, []);
 
   const login = () => setIsLoggedIn(true);
   const logout = async () => {
-  
     try {
       const res = await fetch("/api/logout", {
-      method: "POST",
-      credentials: "include",
+        method: "POST",
+        credentials: "include",
       });
 
       if (res.ok) {
-        console.log("Succesfull logout!");
+        console.log("Successful logout!");
         setIsLoggedIn(false);
+        navigate("/"); // Redirect to landing page
       }
     } catch (err) {
       console.log("an error occurred:", err);
