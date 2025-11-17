@@ -1,21 +1,17 @@
-
-import { Blobs } from "./components/Blobs";
-import { Header } from "./components/Header";
-import { DarkMode } from "./components/DarkMode";
 import { GetAuth } from "./components/GetAuth";
 import { GameProvider } from "./components/GameContext";
 import { AppContent } from "./components/AppContent";
+import { BrowserRouter as Router } from "react-router-dom";
 
 function App() {
   return <>
-    <GetAuth>
-      <Blobs />
-      <Header />
-      <DarkMode />
-      <GameProvider>
-        <AppContent />
-      </GameProvider>
-    </GetAuth>
+    <Router>
+      <GetAuth>
+        <GameProvider>
+          <AppContent />
+        </GameProvider>
+      </GetAuth>
+    </Router>
   </>;
 }
 

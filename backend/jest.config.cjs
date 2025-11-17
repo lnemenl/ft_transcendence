@@ -7,7 +7,11 @@ const isCI = process.env.CI === 'true';
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['<rootDir>/tests/routes/**/*.test.ts', '<rootDir>/tests/plugins/**/*.test.ts'],
+  testMatch: [
+    '<rootDir>/tests/routes/**/*.test.ts',
+    '<rootDir>/tests/plugins/**/*.test.ts',
+    '<rootDir>/tests/services/**/*.test.ts',
+  ],
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
