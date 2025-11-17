@@ -218,8 +218,6 @@ export const Profile: React.FC = () => {
   }
 
   return (
-<<<<<<< HEAD
-    return (
     <>
       <Blobs />
       <div className="min-h-screen p-6">
