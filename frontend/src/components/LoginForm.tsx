@@ -22,13 +22,13 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
   const [requires2FA, setRequires2FA] = useState(false);
   const [twoFactorToken, setTwoFactorToken] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const handleScroll = () => {
     document.getElementById("game")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleGameContextAfterLogin = (id: number) => {
+  const handleGameContextAfterLogin = (id: string) => {
     if (currentPlayerIndex === 0) {
       onLogin();
     }
