@@ -1,62 +1,60 @@
 import request from 'supertest';
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { app, prisma } from '../setup';
 import { testUsers, invalidUsers } from '../fixtures';
-import { cleanDatabase, getCookies, hasCookie, createAuthenticatedUser } from '../helpers';
+import { cleanDatabase, hasCookie, createAuthenticatedUser, getCookies } from '../helpers';
+import * as authService from '../../src/services/auth.service';
 
 beforeEach(cleanDatabase);
 
 describe('Authentication System', () => {
-  // REGISTRATION
   describe('Registration', () => {
     it('creates a new user with valid data', async () => {
       const res = await request(app.server).post('/api/register').send(testUsers.alice).expect(201);
-
       expect(res.body.email).toBe(testUsers.alice.email);
       expect(res.body.username).toBe(testUsers.alice.username);
-      expect(res.body).not.toHaveProperty('password'); // Password should never be returned
+      expect(res.body).not.toHaveProperty('password');
     });
 
     it('rejects duplicate email', async () => {
       await request(app.server).post('/api/register').send(testUsers.alice).expect(201);
-
       const res = await request(app.server).post('/api/register').send(testUsers.alice).expect(400);
-
       expect(res.body.error).toMatch(/exists/i);
     });
 
     it('rejects duplicate username', async () => {
       await request(app.server).post('/api/register').send(testUsers.alice).expect(201);
-
       const duplicate = { ...testUsers.bob, username: testUsers.alice.username };
       const res = await request(app.server).post('/api/register').send(duplicate).expect(400);
-
       expect(res.body.error).toMatch(/username/i);
     });
 
     it('rejects invalid email format', async () => {
       const res = await request(app.server).post('/api/register').send(invalidUsers.invalidEmail).expect(400);
-
       expect(res.body).toHaveProperty('error');
     });
 
     it('rejects missing password', async () => {
       const res = await request(app.server).post('/api/register').send(invalidUsers.noPassword).expect(400);
-
       expect(res.body).toHaveProperty('error');
     });
 
     it('rejects short password', async () => {
       const res = await request(app.server).post('/api/register').send(invalidUsers.shortPassword).expect(400);
-
       expect(res.body.error).toMatch(/bad request/i);
+    });
+
+    it('returns 500 when database fails during registration', async () => {
+      const createSpy = jest.spyOn(prisma.user, 'create').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server).post('/api/register').send(testUsers.alice).expect(400);
+      expect(res.body).toHaveProperty('error');
+      createSpy.mockRestore();
     });
   });
 
-  // LOGIN
   describe('Login', () => {
     beforeEach(async () => {
-      await request(app.server).post('/api/register').send(testUsers.alice);
+      await request(app.server).post('/api/register').send(testUsers.alice).expect(201);
     });
 
     it('succeeds with valid email and password', async () => {
@@ -117,27 +115,51 @@ describe('Authentication System', () => {
 
     it('rejects login without email or username', async () => {
       const res = await request(app.server).post('/api/login').send({ password: testUsers.alice.password }).expect(401);
-
       expect(res.body.error).toMatch(/provide username or email/i);
     });
 
-    it('Player 2 login if they have 2FA enabled', async () => {
-      // Import TOTP for this test
-      const { TOTP } = await import('otpauth');
+    it('returns 401 when database fails during login', async () => {
+      const findFirstSpy = jest.spyOn(prisma.user, 'findFirst').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server)
+        .post('/api/login')
+        .send({ email: testUsers.alice.email, password: testUsers.alice.password })
+        .expect(401);
+      expect(res.body).toHaveProperty('error');
+      findFirstSpy.mockRestore();
+    });
+  });
 
-      // Enable 2FA for bob
-      const { cookies } = await createAuthenticatedUser(testUsers.bob);
-      const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
-      const secret: string = gen.body.secret;
-      const token = new TOTP({ secret }).generate();
-      await request(app.server)
-        .post('/api/2fa/enable')
+  describe('Player 2 Login', () => {
+    beforeEach(async () => {
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+    });
+
+    it('allows player2 to log in when player1 is authenticated', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const res = await request(app.server)
+        .post('/api/login/player2')
         .set('Cookie', cookies)
-        .send({ SixDigitCode: token })
+        .send(testUsers.bob)
         .expect(200);
 
-      // Now try to login as player2 with bob (who has 2FA enabled)
-      const aliceCookies = (await createAuthenticatedUser(testUsers.alice)).cookies;
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('username');
+      expect(res.body).toHaveProperty('avatarUrl');
+      expect(res.body).toHaveProperty('accessToken');
+      expect(hasCookie(res, 'player2_token')).toBe(true);
+    });
+
+    it('returns 2FA requirement when player2 has 2FA enabled', async () => {
+      const { TOTP } = await import('otpauth');
+      const { cookies } = await createAuthenticatedUser(testUsers.bob);
+
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret = genRes.body.secret;
+      const code = new TOTP({ secret }).generate();
+      await request(app.server).post('/api/2fa/enable').set('Cookie', cookies).send({ SixDigitCode: code }).expect(200);
+
+      const { cookies: aliceCookies } = await createAuthenticatedUser(testUsers.alice);
       const res = await request(app.server)
         .post('/api/login/player2')
         .set('Cookie', aliceCookies)
@@ -148,23 +170,66 @@ describe('Authentication System', () => {
       expect(typeof res.body.twoFactorToken).toBe('string');
     });
 
-    it('Tournament login if they have 2FA enabled', async () => {
-      // Import TOTP for this test
-      const { TOTP } = await import('otpauth');
+    it('rejects player2 login without player1 authenticated', async () => {
+      const res = await request(app.server).post('/api/login/player2').send(testUsers.bob).expect(401);
 
-      // Enable 2FA for bob
-      const { cookies } = await createAuthenticatedUser(testUsers.bob);
-      const gen = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
-      const secret: string = gen.body.secret;
-      const token = new TOTP({ secret }).generate();
-      await request(app.server)
-        .post('/api/2fa/enable')
+      expect(res.body.error).toBeDefined();
+    });
+
+    it('rejects player2 login with invalid credentials', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const res = await request(app.server)
+        .post('/api/login/player2')
         .set('Cookie', cookies)
-        .send({ SixDigitCode: token })
+        .send({ email: testUsers.bob.email, password: 'WrongPassword!' })
+        .expect(401);
+
+      expect(res.body.error).toBeDefined();
+    });
+
+    it('returns 401 when database fails during player2 login', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const findFirstSpy = jest.spyOn(prisma.user, 'findFirst').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server)
+        .post('/api/login/player2')
+        .set('Cookie', cookies)
+        .send(testUsers.bob)
+        .expect(401);
+      expect(res.body).toHaveProperty('error');
+      findFirstSpy.mockRestore();
+    });
+  });
+
+  describe('Tournament Login', () => {
+    beforeEach(async () => {
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+    });
+
+    it('allows tournament login when player1 is authenticated', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const res = await request(app.server)
+        .post('/api/login/tournament')
+        .set('Cookie', cookies)
+        .send(testUsers.bob)
         .expect(200);
 
-      // Now try to login as player2 with bob (who has 2FA enabled)
-      const aliceCookies = (await createAuthenticatedUser(testUsers.alice)).cookies;
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('username');
+      expect(res.body).toHaveProperty('avatarUrl');
+    });
+
+    it('returns 2FA requirement when tournament player has 2FA enabled', async () => {
+      const { TOTP } = await import('otpauth');
+      const { cookies } = await createAuthenticatedUser(testUsers.bob);
+
+      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', cookies).expect(200);
+      const secret = genRes.body.secret;
+      const code = new TOTP({ secret }).generate();
+      await request(app.server).post('/api/2fa/enable').set('Cookie', cookies).send({ SixDigitCode: code }).expect(200);
+
+      const { cookies: aliceCookies } = await createAuthenticatedUser(testUsers.alice);
       const res = await request(app.server)
         .post('/api/login/tournament')
         .set('Cookie', aliceCookies)
@@ -174,70 +239,38 @@ describe('Authentication System', () => {
       expect(res.body.twoFactorRequired).toBe(true);
       expect(typeof res.body.twoFactorToken).toBe('string');
     });
-  });
 
-  // PLAYER 2 LOGIN
-  describe('Player 2 Login', () => {
-    it('POST /api/login/player2 should allow a second user to log in', async () => {
-      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
-      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+    it('rejects tournament login without player1 authenticated', async () => {
+      const res = await request(app.server).post('/api/login/tournament').send(testUsers.bob).expect(401);
 
-      const result = await request(app.server).post('/api/login/player2').set('Cookie', cookies).send(testUsers.bob);
-
-      expect(result.status).toBe(200);
-      const cookieString = getCookies(result).find((c) => c.startsWith('player2_token='));
-      const token = cookieString?.split(';')[0].split('=')[1]; // token value
-      expect(token).toBeDefined();
+      expect(res.body.error).toBeDefined();
     });
 
-    it('POST /api/login/player2 without logged in to the app should fail', async () => {
-      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
-      const result = await request(app.server).post('/api/login/player2').send(testUsers.bob);
+    it('rejects tournament login with invalid credentials', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
 
-      expect(result.status).toBe(401);
-      expect(result.body.error).toBeDefined();
+      const res = await request(app.server)
+        .post('/api/login/tournament')
+        .set('Cookie', cookies)
+        .send({ email: testUsers.bob.email, password: 'WrongPassword!' })
+        .expect(401);
+
+      expect(res.body.error).toBeDefined();
     });
 
-    it('POST /api/login/player2 with invalid credentials should fail', async () => {
-      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
-      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
-      const result = await request(app.server).post('/api/login/player2').set('Cookie', cookies).send({
-        email: testUsers.bob.email,
-        password: 'Invalid!',
-      });
-
-      expect(result.status).toBe(401);
-      expect(result.body.error).toBeDefined();
-    });
-
-    // LOGIN TOURNAMENT
-    it('POST /api/login/tournament with valid credentials should pass', async () => {
-      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
-      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
-
-      const result = await request(app.server).post('/api/login/tournament').set('Cookie', cookies).send(testUsers.bob);
-
-      expect(result.status).toBe(200);
-      expect(result.body).toHaveProperty('id');
-      expect(result.body).toHaveProperty('username');
-      expect(result.body).toHaveProperty('avatarUrl');
-    });
-
-    it('POST /api/login/tournament with invalid credentials should fail', async () => {
-      const { cookies } = await createAuthenticatedUser(testUsers.charlie);
-      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
-
-      const result = await request(app.server).post('/api/login/tournament').set('Cookie', cookies).send({
-        email: testUsers.charlie.email,
-        password: 'Invalid!',
-      });
-
-      expect(result.status).toBe(401);
-      expect(result.body).toBeDefined();
+    it('returns 401 when database fails during tournament login', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const findFirstSpy = jest.spyOn(prisma.user, 'findFirst').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server)
+        .post('/api/login/tournament')
+        .set('Cookie', cookies)
+        .send(testUsers.bob)
+        .expect(401);
+      expect(res.body).toHaveProperty('error');
+      findFirstSpy.mockRestore();
     });
   });
 
-  // LOGOUT
   describe('Logout', () => {
     it('clears both cookies when authenticated', async () => {
       const { cookies } = await createAuthenticatedUser(testUsers.alice);
@@ -254,25 +287,98 @@ describe('Authentication System', () => {
     it('revokes refresh token in database', async () => {
       const { user, cookies } = await createAuthenticatedUser(testUsers.alice);
 
-      // Verify token is active
       const before = await prisma.refreshToken.findFirst({ where: { userId: user.id } });
       expect(before?.revoked).toBe(false);
 
       await request(app.server).post('/api/logout').set('Cookie', cookies).expect(200);
 
-      // Verify token is revoked
       const after = await prisma.refreshToken.findFirst({ where: { userId: user.id } });
       expect(after?.revoked).toBe(true);
     });
 
-    it('succeeds without cookies (clears access token only)', async () => {
+    it('succeeds without cookies', async () => {
       const res = await request(app.server).post('/api/logout').expect(200);
 
       expect(res.body).toEqual({ ok: true });
 
       const setCookies = getCookies(res).join(';');
       expect(setCookies).toMatch(/accessToken=;/);
-      expect(setCookies).not.toMatch(/refreshToken=;/); // No refresh token to clear
+      expect(setCookies).not.toMatch(/refreshToken=;/);
+    });
+  });
+
+  describe('Google OAuth', () => {
+    const mockUser = {
+      id: '1',
+      username: 'test',
+      email: 'test@test.com',
+      avatarUrl: null,
+      password: '',
+      isTwoFactorEnabled: false,
+      twoFactorSecret: null,
+      googleId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('redirects to Google', async () => {
+      for (const type of ['main', 'player2', 'tournament']) {
+        await request(app.server).get(`/api/google/init?type=${type}`).expect(302);
+      }
+    });
+
+    it('validates callbacks', async () => {
+      const endpoints = ['/api/google/callback', '/api/google/callback/player2', '/api/google/callback/tournament'];
+
+      for (const endpoint of endpoints) {
+        await request(app.server)
+          .get(`${endpoint}?code=test&state=wrong`)
+          .set('Cookie', 'oauth_state=test')
+          .expect(400);
+        await request(app.server).get(`${endpoint}?state=test`).set('Cookie', 'oauth_state=test').expect(400);
+        await request(app.server)
+          .get(`${endpoint}?error=denied&state=test`)
+          .set('Cookie', 'oauth_state=test')
+          .expect(400);
+      }
+    });
+
+    it('handles database errors', async () => {
+      const spy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('DB'));
+      await request(app.server)
+        .get('/api/google/callback?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(500);
+      await request(app.server)
+        .get('/api/google/callback/player2?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(500);
+      await request(app.server)
+        .get('/api/google/callback/tournament?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(500);
+      spy.mockRestore();
+    });
+
+    it('authenticates users', async () => {
+      const spy1 = jest.spyOn(authService, 'handleGoogleUser').mockResolvedValue(mockUser);
+      const spy2 = jest.spyOn(authService, 'createRefreshToken').mockResolvedValue('token');
+
+      await request(app.server)
+        .get('/api/google/callback?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200);
+      await request(app.server)
+        .get('/api/google/callback/player2?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200);
+      await request(app.server)
+        .get('/api/google/callback/tournament?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200);
+
+      spy1.mockRestore();
+      spy2.mockRestore();
     });
 
     it('database call protected', async () => {

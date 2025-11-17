@@ -27,16 +27,18 @@ model User {
   isTwoFactorEnabled      Boolean @default(false)
   twoFactorSecret         String? //The '?' makes this field optional
 
+  googleId                String?   @unique // Google's unique user ID, must be unique
+
   friends                 User[]   @relation("UserFriends") // Users that this user is friends with
   friendsOf               User[]   @relation("UserFriends") // Users who have this user as a friend
 
   sentFriendRequests      FriendRequest[]  @relation("SentRequests") // Sent friend requests
   receivedFriendRequests  FriendRequest[] @relation("ReceivedRequests") // Received friend requests
 
-  createdAt DateTime  @default(now()) // Automatically set the creation timestamp
-  updatedAt DateTime  @updatedAt    // Automatically update the timestamp on any change
+  createdAt               DateTime @default(now()) // Automatically set the creation timestamp
+  updatedAt               DateTime @updatedAt    // Automatically update the timestamp on any change
 
-    // Relation: a user can have multiple refresh tokens (multiple devices)
+  // Relation: a user can have multiple refresh tokens (multiple devices)
   refreshTokens           RefreshToken[]
 }
 

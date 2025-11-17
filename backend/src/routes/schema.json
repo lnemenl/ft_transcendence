@@ -836,5 +836,74 @@
       "400": { "type": "object", "properties": { "error": { "type": "string" } } },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
+  },
+
+  "googleInitSchema": {
+    "description": "Initialize Google OAuth flow",
+    "tags": ["Auth"],
+    "querystring": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["main", "player2", "tournament"] }
+      }
+    }
+  },
+
+  "googleCallbackSchema": {
+    "description": "Google OAuth callback handler",
+    "tags": ["Auth"],
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" },
+          "accessToken": { "type": "string" },
+          "refreshToken": { "type": "string" }
+        },
+        "required": ["id", "username", "avatarUrl", "accessToken"]
+      },
+      "400": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "googleCallbackPlayer2Schema": {
+    "description": "Google OAuth callback handler for player 2",
+    "tags": ["Auth"],
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" },
+          "accessToken": { "type": "string" }
+        },
+        "required": ["id", "username", "avatarUrl", "accessToken"]
+      },
+      "400": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  },
+
+  "googleCallbackTournamentSchema": {
+    "description": "Google OAuth callback handler for tournament",
+    "tags": ["Auth"],
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        },
+        "required": ["id", "username", "avatarUrl"]
+      },
+      "400": { "type": "object", "properties": { "error": { "type": "string" } } },
+      "401": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
   }
 }
