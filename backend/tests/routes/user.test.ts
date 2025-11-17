@@ -37,6 +37,43 @@ describe('User Profile Management', () => {
       expect(res.body.friends[0]).toHaveProperty('id', alice.id);
       expect(res.body.friends[0]).toHaveProperty('username', alice.username);
       expect(res.body.friends[0]).toHaveProperty('avatarUrl');
+      expect(res.body.friends[0]).toHaveProperty('isOnline', true);
+      expect(res.body).not.toHaveProperty('password');
+      expect(res.body).not.toHaveProperty('twoFactorSecret');
+    });
+
+    it('updates online status upon logout', async () => {
+      const { user: bob } = await createAuthenticatedUser(testUsers.bob);
+      const { user: alice, cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const friendRequest = await request(app.server)
+        .post(`/api/friend-request/${bob.id}`)
+        .set('Cookie', cookies)
+        .expect(201);
+
+      expect(friendRequest.body).toHaveProperty('id');
+      const friendRequestId = friendRequest.body.id;
+      const loginBob = await request(app.server).post('/api/login').send(testUsers.bob).expect(200);
+      let authCookies = getCookies(loginBob);
+      await request(app.server).patch(`/api/friend-request/${friendRequestId}`).set('Cookie', authCookies).expect(200);
+
+      await request(app.server).post('/api/logout').set('Cookie', authCookies).expect(200);
+      const loginAlice = await request(app.server).post('/api/login').send(testUsers.alice).expect(200);
+      authCookies = getCookies(loginAlice);
+      const res = await request(app.server).get('/api/users/me').set('Cookie', authCookies).expect(200);
+
+      expect(res.body).toBeDefined();
+      expect(res.body).toHaveProperty('id', alice.id);
+      expect(res.body).toHaveProperty('email', testUsers.alice.email);
+      expect(res.body).toHaveProperty('username', testUsers.alice.username);
+      expect(res.body).toHaveProperty('isTwoFactorEnabled', false);
+      expect(res.body).toHaveProperty('createdAt');
+      expect(res.body).toHaveProperty('friends');
+      expect(Array.isArray(res.body.friends)).toBe(true);
+      expect(res.body.friends[0]).toHaveProperty('id', bob.id);
+      expect(res.body.friends[0]).toHaveProperty('username', testUsers.bob.username);
+      expect(res.body.friends[0]).toHaveProperty('avatarUrl');
+      expect(res.body.friends[0]).toHaveProperty('isOnline', false);
       expect(res.body).not.toHaveProperty('password');
       expect(res.body).not.toHaveProperty('twoFactorSecret');
     });
@@ -56,6 +93,14 @@ describe('User Profile Management', () => {
         .get('/api/users/me')
         .set('Cookie', [`accessToken=${validToken}`])
         .expect(404);
+    });
+
+    it('returns 500 when database fails during GET /me', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server).get('/api/users/me').set('Cookie', cookies).expect(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+      findUniqueSpy.mockRestore();
     });
   });
 
@@ -126,6 +171,18 @@ describe('User Profile Management', () => {
         .send({ avatarUrl: 'not-a-url' })
         .expect(400);
     });
+
+    it('returns 500 when database fails during PATCH /me', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const updateSpy = jest.spyOn(prisma.user, 'update').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server)
+        .patch('/api/users/me')
+        .set('Cookie', cookies)
+        .send({ username: 'test_new' })
+        .expect(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+      updateSpy.mockRestore();
+    });
   });
 
   describe('GET /api/users/', () => {
@@ -185,6 +242,15 @@ describe('User Profile Management', () => {
 
       const nonExistentId = 'clxkq0000000008l9d9e6g3h1';
       await request(app.server).get(`/api/users/${nonExistentId}`).set('Cookie', cookies).expect(404);
+    });
+
+    it('returns 500 when database fails during GET /api/users/:id', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+      const { user: bob } = await createAuthenticatedUser(testUsers.bob);
+      const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
+      const res = await request(app.server).get(`/api/users/${bob.id}`).set('Cookie', cookies).expect(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
+      findUniqueSpy.mockRestore();
     });
   });
 

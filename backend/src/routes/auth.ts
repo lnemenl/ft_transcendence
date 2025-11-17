@@ -1,6 +1,17 @@
 import { FastifyInstance } from 'fastify';
-import { registerUser, loginUser, revokeRefreshTokenByRaw } from '../services/auth.service';
-import { loginSchema, logoutSchema, registerSchema } from './schema.json';
+import { prisma } from '../utils/prisma';
+import {
+  registerUser,
+  loginUser,
+  revokeRefreshTokenByRaw,
+  handleGoogleUser,
+  createRefreshToken,
+} from '../services/auth.service';
+import { loginSchema, logoutSchema, registerSchema, googleInitSchema } from './schema.json';
+import { oauth2TournamentClient, oauth2Player2Client, oauth2MainClient } from '../services/google.service';
+import crypto from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
+import { getAccessTokenExpiresIn } from '../config';
 
 const authRoutes = async (fastify: FastifyInstance) => {
   fastify.post('/register', { schema: registerSchema }, async (request, reply) => {
@@ -102,7 +113,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
         return reply.status(200).send({ twoFactorRequired: true, twoFactorToken: loginResult.twoFactorToken });
       }
 
-      const { accessToken, refreshToken } = loginResult;
+      const { id, accessToken, refreshToken } = loginResult;
 
       reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
@@ -120,6 +131,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
         maxAge: 14 * 24 * 60 * 60, // 14 days
       });
 
+      await prisma.user.update({ where: { id: id }, data: { isOnline: true } });
+
       const { refreshToken: _revokedToken, ...user } = loginResult;
       return reply.status(200).send(user);
     } catch (err) {
@@ -128,20 +141,218 @@ const authRoutes = async (fastify: FastifyInstance) => {
     }
   });
 
-  fastify.post('/logout', { schema: logoutSchema }, async (request, reply) => {
-    const refresh = request.cookies?.refreshToken;
-    if (refresh) {
-      try {
-        await revokeRefreshTokenByRaw(refresh);
-      } catch (err) {
-        /* istanbul ignore next */
-        fastify.log.error(err);
-      }
-      reply.clearCookie('refreshToken', { path: '/' });
-    }
+  fastify.post(
+    '/logout',
+    {
+      schema: logoutSchema,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      const { id } = request.user as { id: string };
+      const refresh = request.cookies?.refreshToken;
+      if (refresh) {
+        try {
+          await revokeRefreshTokenByRaw(refresh);
+          await prisma.user.update({ where: { id }, data: { isOnline: false } });
+        } catch (err) {
+          fastify.log.error(err);
 
-    reply.clearCookie('accessToken', { path: '/' });
-    return reply.status(200).send({ ok: true });
+          return reply.status(500).send({ error: 'Internal server error' });
+        }
+        reply.clearCookie('refreshToken', { path: '/' });
+      }
+
+      const player2_token = request.cookies?.player2_token;
+      if (player2_token) reply.clearCookie('player2_token', { path: '/' });
+
+      reply.clearCookie('accessToken', { path: '/' });
+      return reply.status(200).send({ ok: true });
+    },
+  );
+
+  fastify.get('/google/init', { schema: googleInitSchema }, async (request, reply) => {
+    try {
+      const state = crypto.randomBytes(32).toString('hex');
+
+      const { type } = request.query as { type: string };
+      let oauthClient: OAuth2Client;
+
+      if (type === 'main') oauthClient = oauth2MainClient;
+      else if (type === 'player2') oauthClient = oauth2Player2Client;
+      else oauthClient = oauth2TournamentClient;
+
+      reply.setCookie('oauth_state', state, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 10 * 60, // State expires in 10 minutes
+      });
+
+      const scopes = [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+      ];
+
+      const authorizationUrl = oauthClient.generateAuthUrl({
+        access_type: 'offline',
+        scope: scopes,
+        include_granted_scopes: true,
+        state: state,
+      });
+
+      return reply.redirect(authorizationUrl);
+    } catch (_error) {
+      fastify.log.error(_error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  fastify.get('/google/callback', async (request, reply) => {
+    try {
+      // Parse the query parameters that Google sends back
+      const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
+
+      // Check if there was an error (user denied access)
+      if (error) {
+        return reply.code(400).send({ error: error });
+      }
+
+      // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
+      const storedState = request.cookies.oauth_state;
+      if (state !== storedState) {
+        return reply.code(400).send({ error: 'State mismatch' });
+      }
+
+      // Exchange authorization code for refresh and access tokens
+      if (!code) {
+        return reply.code(400).send({ error: 'No code provided' });
+      }
+
+      // Get or create the user in our database
+      const user = await handleGoogleUser(code, oauth2MainClient);
+
+      // Create JWT access token (15 minutes)
+      const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
+
+      // Create opaque refresh token (14 days)
+      const refreshToken = await createRefreshToken(user.id);
+
+      reply.setCookie('accessToken', accessToken, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60, // 15 minutes
+      });
+
+      reply.setCookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 14 * 24 * 60 * 60, // 14 days
+      });
+
+      await prisma.user.update({ where: { id: user.id }, data: { isOnline: true } });
+
+      // Return user info with tokens
+      return reply.send({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        accessToken,
+        refreshToken,
+      });
+    } catch (_error) {
+      fastify.log.error(_error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  fastify.get('/google/callback/player2', async (request, reply) => {
+    try {
+      // Parse the query parameters that Google sends back
+      const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
+
+      // Check if there was an error (user denied access)
+      if (error) {
+        return reply.code(400).send({ error: error });
+      }
+
+      // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
+      const storedState = request.cookies.oauth_state;
+      if (state !== storedState) {
+        return reply.code(400).send({ error: 'State mismatch' });
+      }
+
+      // Exchange authorization code for refresh and access tokens
+      if (!code) {
+        return reply.code(400).send({ error: 'No code provided' });
+      }
+
+      // Get or create the user in our database
+      const user = await handleGoogleUser(code, oauth2Player2Client);
+
+      // Create JWT access token (15 minutes)
+      const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
+
+      reply.setCookie('player2_token', accessToken, {
+        httpOnly: true,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 15 * 60, // 15 minutes
+      });
+
+      // Return user info with tokens
+      return reply.send({
+        id: user.id,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+        accessToken,
+      });
+    } catch (_error) {
+      fastify.log.error(_error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  fastify.get('/google/callback/tournament', async (request, reply) => {
+    try {
+      // Parse the query parameters that Google sends back
+      const { code, error, state } = request.query as { code?: string; error?: string; state?: string };
+
+      // Check if there was an error (user denied access)
+      if (error) {
+        return reply.code(400).send({ error: error });
+      }
+
+      // Check if state matches (CSRF protection - verify the state we sent matches what Google returns)
+      const storedState = request.cookies.oauth_state;
+      if (state !== storedState) {
+        return reply.code(400).send({ error: 'State mismatch' });
+      }
+
+      // Exchange authorization code for refresh and access tokens
+      if (!code) {
+        return reply.code(400).send({ error: 'No code provided' });
+      }
+
+      // Get or create the user in our database
+      const user = await handleGoogleUser(code, oauth2TournamentClient);
+
+      // Return user info with tokens
+      return reply.send({
+        id: user.id,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+      });
+    } catch (_error) {
+      fastify.log.error(_error);
+      return reply.code(500).send({ error: 'Internal server error' });
+    }
   });
 };
 

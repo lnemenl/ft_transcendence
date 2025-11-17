@@ -150,6 +150,8 @@ const twoFARoutes = async (fastify: FastifyInstance) => {
         maxAge: 14 * 24 * 60 * 60, // 14 days in seconds
       });
 
+      await prisma.user.update({ where: { id: user.id }, data: { isOnline: true } });
+
       return reply.status(200).send({ ok: true });
     } catch (err) {
       fastify.log.error(err);
