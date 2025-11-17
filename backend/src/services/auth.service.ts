@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 import { FastifyReply } from 'fastify';
 import crypto from 'crypto';
 import { getAccessTokenExpiresIn } from '../config';
+import { OAuth2Client } from 'google-auth-library';
+import { google } from 'googleapis';
 
 const SALT_ROUNDS = 10;
 
@@ -139,4 +141,64 @@ export const revokeRefreshTokenByRaw = async (raw: string) => {
     where: { tokenHash },
     data: { revoked: true },
   });
+};
+
+// Handle Google OAuth user: find existing or create new
+export const handleGoogleUser = async (code: string, oauth2Client: OAuth2Client) => {
+  // Check if user already exists by googleId
+
+  const response = await oauth2Client.getToken(code);
+  const tokens = response.tokens;
+  oauth2Client.setCredentials(tokens);
+
+  // Now that we have valid tokens, call the People API to get the user's profile
+  const people = google.people('v1');
+  const userProfile = await people.people.get({
+    auth: oauth2Client,
+    resourceName: 'people/me',
+    personFields: 'names,emailAddresses,photos',
+  });
+
+  // Extract the data we need from Google's response
+  // data is where Google puts the JSON payload returned by the API
+  const googleId = userProfile.data.resourceName?.split('/')?.pop() || '';
+  const email = userProfile.data.emailAddresses?.[0]?.value || '';
+  const name = userProfile.data.names?.[0]?.displayName || '';
+
+  let user = await prisma.user.findUnique({
+    where: { googleId },
+  });
+
+  // If user exists, return them
+  if (user) {
+    return user;
+  }
+
+  // User doesn't exist, create new one
+  // Generate username from name: "John Doe" → "john_doe"
+  const baseUsername = name.toLowerCase().replace(/\s+/g, '_');
+
+  // Check if username exists, if yes add a number
+  let username = baseUsername;
+  let counter = 1;
+  while (await prisma.user.findUnique({ where: { username } })) {
+    username = `${baseUsername}_${counter}`;
+    counter++;
+  }
+
+  // Generate random password (Google users won't use this)
+  const randomPassword = crypto.randomBytes(32).toString('hex');
+  const hashedPassword = bcrypt.hashSync(randomPassword, SALT_ROUNDS);
+
+  // Create new user
+  user = await prisma.user.create({
+    data: {
+      email: email.toLowerCase(),
+      username,
+      password: hashedPassword,
+      googleId,
+    },
+  });
+
+  return user;
 };
