@@ -1,4 +1,4 @@
-import { t } from "./lang";
+import { t } from "./useLanguage";
 
 export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }: {
   e: React.FormEvent<HTMLFormElement>;
