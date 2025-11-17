@@ -36,7 +36,10 @@ export const verifyRefreshToken = async (raw: string) => {
   const tokenHash = hashRefreshToken(raw);
   const rec = await prisma.refreshToken.findUnique({ where: { tokenHash } });
   /* istanbul ignore next */
-  if (!rec || rec.revoked || rec.expiresAt < new Date()) return null;
+  if (!rec || rec.revoked || rec.expiresAt < new Date()) {
+    if (rec) await prisma.user.update({ where: { id: rec.id }, data: { isOnline: false } });
+    return null;
+  }
   return rec;
 };
 

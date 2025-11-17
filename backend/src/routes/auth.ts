@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { prisma } from '../utils/prisma';
 import {
   registerUser,
   loginUser,
@@ -112,7 +113,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
         return reply.status(200).send({ twoFactorRequired: true, twoFactorToken: loginResult.twoFactorToken });
       }
 
-      const { accessToken, refreshToken } = loginResult;
+      const { id, accessToken, refreshToken } = loginResult;
 
       reply.setCookie('accessToken', accessToken, {
         httpOnly: true,
@@ -130,6 +131,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
         maxAge: 14 * 24 * 60 * 60, // 14 days
       });
 
+      await prisma.user.update({ where: { id: id }, data: { isOnline: true } });
+
       const { refreshToken: _revokedToken, ...user } = loginResult;
       return reply.status(200).send(user);
     } catch (err) {
@@ -138,24 +141,34 @@ const authRoutes = async (fastify: FastifyInstance) => {
     }
   });
 
-  fastify.post('/logout', { schema: logoutSchema }, async (request, reply) => {
-    const refresh = request.cookies?.refreshToken;
-    if (refresh) {
-      try {
-        await revokeRefreshTokenByRaw(refresh);
-      } catch (err) {
-        /* istanbul ignore next */
-        fastify.log.error(err);
+  fastify.post(
+    '/logout',
+    {
+      schema: logoutSchema,
+      preHandler: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      const { id } = request.user as { id: string };
+      const refresh = request.cookies?.refreshToken;
+      if (refresh) {
+        try {
+          await revokeRefreshTokenByRaw(refresh);
+          await prisma.user.update({ where: { id }, data: { isOnline: false } });
+        } catch (err) {
+          fastify.log.error(err);
+
+          return reply.status(500).send({ error: 'Internal server error' });
+        }
+        reply.clearCookie('refreshToken', { path: '/' });
       }
-      reply.clearCookie('refreshToken', { path: '/' });
-    }
 
-    const player2_token = request.cookies?.player2_token;
-    if (player2_token) reply.clearCookie('player2_token', { path: '/' });
+      const player2_token = request.cookies?.player2_token;
+      if (player2_token) reply.clearCookie('player2_token', { path: '/' });
 
-    reply.clearCookie('accessToken', { path: '/' });
-    return reply.status(200).send({ ok: true });
-  });
+      reply.clearCookie('accessToken', { path: '/' });
+      return reply.status(200).send({ ok: true });
+    },
+  );
 
   fastify.get('/google/init', { schema: googleInitSchema }, async (request, reply) => {
     try {
@@ -240,6 +253,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
         sameSite: 'lax',
         maxAge: 14 * 24 * 60 * 60, // 14 days
       });
+
+      await prisma.user.update({ where: { id: user.id }, data: { isOnline: true } });
 
       // Return user info with tokens
       return reply.send({

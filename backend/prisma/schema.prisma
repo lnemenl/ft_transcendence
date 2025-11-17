@@ -17,6 +17,7 @@ model User {
   password                String      // Where we will store the securely hashed password
   username                String      @unique// The players username to be used throughout the website
   avatarUrl               String?
+  isOnline                Boolean     @default(false) // Online status of the user
 
   games                   Game[]      @relation("UserGames") // The games that the user has participated in
   gamesWon                Game[]      @relation("GameWinner") // The games that the user has won

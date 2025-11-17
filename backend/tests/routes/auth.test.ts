@@ -296,14 +296,15 @@ describe('Authentication System', () => {
       expect(after?.revoked).toBe(true);
     });
 
-    it('succeeds without cookies', async () => {
-      const res = await request(app.server).post('/api/logout').expect(200);
+    it('database call protected', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.anna);
 
-      expect(res.body).toEqual({ ok: true });
+      jest.spyOn(prisma.user, 'update').mockRejectedValue(new Error('Internal server error'));
 
-      const setCookies = getCookies(res).join(';');
-      expect(setCookies).toMatch(/accessToken=;/);
-      expect(setCookies).not.toMatch(/refreshToken=;/);
+      const res = await request(app.server).post('/api/logout').set('Cookie', cookies);
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty('error', 'Internal server error');
     });
   });
 
@@ -363,6 +364,7 @@ describe('Authentication System', () => {
     it('authenticates users', async () => {
       const spy1 = jest.spyOn(authService, 'handleGoogleUser').mockResolvedValue(mockUser);
       const spy2 = jest.spyOn(authService, 'createRefreshToken').mockResolvedValue('token');
+      const spy3 = jest.spyOn(prisma.user, 'update').mockResolvedValue(mockUser);
 
       await request(app.server)
         .get('/api/google/callback?code=test&state=test')
@@ -379,6 +381,7 @@ describe('Authentication System', () => {
 
       spy1.mockRestore();
       spy2.mockRestore();
+      spy3.mockRestore();
     });
   });
 });
