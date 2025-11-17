@@ -13,6 +13,7 @@ import {
 } from "../utils/api";
 import type { User, Game, UserWithFriends, FriendRequestsResponse } from "../types";
 import { Blobs } from "./Blobs";
+import { TwoFactorSettings } from "./TwoFactorSettings";
 
 export const Profile: React.FC = () => {
   const [user, setUser] = useState<UserWithFriends | null>(null);
@@ -217,6 +218,8 @@ export const Profile: React.FC = () => {
   }
 
   return (
+<<<<<<< HEAD
+    return (
     <>
       <Blobs />
       <div className="min-h-screen p-6">
@@ -318,10 +321,16 @@ export const Profile: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* 2FA Settings Card */}
+              <div className="bg-white dark:bg-[#1e2030] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Security</h3>
+                <TwoFactorSettings />
+              </div>
             </div>
 
             {/* Right Column - Friends & Games */}
-            <div className="md:col-span-2 space-y-6">
+            <div className="md:col-span-2 space-y-6">{/* Friend Requests */}
               {/* Friend Requests */}
               {friendRequests && friendRequests.receivedFriendRequests.length > 0 && (
                 <div className="bg-white dark:bg-[#1e2030] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
