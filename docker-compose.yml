@@ -1,3 +1,7 @@
+networks:
+  pong:
+    driver: bridge
+
 # Defines all the services (containers) for our application.
 services:
   # The name of our service.
@@ -7,7 +11,8 @@ services:
     container_name: ft_transcendence_backend
     # This is optional but good practice for cross-platform teams (Apple Silicon, etc.).
     platform: linux/amd64
-
+    networks:
+      - pong
     ports:
       - "3011:3011"
       
@@ -24,6 +29,7 @@ services:
       # We tell Docker to create a separate, managed volume just for the node_modules directory.
       # This prevents the `npm install` from running every time and avoids OS-specific file conflicts.
       - /app/node_modules
+      - /app/dist
 
       # Saving database file
 
@@ -39,23 +45,21 @@ services:
         npm install --include=dev &&
         npm run clean:all &&
         npx prisma generate &&
-        npm run dev
+        npm run build &&
+        npm run start
       "
   frontend:
-    image: node:lts-slim
+    image: frontend
     container_name: ft_transcendence_frontend
     platform: linux/amd64
-    working_dir: /app
+    build: ./frontend
+    networks:
+      - pong
     ports:
-      - "5173:5173"
+      - "443:443"
+      - "80:80"
     volumes:
       - ./frontend:/app
-      - ./game:/app/public/game
+      - ./game:/usr/share/nginx/html/game:ro
       - /app/node_modules
-    environment:
-      -VITE_API_BASE_URL: "http://localhost:3011"
-    command: >
-      bash -c "
-        npm install &&
-        npm run dev -- --host 0.0.0.0
-        "
+      - /app/dist
