@@ -22,6 +22,8 @@ RUN rm -fr ./*
 
 COPY --from=builder /app/dist .
 
+RUN mkdir -p game
+
 COPY nginx.conf /etc/nginx/nginx.conf
 
 RUN mkdir -p /etc/nginx/certs
@@ -32,6 +34,6 @@ RUN openssl req -x509 -new -nodes \
     -subj "/C=FI/ST=Uusimaa/L=Helsinki/CN=localhost" \
     -outform PEM
 
-EXPOSE 80
+EXPOSE 443
 
 CMD ["nginx", "-c", "/etc/nginx/nginx.conf", "-g", "daemon off;"]

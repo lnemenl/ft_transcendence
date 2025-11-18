@@ -1,3 +1,7 @@
+networks:
+  pong:
+    driver: bridge
+
 # Defines all the services (containers) for our application.
 services:
   # The name of our service.
@@ -7,7 +11,8 @@ services:
     container_name: ft_transcendence_backend
     # This is optional but good practice for cross-platform teams (Apple Silicon, etc.).
     platform: linux/amd64
-
+    networks:
+      - pong
     ports:
       - "3011:3011"
       
@@ -46,9 +51,12 @@ services:
     container_name: ft_transcendence_frontend
     platform: linux/amd64
     build: ./frontend
+    networks:
+      - pong
     ports:
+      - "443:443"
       - "80:80"
     volumes:
       - ./frontend:/app
-      - ./game:/app/public/game
+      - ./game:/usr/share/nginx/html/game
       - /app/node_modules
