@@ -45,7 +45,7 @@ export function TournamentLoginForm({ getBack, setMode }: LoginFormProps) {
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username">
             {t.username}
           </label>
-          <input onChange={(e) => setUsername(e.target.value)} className="shadow xappearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={username} type="text" placeholder={t.username} required/>
+          <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={username} type="text" placeholder={t.username} required/>
         </div>
         <div className="mb-4">
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="email-p1">
