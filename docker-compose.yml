@@ -29,6 +29,7 @@ services:
       # We tell Docker to create a separate, managed volume just for the node_modules directory.
       # This prevents the `npm install` from running every time and avoids OS-specific file conflicts.
       - /app/node_modules
+      - /app/dist
 
       # Saving database file
 
@@ -44,7 +45,8 @@ services:
         npm install --include=dev &&
         npm run clean:all &&
         npx prisma generate &&
-        npm run dev
+        npm run build &&
+        npm run start
       "
   frontend:
     image: frontend
@@ -58,5 +60,6 @@ services:
       - "80:80"
     volumes:
       - ./frontend:/app
-      - ./game:/usr/share/nginx/html/game
+      - ./game:/usr/share/nginx/html/game:ro
       - /app/node_modules
+      - /app/dist
