@@ -1,8 +1,7 @@
 import React from "react";
 import { LoginForm } from "./LoginForm";
 import { useLanguage } from "./useLanguage";
-
-type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
+import type { View } from "./types";
 
 type Props = {
   onBack: () => void;

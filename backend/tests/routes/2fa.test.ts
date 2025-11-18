@@ -241,7 +241,7 @@ describe('Two-Factor Authentication (2FA)', () => {
       expect(cookies.join(';')).toMatch(/refreshToken=/);
     });
 
-    it('verify/player2 sets Player2Token cookie on success', async () => {
+    it('verify/player2 sets player2_token cookie on success', async () => {
       // Step 1: Enable 2FA for alice
       const { cookies: enableCookies } = await createAuthenticatedUser(testUsers.alice);
       const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', enableCookies).expect(200);
@@ -256,7 +256,7 @@ describe('Two-Factor Authentication (2FA)', () => {
       // Step 2: Login alice - get twoFactorToken
       const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
 
-      // Step 3: Verify 2FA with /player2 endpoint - should set Player2Token
+      // Step 3: Verify 2FA with /player2 endpoint - should set player2_token
       const verifyCode = totpGenerate(secret);
       const player2Res = await request(app.server)
         .post('/api/2fa/verify/player2')
@@ -264,7 +264,7 @@ describe('Two-Factor Authentication (2FA)', () => {
         .expect(200);
 
       const cookies = getCookies(player2Res);
-      expect(cookies.find((c) => c.startsWith('Player2Token='))).toBeDefined();
+      expect(cookies.find((c) => c.startsWith('player2_token='))).toBeDefined();
       expect(cookies.find((c) => c.startsWith('refreshToken='))).toBeUndefined();
       expect(cookies.find((c) => c.startsWith('accessToken='))).toBeUndefined();
     });
@@ -523,8 +523,9 @@ describe('TOTPService unit checks (small)', () => {
     const totp = new TOTP({ secret });
     const now = totp.generate();
     expect(totpVerify(secret, now)).toBe(true);
+    // With window: 0, codes from previous time windows should be rejected
     const prev = totp.generate({ timestamp: Date.now() - 30000 });
-    expect(totpVerify(secret, prev)).toBe(true);
+    expect(totpVerify(secret, prev)).toBe(false);
     const old = totp.generate({ timestamp: Date.now() - 90000 });
     expect(totpVerify(secret, old)).toBe(false);
     expect(totpVerify(secret, 'abc123')).toBe(false);

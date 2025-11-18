@@ -1,11 +1,16 @@
 import { SlControlPlay } from "react-icons/sl";
+import { useGame } from "./GameContext";
 
 export function Header() {
+	const { ready } = useGame();
+	
 	const handleScroll = () => {
-		document.getElementById("login")?.scrollIntoView({
+		const targetId = ready ? "game" : "login";
+		document.getElementById(targetId)?.scrollIntoView({
 			behavior: "smooth",
 		});
 	};
+	
 	return <div className="relative z-10 flex h-screen justify-center items-center inset-0">
 		<div className="text-8xl m-8 text-[#24273a] dark:text-[#cad3f5]">
       P

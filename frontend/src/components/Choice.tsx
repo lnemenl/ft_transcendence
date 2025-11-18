@@ -1,6 +1,5 @@
-import {useLanguage} from "./useLanguage";
-
-type View = "register" | "choice" | "login";
+import { useLanguage } from "./useLanguage";
+import type { View } from "./types";
 
 type Props = {
   onSelectMode: (view: View) => void;

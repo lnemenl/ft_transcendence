@@ -2,8 +2,8 @@ import React from "react";
 import { useState } from "react";
 import { TournamentSize } from "./TournamentSize";
 import { TournamentSetup } from "./TournamentSetup"
-
-type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
+import { useGame } from "./GameContext";
+import type { View } from "./types";
 
 type Props = { 
   onBack: () => void;
@@ -13,9 +13,15 @@ type Stage = "choose-size" | "login-players"
 
 export const Tournament: React.FC<Props> = ({ onBack, onSelectMode }) => {
   const [stage, setStage] = useState<Stage>("choose-size");
+  const { setPlayers, setCurrentPlayerIndex } = useGame();
+  
   const handleSetStage = (stage: Stage) => setStage(stage);
+  
   const getBack = () => {
-    setStage("choose-size")
+    // Reset players and index when going back to choose-size
+    setPlayers([]);
+    setCurrentPlayerIndex(0);
+    setStage("choose-size");
   }
 
   if (stage === "choose-size") {

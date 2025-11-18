@@ -1,4 +1,4 @@
-import { t } from "./useLanguage";
+import { t, translateError } from "./useLanguage";
 
 export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }: {
   e: React.FormEvent<HTMLFormElement>;
@@ -9,8 +9,6 @@ export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }:
     
   e.preventDefault();
 
-  console.log("WHAT WAS SENT: ", data);
-
   if (setError) {
     setError("");
   }
@@ -19,17 +17,25 @@ export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }:
     const res = await fetch(`/api/${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(data),
     });
 
     if (res.ok) {
       const response = await res.json();
-      console.log("SUCCESS!", response);
       onSuccess?.(response);
     } else {
       const errorData = await res.json();
-      console.log("Request failed:", res.status, errorData);
-      setError?.(errorData.error);
+      const backendError = errorData.error;
+      
+      // Try to translate the backend error
+      const translationKey = translateError(backendError);
+      const translations = t();
+      
+      // Use translated error if available, otherwise use backend error as fallback
+      const errorMessage = translationKey ? translations[translationKey] : backendError;
+      
+      setError?.(errorMessage);
     }
   } catch (err) {
     console.error("Network or parsing error:", err);

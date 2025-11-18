@@ -1,5 +1,6 @@
 import { useGame } from "./GameContext";
 import { useLanguage } from "./useLanguage";
+import { useEffect, useState } from "react";
 
 type View = "multiplayer" | "choice" | "tournament";
 
@@ -9,10 +10,36 @@ type Props = {
 
 export const GameMode: React.FC<Props> = ({ onSelectMode }) => {
   const t = useLanguage();
-  const { setMode } = useGame();
+  const { setMode, setTotalPlayers, saveCurrentPlayer } = useGame();
+  const [mainUser, setMainUser] = useState<{id: string, username: string} | null>(null);
+  
+  // Fetch the main logged-in user info
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/users/me", { credentials: "include" });
+        if (res.ok) {
+          const userData = await res.json();
+          setMainUser({ id: userData.id, username: userData.username });
+        }
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleModeChange = (newMode: "multiplayer" | "tournament") => {
     setMode(newMode);
+    
+    // For multiplayer, set 2 players and add main user as player 1
+    if (newMode === "multiplayer") {
+      setTotalPlayers(2);
+      if (mainUser) {
+        saveCurrentPlayer(mainUser.username, mainUser.id);
+      }
+    }
+    
     onSelectMode(newMode);
   };
   return (

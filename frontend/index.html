@@ -2,12 +2,26 @@
 <html lang="en">
   <head>
     <script>
+        // Apply theme IMMEDIATELY to prevent flash
+        (function() {
+            const stored = localStorage.getItem('theme');
+            if (stored === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                // Default to light (remove dark class if present)
+                document.documentElement.classList.remove('dark');
+                if (!stored) {
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+        })();
+        
+        // Language initialization
         const supportedLanguages = ["en", "fi", "fr", "ru"];
         let locale = localStorage.getItem("ft_transcendence:lang");
         if (!supportedLanguages.includes(locale)) {
             locale = "en";
             localStorage.setItem("ft_transcendence:lang", "en");
-            console.log("Unsupported language. Defaulting to English.");
         }
         document.documentElement.lang = locale;
     </script>

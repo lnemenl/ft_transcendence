@@ -2,20 +2,34 @@ import { useState } from "react";
 import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
 import { LogOut } from "./LogOut";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export function LogButton() {
   const { isLoggedIn, logout } = useAuth();
   const { resetGame, setReady } = useGame();
   const [showLogoutScreen, setShowLogoutScreen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleScroll = () => {
-    document.getElementById("login")?.scrollIntoView({
-      behavior: "smooth"
-    });
+    // If not on home page, navigate home first
+    if (location.pathname !== '/') {
+      navigate('/');
+      // Wait for navigation to complete before scrolling
+      setTimeout(() => {
+        document.getElementById("login")?.scrollIntoView({
+          behavior: "smooth"
+        });
+      }, 100);
+    } else {
+      document.getElementById("login")?.scrollIntoView({
+        behavior: "smooth"
+      });
+    }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     resetGame();
     handleScroll();
     setReady(false);
@@ -30,12 +44,17 @@ export function LogButton() {
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div>
       {isLoggedIn ? (
-        <button type="button" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="p-1 w-full rounded-2xl">
+        <button type="button" onClick={async () => { 
+          await logout(); 
+          resetGame(); 
+          handleScroll(); 
+          setReady(false);
+        }} className="p-1 w-full rounded-2xl">
           Logout
         </button>
       ) : (

@@ -31,7 +31,6 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
 
       if (res.ok) {
         const data = await res.json();
-        console.log("Profile data:", data);
         setIsTwoFactorEnabled(data.isTwoFactorEnabled || false);
       } else {
         console.error("Failed to load profile, status:", res.status);
@@ -47,6 +46,7 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleGenerateQR = async () => {
@@ -133,22 +133,18 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-md">
-        <p className="text-center text-gray-500 dark:text-[#cad3f5]">{t.loading}</p>
+      <div className="w-full">
+        <p className="text-center text-gray-500 dark:text-gray-400">{t.loading}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-md">
-      <h2 className="text-2xl font-bold text-[#6688cc] dark:text-[#cad3f5] mb-6">
-        {t.twoFactorAuth}
-      </h2>
-
+    <div className="w-full">
       {/* Status */}
-      <div className="mb-6">
-        <p className="text-gray-700 dark:text-[#cad3f5] mb-2">
-          {t.status}: <span className={`font-semibold ${isTwoFactorEnabled ? 'text-green-600' : 'text-gray-500'}`}>
+      <div className="mb-4">
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          {t.status}: <span className={`font-semibold ${isTwoFactorEnabled ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
             {isTwoFactorEnabled ? t.twoFactorEnabled : t.twoFactorDisabled}
           </span>
         </p>
@@ -156,25 +152,25 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
 
       {/* Success/Error Messages */}
       {error && (
-        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 rounded">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
       {success && (
-        <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 rounded">
-          <p className="text-sm text-green-600 dark:text-green-400">{success}</p>
+        <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-sm text-green-700 dark:text-green-300">{success}</p>
         </div>
       )}
 
       {/* Enable 2FA Flow */}
       {!isTwoFactorEnabled && !showQRCode && (
         <div>
-          <p className="text-sm text-gray-600 dark:text-[#cad3f5] mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             {t.twoFactorExplanation}
           </p>
           <button
             onClick={handleGenerateQR}
-            className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-6 py-2 text-white w-full"
+            className="bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 text-white text-sm font-medium w-full transition-colors"
           >
             {t.enableTwoFactor}
           </button>
@@ -184,32 +180,32 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
       {/* Show QR Code and Verification */}
       {!isTwoFactorEnabled && showQRCode && (
         <div>
-          <p className="text-sm text-gray-600 dark:text-[#cad3f5] mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             {t.scanQRCode}
           </p>
 
           <div className="flex justify-center mb-4">
-            <img src={qrCode} alt="QR Code" className="border-2 border-gray-300 dark:border-gray-600 rounded" />
+            <img src={qrCode} alt="QR Code" className="border-2 border-gray-300 dark:border-gray-600 rounded-lg" />
           </div>
 
           <div className="mb-4">
-            <p className="text-xs text-gray-600 dark:text-[#cad3f5] mb-2">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
               {t.manualEntry}
             </p>
-            <code className="block p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs break-all">
+            <code className="block p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs break-all text-gray-900 dark:text-gray-200">
               {secret}
             </code>
           </div>
 
           <form onSubmit={handleEnableTwoFactor}>
-            <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">
+            <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
               {t.enterSixDigitCode}
             </label>
             <input
               type="text"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white mb-4 leading-tight focus:outline-none focus:shadow-outline"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#24273a] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
               placeholder="000000"
               maxLength={6}
               pattern="\d{6}"
@@ -218,7 +214,7 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-6 py-2 text-white flex-1"
+                className="bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 text-white text-sm font-medium flex-1 transition-colors"
               >
                 {t.verifyAndEnable}
               </button>
@@ -230,7 +226,7 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
                   setSecret("");
                   setVerificationCode("");
                 }}
-                className="bg-gray-500 hover:bg-gray-600 rounded-2xl px-6 py-2 text-white"
+                className="bg-gray-500 hover:bg-gray-600 rounded-lg px-4 py-2 text-white text-sm font-medium transition-colors"
               >
                 {t.cancel}
               </button>
@@ -242,12 +238,12 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
       {/* Disable 2FA Flow */}
       {isTwoFactorEnabled && !showDisableForm && (
         <div>
-          <p className="text-sm text-gray-600 dark:text-[#cad3f5] mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             {t.twoFactorProtected}
           </p>
           <button
             onClick={() => setShowDisableForm(true)}
-            className="bg-red-600 hover:bg-red-700 rounded-2xl px-6 py-2 text-white w-full"
+            className="bg-red-600 hover:bg-red-700 rounded-lg px-4 py-2 text-white text-sm font-medium w-full transition-colors"
           >
             {t.disableTwoFactor}
           </button>
@@ -256,14 +252,14 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
 
       {isTwoFactorEnabled && showDisableForm && (
         <form onSubmit={handleDisableTwoFactor}>
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">
+          <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
             {t.enterSixDigitCode}
           </label>
           <input
             type="text"
             value={disableCode}
             onChange={(e) => setDisableCode(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white mb-4 leading-tight focus:outline-none focus:shadow-outline"
+            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#24273a] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
             placeholder="000000"
             maxLength={6}
             pattern="\d{6}"
@@ -272,7 +268,7 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
           <div className="flex gap-2">
             <button
               type="submit"
-              className="bg-red-600 hover:bg-red-700 rounded-2xl px-6 py-2 text-white flex-1"
+              className="bg-red-600 hover:bg-red-700 rounded-lg px-4 py-2 text-white text-sm font-medium flex-1 transition-colors"
             >
               {t.disable}
             </button>
@@ -282,7 +278,7 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
                 setShowDisableForm(false);
                 setDisableCode("");
               }}
-              className="bg-gray-500 hover:bg-gray-600 rounded-2xl px-6 py-2 text-white"
+              className="bg-gray-500 hover:bg-gray-600 rounded-lg px-4 py-2 text-white text-sm font-medium transition-colors"
             >
               {t.cancel}
             </button>
@@ -294,7 +290,7 @@ export function TwoFactorSettings({ onClose }: TwoFactorSettingsProps) {
       {onClose && (
         <button
           onClick={onClose}
-          className="mt-6 text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700 w-full"
+          className="mt-6 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 w-full"
         >
           {t.back}
         </button>

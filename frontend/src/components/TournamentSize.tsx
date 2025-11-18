@@ -1,5 +1,5 @@
 import React from "react"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGame } from "./GameContext";
 import { useLanguage } from "./useLanguage";
 
@@ -12,11 +12,35 @@ type Props = {
 
 export const TournamentSize: React.FC<Props> = ({ onBack, onSetStage }) => {
   const t = useLanguage();
-  const { setTotalPlayers, totalPlayers } = useGame();
+  const { setTotalPlayers, totalPlayers, saveCurrentPlayer } = useGame();
   const [selectedSize, setSelectedSize] = useState<number>(totalPlayers || 4);
+  const [mainUser, setMainUser] = useState<{id: string, username: string} | null>(null);
+  
+  // Fetch the main logged-in user info
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/users/me", { credentials: "include" });
+        if (res.ok) {
+          const userData = await res.json();
+          setMainUser({ id: userData.id, username: userData.username });
+        }
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      }
+    };
+    fetchUser();
+  }, []);
+  
   const handleNextFromSize = (e: React.FormEvent) => {
     e.preventDefault();
     setTotalPlayers(selectedSize);
+    
+    // Add the main logged-in user as the first player
+    if (mainUser) {
+      saveCurrentPlayer(mainUser.username, mainUser.id);
+    }
+    
     onSetStage("login-players");
   };
 

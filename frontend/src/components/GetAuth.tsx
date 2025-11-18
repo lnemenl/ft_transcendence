@@ -39,12 +39,11 @@ export function GetAuth({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        console.log("Successful logout!");
         setIsLoggedIn(false);
         navigate("/"); // Redirect to landing page
       }
     } catch (err) {
-      console.log("an error occurred:", err);
+      // Error during logout
     }
   };
 

@@ -191,7 +191,7 @@ const twoFARoutes = async (fastify: FastifyInstance) => {
       // Issue short-lived access token for player2 (no refresh token persisted)
       const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
 
-      reply.setCookie('Player2Token', accessToken, {
+      reply.setCookie('player2_token', accessToken, {
         httpOnly: true,
         path: '/',
         secure: getSecureCookies(),

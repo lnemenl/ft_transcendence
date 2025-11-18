@@ -205,6 +205,24 @@ function onThree(G) {
 }
 
 const updateUI = createUI(canvas, STATES);
+const buttons = updateUI(G);
+
+// Handle game over buttons
+buttons.playAgainButton.onclick = () => {
+    if (G.state === STATES.GAME_OVER) {
+        onThree(G);
+    }
+};
+
+buttons.quitButton.onclick = () => {
+    if (G.state === STATES.GAME_OVER) {
+        G.state = STATES.START;
+        G.p1.roundsWon = 0;
+        G.p2.roundsWon = 0;
+        G.p1.score = 0;
+        G.p2.score = 0;
+    }
+};
 
 function loop(current_time_ms) {
     if (!document.getElementById("canvas")) {
@@ -228,4 +246,11 @@ function xhrPost(url, body) {
     req.withCredentials = true; // Include cookies for authentication
     req.setRequestHeader("Content-Type", "application/json");
     req.send(JSON.stringify(body));
+    
+    // Notify React app when game is completed
+    req.onload = function() {
+        if (req.status === 200 || req.status === 201) {
+            window.dispatchEvent(new Event('gameCompleted'));
+        }
+    };
 }

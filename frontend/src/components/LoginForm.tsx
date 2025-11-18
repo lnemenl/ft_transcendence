@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { handleRequest } from "./AuthRequest";
-import { useLanguage } from "./useLanguage";
+import { useLanguage, translateError } from "./useLanguage";
 import { useGame } from "./GameContext";
 
 type LoginFormProps = {
@@ -12,8 +12,7 @@ type LoginFormProps = {
 
 export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginFormProps) {
   const t = useLanguage();
-  const [username, setUsername] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+  const [usernameOrEmail, setUsernameOrEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
   const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers, players } = useGame();
@@ -22,55 +21,69 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
   const [requires2FA, setRequires2FA] = useState(false);
   const [twoFactorToken, setTwoFactorToken] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [userId, setUserId] = useState<number | null>(null);
 
   const handleScroll = () => {
     document.getElementById("game")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleGameContextAfterLogin = (id: number) => {
+  const handleGameContextAfterLogin = (id: number, username: string) => {
+    // For initial login (not tournament/multiplayer), only call onLogin without adding to players
+    if (loginEndpoint === "login") {
+      onLogin();
+      setUsernameOrEmail("");
+      setPassword("");
+      return;
+    }
+    
+    // For game logins (tournament/player2), add to players array
     if (currentPlayerIndex === 0) {
       onLogin();
     }
-    saveCurrentPlayer(username, id);
+    saveCurrentPlayer(username, String(id));
     if (currentPlayerIndex === totalPlayers - 1) {
       setReady(true);
       setMode();
     } else {
       onBack();
     }
-    setUsername("");
-    setEmail("");
+    setUsernameOrEmail("");
     setPassword("");
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Check if username is already used by another player (case-sensitive to match backend)
-    const isDuplicate = players.some((player, index) =>
-      index < currentPlayerIndex && player.name === username
-    );
-
-    if (isDuplicate) {
-      setError(t.duplicateUser);
-      return;
-    }
+    // Determine if input is email or username
+    const isEmail = usernameOrEmail.includes('@');
+    const loginData = isEmail 
+      ? { email: usernameOrEmail, password }
+      : { username: usernameOrEmail, password };
 
     handleRequest({
       e,
       endpoint: loginEndpoint,
-      data: { username, email, password },
+      data: loginData,
       onSuccess: (result) => {
+        // For tournament/multiplayer, check if this player is already in the game
+        if (loginEndpoint !== "login") {
+          const isDuplicate = players.some((player) => 
+            player.name && player.name === result.username
+          );
+
+          if (isDuplicate) {
+            setError(t.duplicateUser);
+            return;
+          }
+        }
+
         // Check if 2FA is required
         if (result.twoFactorRequired && result.twoFactorToken) {
           setRequires2FA(true);
           setTwoFactorToken(result.twoFactorToken);
-          setUserId(result.id);
           setError("");
         } else {
           // Normal login without 2FA - handle game context
-          handleGameContextAfterLogin(result.id);
+          handleGameContextAfterLogin(result.id, result.username);
         }
       },
       setError,
@@ -81,8 +94,15 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
     e.preventDefault();
     setError("");
 
+    // Determine the correct 2FA endpoint based on login type
+    const twoFAEndpoint = loginEndpoint === "login/player2" 
+      ? "/api/2fa/verify/player2"
+      : loginEndpoint === "login/tournament"
+      ? "/api/2fa/verify/tournament"
+      : "/api/2fa/verify";
+
     try {
-      const res = await fetch("/api/2fa/verify", {
+      const res = await fetch(twoFAEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -93,17 +113,33 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
       });
 
       if (res.ok) {
-        console.log("2FA verification successful!");
-        handleScroll();
-        // After 2FA succeeds, handle game context
-        if (userId !== null) {
-          handleGameContextAfterLogin(userId);
-        } else {
-          onLogin();
+        const result = await res.json();
+        
+        // Check for duplicates again after 2FA (in case user tried to add same player twice)
+        if (loginEndpoint !== "login") {
+          const isDuplicate = players.some((player) => 
+            player.name && player.name === result.username
+          );
+
+          if (isDuplicate) {
+            setError(t.duplicateUser);
+            return;
+          }
         }
+        
+        handleScroll();
+        // After 2FA succeeds, handle game context with username from response
+        handleGameContextAfterLogin(result.id, result.username);
       } else {
         const errorData = await res.json();
-        setError(errorData.error || t.invalidCode);
+        const backendError = errorData.error;
+        
+        // Try to translate the backend error
+        const translationKey = translateError(backendError);
+        
+        // Use translated error if available, otherwise fallback to invalidCode
+        const errorMessage = translationKey ? t[translationKey] : (backendError || t.invalidCode);
+        setError(errorMessage);
       }
     } catch (err) {
       console.error("2FA verification error:", err);
@@ -115,7 +151,6 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
     setRequires2FA(false);
     setTwoFactorToken("");
     setTwoFactorCode("");
-    setUserId(null);
     setError("");
   };
 
@@ -168,16 +203,17 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
   <div className="min-w-90 h-full">
     <form onSubmit={handleSubmit} className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
         <div className="mb-4">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username">
-            {t.username}
+          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="usernameOrEmail">
+            {t.usernameOrEmail}
           </label>
-          <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={username} type="text" placeholder={t.username} required/>
-        </div>
-        <div className="mb-4">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="email-p1">
-            {t.email}
-          </label>
-          <input onChange={(e) => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={email} type="email" placeholder={t.email} required />
+          <input 
+            onChange={(e) => setUsernameOrEmail(e.target.value)} 
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" 
+            value={usernameOrEmail} 
+            type="text" 
+            placeholder={t.usernameOrEmail}
+            required
+          />
         </div>
         <div className="">
           <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password">

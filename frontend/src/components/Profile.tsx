@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   getCurrentUser,
   updateCurrentUser,
@@ -14,8 +14,11 @@ import {
 import type { User, Game, UserWithFriends, FriendRequestsResponse } from "../types";
 import { Blobs } from "./Blobs";
 import { TwoFactorSettings } from "./TwoFactorSettings";
+import { validateUsername } from "../utils/validation";
+import { useLanguage } from "./useLanguage";
 
 export const Profile: React.FC = () => {
+  const t = useLanguage();
   const [user, setUser] = useState<UserWithFriends | null>(null);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,8 +26,13 @@ export const Profile: React.FC = () => {
 
   // Avatar upload state
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Username edit state
+  const [newUsername, setNewUsername] = useState("");
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [updatingUsername, setUpdatingUsername] = useState(false);
+  const [usernameWarning, setUsernameWarning] = useState("");
 
   // Friend management state
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -32,14 +40,8 @@ export const Profile: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddFriend, setShowAddFriend] = useState(false);
 
-  // Load user data and game history
-  useEffect(() => {
-    loadUserData();
-    loadGameHistory();
-    loadFriendRequests();
-  }, []);
-
-  const loadUserData = async () => {
+  // Load functions with useCallback for optimization
+  const loadUserData = useCallback(async () => {
     try {
       setLoading(true);
       const userData = await getCurrentUser();
@@ -48,92 +50,149 @@ export const Profile: React.FC = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to load user data";
       setError(errorMessage);
-      console.error("Failed to load user:", errorMessage);
-      // If unauthorized, user should be redirected to login
       if (errorMessage.includes("401") || errorMessage.includes("Unauthorized")) {
         setUser(null);
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadGameHistory = async () => {
+  const loadGameHistory = useCallback(async () => {
     try {
       const gamesData = await getMyGames();
       setGames(gamesData);
-      console.log('Games loaded:', gamesData.length, gamesData);
-    } catch (err) {
-      console.error("Failed to load games:", err);
-      setGames([]); // Set empty array on error
+    } catch {
+      setGames([]);
     }
-  };
+  }, []);
 
-  const loadFriendRequests = async () => {
+  const loadFriendRequests = useCallback(async () => {
     try {
       const requests = await getFriendRequests();
       setFriendRequests(requests);
-    } catch (err) {
-      console.error("Failed to load friend requests:", err);
+    } catch {
       setFriendRequests({ sentFriendRequests: [], receivedFriendRequests: [] });
     }
-  };
+  }, []);
 
-  const loadAllUsers = async () => {
+  const loadAllUsers = useCallback(async () => {
     try {
       const users = await getAllUsers();
       setAllUsers(users);
-    } catch (err) {
-      console.error("Failed to load users:", err);
+    } catch {
+      setError("Failed to load users");
     }
-  };
+  }, []);
+
+  // Load initial data
+  useEffect(() => {
+    loadUserData();
+    loadGameHistory();
+    loadFriendRequests();
+
+    // Listen for game completion to refresh game history
+    const handleGameCompleted = () => {
+      loadGameHistory();
+    };
+
+    window.addEventListener('gameCompleted', handleGameCompleted);
+    return () => window.removeEventListener('gameCompleted', handleGameCompleted);
+  }, [loadUserData, loadGameHistory, loadFriendRequests]);
 
   const handleAvatarUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Handle file upload by converting to base64 or uploading to a service
-    if (avatarFile) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          setUploadingAvatar(true);
-          const base64String = reader.result as string;
-          await updateCurrentUser({ avatarUrl: base64String });
-          // Reload full user data with friends
-          await loadUserData();
-          setAvatarFile(null);
-          setAvatarUrl("");
-          setError("");
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Failed to update avatar");
-        } finally {
-          setUploadingAvatar(false);
-        }
-      };
-      reader.readAsDataURL(avatarFile);
-    } else if (avatarUrl.trim()) {
-      // Handle URL upload
-      try {
-        setUploadingAvatar(true);
-        await updateCurrentUser({ avatarUrl: avatarUrl.trim() });
-        // Reload full user data with friends
-        await loadUserData();
-        setAvatarUrl("");
-        setError("");
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to update avatar");
-      } finally {
-        setUploadingAvatar(false);
-      }
+    if (!avatarUrl.trim()) return;
+
+    try {
+      setUploadingAvatar(true);
+      await updateCurrentUser({ avatarUrl: avatarUrl.trim() });
+      await loadUserData();
+      setAvatarUrl("");
+      setError("");
+      
+      // Notify Menu component to refresh
+      window.dispatchEvent(new Event('profileUpdated'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update avatar");
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setAvatarFile(file);
+    if (!file) return;
+
+    try {
+      setUploadingAvatar(true);
       setAvatarUrl(""); // Clear URL input when file is selected
+
+      // Automatically upload the file
+      const base64String = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      
+      await updateCurrentUser({ avatarUrl: base64String });
+      await loadUserData();
+      setError("");
+      
+      // Notify Menu component to refresh
+      window.dispatchEvent(new Event('profileUpdated'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update avatar");
+    } finally {
+      setUploadingAvatar(false);
     }
+  };
+
+  const handleUsernameChange = (value: string) => {
+    setNewUsername(value);
+    const validation = validateUsername(value);
+    setUsernameWarning(validation.error ? t[validation.error as keyof typeof t] : "");
+  };
+
+  const handleUsernameEdit = () => {
+    setNewUsername(user?.username || "");
+    setEditingUsername(true);
+    setUsernameWarning("");
+  };
+
+  const handleUsernameSave = async () => {
+    if (!newUsername.trim()) {
+      setEditingUsername(false);
+      return;
+    }
+
+    const validation = validateUsername(newUsername);
+    if (!validation.isValid) {
+      setUsernameWarning(validation.error ? t[validation.error as keyof typeof t] : "");
+      return;
+    }
+
+    try {
+      setUpdatingUsername(true);
+      await updateCurrentUser({ username: newUsername.trim() });
+      await loadUserData();
+      setEditingUsername(false);
+      setUsernameWarning("");
+      setError("");
+      
+      // Notify Menu component to refresh
+      window.dispatchEvent(new Event('profileUpdated'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update username");
+    } finally {
+      setUpdatingUsername(false);
+    }
+  };
+
+  const handleUsernameCancel = () => {
+    setEditingUsername(false);
+    setNewUsername("");
+    setUsernameWarning("");
   };
 
   const handleDeleteFriend = async (friendId: string, friendName: string) => {
@@ -142,6 +201,7 @@ export const Profile: React.FC = () => {
     try {
       await deleteFriend(friendId);
       await loadUserData();
+      setError("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete friend");
     }
@@ -160,8 +220,8 @@ export const Profile: React.FC = () => {
   const handleAcceptFriendRequest = async (requestId: string) => {
     try {
       await acceptFriendRequest(requestId);
-      await loadUserData();
-      await loadFriendRequests();
+      await Promise.all([loadUserData(), loadFriendRequests()]);
+      setError("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to accept friend request");
     }
@@ -171,32 +231,43 @@ export const Profile: React.FC = () => {
     try {
       await declineFriendRequest(requestId);
       await loadFriendRequests();
+      setError("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to decline friend request");
     }
   };
 
   const toggleAddFriend = () => {
-    setShowAddFriend(!showAddFriend);
-    if (!showAddFriend && allUsers.length === 0) {
+    const newState = !showAddFriend;
+    setShowAddFriend(newState);
+    if (newState && allUsers.length === 0) {
       loadAllUsers();
     }
   };
 
-  // Filter users for friend search
-  const filteredUsers = allUsers.filter((u) => {
-    if (!searchQuery) return true;
+  // Memoized computed values to avoid unnecessary recalculations
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) return allUsers;
     const query = searchQuery.toLowerCase();
-    return (
-      u.username.toLowerCase().includes(query) ||
-      u.id.toLowerCase().includes(query)
+    return allUsers.filter((u) => 
+      u.username.toLowerCase().includes(query) || u.id.toLowerCase().includes(query)
     );
-  });
+  }, [allUsers, searchQuery]);
 
-  // Check if user is already a friend or has pending request
-  const isFriend = (userId: string) => user?.friends.some((f) => f.id === userId);
-  const hasPendingRequest = (userId: string) =>
-    friendRequests?.sentFriendRequests.some((r) => r.receiver.id === userId);
+  const isFriend = useCallback((userId: string) => 
+    user?.friends.some((f) => f.id === userId) ?? false,
+    [user?.friends]
+  );
+
+  const hasPendingRequest = useCallback((userId: string) =>
+    friendRequests?.sentFriendRequests.some((r) => r.receiver.id === userId) ?? false,
+    [friendRequests?.sentFriendRequests]
+  );
+  
+  const winCount = useMemo(() => 
+    games.filter(g => g.winner.id === user?.id).length,
+    [games, user?.id]
+  );
 
   if (loading) {
     return (
@@ -208,12 +279,24 @@ export const Profile: React.FC = () => {
 
   if (error && !user) {
     return (
-      <div className="flex flex-col justify-center items-center w-full min-h-screen gap-4">
-        <div className="text-2xl text-red-500">Error: {error}</div>
-        <Link to="/" className="p-4 dark:text-[#cad3f5] hover:font-bold">
-          Back to Home
-        </Link>
-      </div>
+      <>
+        <Blobs />
+        <div className="flex flex-col justify-center items-center w-full min-h-screen gap-6">
+          <div className="bg-white dark:bg-[#1e2030] rounded-xl p-8 shadow-lg border border-gray-200 dark:border-gray-700 max-w-md text-center">
+            <div className="text-6xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Unauthorized</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Please log in to view your profile
+            </p>
+            <Link 
+              to="/" 
+              className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+            >
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -222,14 +305,6 @@ export const Profile: React.FC = () => {
       <Blobs />
       <div className="min-h-screen p-6">
         <div className="max-w-6xl mx-auto">
-        {/* Back Button */}
-        <Link 
-          to="/" 
-          className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
-        >
-          <span className="mr-2">←</span> Back
-        </Link>
-
         {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
@@ -240,7 +315,7 @@ export const Profile: React.FC = () => {
         {user && (
           <div className="grid gap-6 md:grid-cols-3">
             {/* Left Column - Profile Info */}
-            <div className="md:col-span-1 space-y-6">
+            <div className="md:col-span-1 flex flex-col space-y-6">
               {/* User Card */}
               <div className="bg-white dark:bg-[#1e2030] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                 <div className="flex flex-col items-center text-center">
@@ -259,8 +334,57 @@ export const Profile: React.FC = () => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                 </div>
 
+                {/* Username Edit */}
+                <div className="mt-6 space-y-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t.username}
+                  </label>
+                  {editingUsername ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={newUsername}
+                        onChange={(e) => handleUsernameChange(e.target.value)}
+                        placeholder={t.username}
+                        maxLength={15}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#24273a] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={updatingUsername}
+                      />
+                      {usernameWarning && (
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400">{usernameWarning}</p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleUsernameSave}
+                          disabled={updatingUsername || !!usernameWarning}
+                          className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
+                        >
+                          {updatingUsername ? t.loading : t.update}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleUsernameCancel}
+                          disabled={updatingUsername}
+                          className="flex-1 py-2 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
+                        >
+                          {t.cancel}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleUsernameEdit}
+                      className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-sm font-medium rounded-lg transition-colors text-left"
+                    >
+                      {user.username} <span className="float-right text-gray-400">✏️</span>
+                    </button>
+                  )}
+                </div>
+
                 {/* Avatar Upload */}
-                <form onSubmit={handleAvatarUpload} className="mt-6 space-y-3">
+                <div className="mt-6 space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Update Avatar
@@ -272,6 +396,9 @@ export const Profile: React.FC = () => {
                       className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-400 dark:hover:file:bg-blue-900/50"
                       disabled={uploadingAvatar}
                     />
+                    {uploadingAvatar && (
+                      <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">Uploading...</p>
+                    )}
                   </div>
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
@@ -281,26 +408,28 @@ export const Profile: React.FC = () => {
                       <span className="px-2 bg-white dark:bg-[#1e2030] text-gray-500">or use URL</span>
                     </div>
                   </div>
-                  <input
-                    type="url"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://example.com/avatar.jpg"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#24273a] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    disabled={uploadingAvatar}
-                  />
-                  <button
-                    type="submit"
-                    disabled={uploadingAvatar || (!avatarUrl.trim() && !avatarFile)}
-                    className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
-                  >
-                    {uploadingAvatar ? "Uploading..." : "Update"}
-                  </button>
-                </form>
+                  <form onSubmit={handleAvatarUpload}>
+                    <input
+                      type="url"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://example.com/avatar.jpg"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#24273a] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                      disabled={uploadingAvatar}
+                    />
+                    <button
+                      type="submit"
+                      disabled={uploadingAvatar || !avatarUrl.trim()}
+                      className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
+                    >
+                      {uploadingAvatar ? "Uploading..." : "Update from URL"}
+                    </button>
+                  </form>
+                </div>
               </div>
 
               {/* Stats Card */}
-              <div className="bg-white dark:bg-[#1e2030] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-[#1e2030] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex-grow">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Stats</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -314,22 +443,16 @@ export const Profile: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Wins</span>
                     <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                      {games.filter(g => g.winner.id === user.id).length}
+                      {winCount}
                     </span>
                   </div>
                 </div>
               </div>
-
-              {/* 2FA Settings Card */}
-              <div className="bg-white dark:bg-[#1e2030] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Security</h3>
-                <TwoFactorSettings />
-              </div>
             </div>
 
             {/* Right Column - Friends & Games */}
-            <div className="md:col-span-2 space-y-6">{/* Friend Requests */}
-              {/* Friend Requests */}
+            <div className="md:col-span-2 flex flex-col space-y-6">
+              {/* Received Friend Requests */}
               {friendRequests && friendRequests.receivedFriendRequests.length > 0 && (
                 <div className="bg-white dark:bg-[#1e2030] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -366,6 +489,44 @@ export const Profile: React.FC = () => {
                             Decline
                           </button>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sent Friend Requests (Pending) */}
+              {friendRequests && friendRequests.sentFriendRequests.length > 0 && (
+                <div className="bg-white dark:bg-[#1e2030] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Pending Requests ({friendRequests.sentFriendRequests.length})
+                  </h2>
+                  <div className="space-y-2">
+                    {friendRequests.sentFriendRequests.map((request) => (
+                      <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#24273a] rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-300 dark:bg-gray-600">
+                            {request.receiver.avatarUrl ? (
+                              <img src={request.receiver.avatarUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-500">
+                                {request.receiver.username.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                              {request.receiver.username}
+                            </span>
+                            <p className="text-xs text-yellow-600 dark:text-yellow-400">Pending</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeclineFriendRequest(request.id)}
+                          className="px-3 py-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm rounded-lg transition-colors"
+                        >
+                          Withdraw
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -512,6 +673,12 @@ export const Profile: React.FC = () => {
                     })}
                   </div>
                 )}
+              </div>
+
+              {/* 2FA Settings */}
+              <div className="bg-white dark:bg-[#1e2030] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex-grow">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Security Settings</h3>
+                <TwoFactorSettings />
               </div>
             </div>
           </div>

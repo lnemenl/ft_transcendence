@@ -1,7 +1,6 @@
 import { SignUpForm } from "./SignUpForm";
 import { useLanguage } from "./useLanguage";
-
-type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
+import type { View } from "./types";
 
 type Props = {
   onBack: () => void;

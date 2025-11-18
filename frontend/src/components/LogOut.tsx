@@ -4,7 +4,7 @@ import { TwoFactorSettings } from "./TwoFactorSettings";
 
 type Props = {
   onBack: () => void;
-  onLogOut: () => void;
+  onLogOut: () => void | Promise<void>;
 };
 
 export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
@@ -13,21 +13,8 @@ export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
 
   const handleLogOut = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-
-    try {
-      const res = await fetch("/api/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        console.log("Succesfull logout!");
-        onBack();
-        onLogOut();
-      }
-    } catch (err) {
-      console.log("an error occurred:", err);
-    }
+    await onLogOut();
+    onBack();
   };
 
   if (showSettings) {

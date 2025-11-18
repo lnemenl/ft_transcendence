@@ -11,11 +11,13 @@ export function LanguageSelect() {
       <select 
         defaultValue={locale}
         onChange={lang}
-        className="w-full bg-transparent text-white cursor-pointer border-none focus:outline-none appearance-none p-1">
-        <option value="en">🇬🇧 ENG</option>
-        <option value="fi">🇫🇮 FIN</option>
-        <option value="fr">🇫🇷 FRA</option>
-        <option value="ru">🇷🇺 RUS</option>
+        className="w-full bg-transparent text-white cursor-pointer border-none focus:outline-none appearance-none p-1"
+        style={{ colorScheme: 'dark' }}
+      >
+        <option value="en" className="bg-[#24273a] text-white">🇬🇧 ENG</option>
+        <option value="fi" className="bg-[#24273a] text-white">🇫🇮 FIN</option>
+        <option value="fr" className="bg-[#24273a] text-white">🇫🇷 FRA</option>
+        <option value="ru" className="bg-[#24273a] text-white">🇷🇺 RUS</option>
       </select>
     );
 }

@@ -1,8 +1,7 @@
 import React from "react";
 import { TournamentLoginForm } from "./TournamentLoginForm";
 import { useGame } from "./GameContext";
-
-type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
+import type { View } from "./types";
 
 type Props = {
   onSelectMode: (view: View) => void;
