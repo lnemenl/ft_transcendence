@@ -56,8 +56,8 @@ services:
     networks:
       - pong
     ports:
-      - "443:443"
-      - "80:80"
+      - "4430:4430"
+      - "8080:8080"
     volumes:
       - ./frontend:/app
       - ./game:/usr/share/nginx/html/game:ro

@@ -34,6 +34,6 @@ RUN openssl req -x509 -new -nodes \
     -subj "/C=FI/ST=Uusimaa/L=Helsinki/CN=localhost" \
     -outform PEM
 
-EXPOSE 443
+EXPOSE 4430
 
 CMD ["nginx", "-c", "/etc/nginx/nginx.conf", "-g", "daemon off;"]
