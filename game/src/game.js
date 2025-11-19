@@ -12,6 +12,23 @@ if (ctx) {
     console.log('Total players:', ctx.totalPlayers);
     console.log('Current player index:', ctx.currentPlayerIndex);
     console.log('Ready:', ctx.ready);
+
+    // Initialize tournament if needed
+    if (ctx.mode === "tournament" && !ctx.tournamentId && ctx.players.length === 4) {
+        const participantIds = ctx.players.map(p => p.id);
+        fetch("/api/tournament", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ participants: participantIds })
+        })
+        .then(res => res.json())
+        .then(data => {
+            ctx.tournamentId = data.tournamentId;
+            console.log('Tournament created:', ctx.tournamentId);
+        })
+        .catch(err => console.error('Failed to create tournament:', err));
+    }
 }
 
 const canvas = document.getElementById("canvas");
@@ -187,11 +204,8 @@ function update(G, delta_ms, keys_down) {
             // This logic needs to move to a transition state
             if (Math.max(G.p1.roundsWon, G.p2.roundsWon) >= G.bestOf / 2) {
                 G.state = STATES.GAME_OVER;
-                // setTimeout(() => G.state = STATES.START, 3000);
-                xhrPost("https://echo.free.beeceptor.com", {
-                    P1: G.p1.roundsWon,
-                    P2: G.p2.roundsWon
-                });
+                const winner = G.p1.roundsWon > G.p2.roundsWon ? 1 : 2;
+                reportGameResult(winner);
             }
             break;
         case STATES.GAME_OVER:
@@ -240,4 +254,35 @@ function xhrPost(url, body) {
     const req = new XMLHttpRequest();
     req.open("POST", url); // Nonblocking by default these days
     req.send(JSON.stringify(body));
+}
+
+function reportGameResult(winner) {
+    const ctx = getGameContext();
+    if (!ctx) return;
+
+    if (ctx.mode === "tournament") {
+        fetch("/api/tournament/game", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+                winner,
+                players: [ctx.players[0].id, ctx.players[1].id],
+                tournamentId: ctx.tournamentId
+            })
+        })
+        .then(res => res.json())
+        .then(data => console.log('Tournament game result reported:', data))
+        .catch(err => console.error('Failed to report tournament result:', err));
+    } else {
+        fetch("/api/games", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ winner })
+        })
+        .then(res => res.json())
+        .then(data => console.log('Game result reported:', data))
+        .catch(err => console.error('Failed to report game result:', err));
+    }
 }
