@@ -33,11 +33,14 @@ const createUI = Object.freeze(
         canvas.parentNode.insertBefore(container, canvas);
         container.append(canvas, overlay);
         overlay.appendChild(scoreDisplay);
-        function showScore(G) {
+        function showScore(G, tournament) {
             switch (G.state) {
             case STATES.GAME_OVER:
-                return t().score(G);
+                return t().gameOver(G);
             case STATES.START:
+                if (tournament && tournament.active) {
+                    return `${G.p1.name} vs ${G.p2.name}\n${t().controls}`;
+                }
                 return t().controls;
             case STATES.PLAYING:
                 return `${G.p1.name} ${G.p1.score} | ${G.p2.score} ${G.p2.name}`;
@@ -50,8 +53,8 @@ const createUI = Object.freeze(
             }
         }
 
-        return function updateUI(G) {
-            scoreDisplay.textContent = showScore(G);
+        return function updateUI(G, tournament) {
+            scoreDisplay.textContent = showScore(G, tournament);
         };
     }
 );

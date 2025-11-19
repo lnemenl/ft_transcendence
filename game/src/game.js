@@ -1,14 +1,11 @@
 import {createRenderer} from "./render.js";
-import {getGameContext,initTournament,reportGameResult} from "./api.js";
+import {getGameContext,initTournament,reportGameResult,finalizeTournament} from "./api.js";
 import {createUI} from "./ui.js";
 import {t} from "./lang.js";
 
 let g_LAST_TIME_MS = 0;
 
 const ctx = getGameContext();
-if (ctx && ctx.mode === "tournament") {
-    initTournament(ctx);
-}
 
 const canvas = document.getElementById("canvas");
 
@@ -60,7 +57,19 @@ const G = {
     winningScore: 7
 };
 
-console.log(G);
+const TOURNAMENT = {
+    active: ctx.mode === "tournament",
+    currentMatch: 0,
+    matches: [
+        { p1Idx: 0, p2Idx: 1, winner: null },
+        { p1Idx: 2, p2Idx: 3, winner: null },
+        { p1Idx: null, p2Idx: null, winner: null }
+    ]
+};
+
+if (ctx && ctx.mode === "tournament") {
+    initTournament(ctx);
+}
 
 function move(v, u, speed, dt) {
     if (u.x === undefined) {
@@ -175,14 +184,46 @@ function update(G, delta_ms, keys_down) {
                 G.p1.score = 0;
                 G.p2.score = 0;
             }
-            // This logic needs to move to a transition state
             if (Math.max(G.p1.roundsWon, G.p2.roundsWon) >= G.bestOf / 2) {
                 G.state = STATES.GAME_OVER;
                 const winner = G.p1.roundsWon > G.p2.roundsWon ? 1 : 2;
-                reportGameResult(winner);
+
+                if (TOURNAMENT.active) {
+                    const match = TOURNAMENT.matches[TOURNAMENT.currentMatch];
+                    match.winner = winner === 1 ? match.p1Idx : match.p2Idx;
+
+                    if (TOURNAMENT.currentMatch === 1) {
+                        TOURNAMENT.matches[2].p1Idx = TOURNAMENT.matches[0].winner;
+                        TOURNAMENT.matches[2].p2Idx = TOURNAMENT.matches[1].winner;
+                    }
+                }
+
+                reportGameResult(winner, TOURNAMENT);
             }
             break;
         case STATES.GAME_OVER:
+            if (TOURNAMENT.active && TOURNAMENT.currentMatch <= 2) {
+                TOURNAMENT.currentMatch += 1;
+                if (TOURNAMENT.currentMatch > 2) {
+                    const tournamentWinnerId = ctx.players[TOURNAMENT.matches[2].winner].id;
+                    finalizeTournament(tournamentWinnerId);
+                    console.log("Tournament over!");
+                    break;
+                }
+                G.p1.name = ctx.players[TOURNAMENT.matches[TOURNAMENT.currentMatch].p1Idx].name;
+                G.p2.name = ctx.players[TOURNAMENT.matches[TOURNAMENT.currentMatch].p2Idx].name;
+                console.log(`Next game! ${G.p1.name} vs ${G.p2.name}`);
+                G.p1.score = 0;
+                G.p2.score = 0;
+                G.p1.roundsWon = 0;
+                G.p2.roundsWon = 0;
+                G.ball.x = 0;
+                G.ball.z = 0;
+                G.ball.speed = 0;
+                G.ball.dir.x = 1;
+                G.ball.dir.z = 0;
+                G.state = STATES.START;
+            }
             break;
     }
 }
@@ -216,7 +257,7 @@ function loop(current_time_ms) {
     const delta_ms = (current_time_ms - g_LAST_TIME_MS) / 1000;
     g_LAST_TIME_MS = current_time_ms;
     update(G, delta_ms, keys_down);
-    updateUI(G);
+    updateUI(G, TOURNAMENT);
     render(G);
     requestAnimationFrame(loop);
 }

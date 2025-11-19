@@ -9,36 +9,34 @@ function initTournament(ctx) {
     console.log('Current player index:', ctx.currentPlayerIndex);
     console.log('Ready:', ctx.ready);
 
-    // Initialize tournament if needed
-    if (ctx.mode === "tournament" && !ctx.tournamentId && ctx.players.length === 4) {
-        const participantIds = ctx.players.map(p => p.id);
-        fetch("/api/tournament", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ participants: participantIds })
+    const participantIds = ctx.players.map(p => p.id);
+    fetch("/api/tournament", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ participants: participantIds })
+    })
+        .then(res => res.json())
+        .then(data => {
+            ctx.tournamentId = data.tournamentId;
+            console.log('Tournament created:', ctx.tournamentId);
         })
-            .then(res => res.json())
-            .then(data => {
-                ctx.tournamentId = data.tournamentId;
-                console.log('Tournament created:', ctx.tournamentId);
-            })
-            .catch(err => console.error('Failed to create tournament:', err));
-    }
+        .catch(err => console.error('Failed to create tournament:', err));
 }
 
-function reportGameResult(winner) {
+function reportGameResult(winner, tournament) {
     const ctx = getGameContext();
     if (!ctx) return;
 
-    if (ctx.mode === "tournament") {
+    if (tournament.active) {
+        const m = tournament.matches[tournament.currentMatch];
         fetch("/api/tournament/game", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({
                 winner,
-                players: [ctx.players[0].id, ctx.players[1].id],
+                players: [ctx.players[m.p1Idx].id, ctx.players[m.p2Idx].id],
                 tournamentId: ctx.tournamentId
             })
         })
@@ -58,4 +56,19 @@ function reportGameResult(winner) {
     }
 }
 
-export {getGameContext,initTournament,reportGameResult};
+function finalizeTournament(winnerId) {
+    const ctx = getGameContext();
+    if (!ctx || !ctx.tournamentId) return;
+
+    fetch(`/api/tournament/${ctx.tournamentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ winner: winnerId })
+    })
+        .then(res => res.json())
+        .then(data => console.log('Tournament finalized:', data))
+        .catch(err => console.error('Failed to finalize tournament:', err));
+}
+
+export {getGameContext,initTournament,reportGameResult,finalizeTournament};

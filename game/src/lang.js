@@ -22,6 +22,10 @@ const table = Object.freeze(
                 } else {
                     return `${G.p1.name} wins! ${G.p1.roundsWon} to ${G.p2.roundsWon}.`;
                 }
+            },
+            gameOver: (G) => {
+                const winner = G.p1.roundsWon > G.p2.roundsWon ? G.p1.name : G.p2.name;
+                return `${G.p1.name} vs ${G.p2.name}\n${winner} wins! ${Math.max(G.p1.roundsWon, G.p2.roundsWon)} to ${Math.min(G.p1.roundsWon, G.p2.roundsWon)}.`;
             }
         },
         "fr": {
@@ -35,6 +39,10 @@ const table = Object.freeze(
                 } else {
                     return `${G.p1.name} l'emporte! ${G.p1.roundsWon} à ${G.p2.roundsWon}.`;
                 }
+            },
+            gameOver: (G) => {
+                const winner = G.p1.roundsWon > G.p2.roundsWon ? G.p1.name : G.p2.name;
+                return `${G.p1.name} vs ${G.p2.name}\n${winner} l'emporte! ${Math.max(G.p1.roundsWon, G.p2.roundsWon)} à ${Math.min(G.p1.roundsWon, G.p2.roundsWon)}.`;
             }
         },
         "fi": {
@@ -48,6 +56,10 @@ const table = Object.freeze(
                 } else {
                     return `${G.p1.name} voittaa! ${G.p1.roundsWon}–${G.p2.roundsWon}.`;
                 }
+            },
+            gameOver: (G) => {
+                const winner = G.p1.roundsWon > G.p2.roundsWon ? G.p1.name : G.p2.name;
+                return `${G.p1.name} vs ${G.p2.name}\n${winner} voittaa! ${Math.max(G.p1.roundsWon, G.p2.roundsWon)}–${Math.min(G.p1.roundsWon, G.p2.roundsWon)}.`;
             }
         },
         "ru": {
@@ -61,6 +73,10 @@ const table = Object.freeze(
                 } else {
                     return `${G.p1.name} побеждает! ${G.p1.roundsWon}:${G.p2.roundsWon}.`;
                 }
+            },
+            gameOver: (G) => {
+                const winner = G.p1.roundsWon > G.p2.roundsWon ? G.p1.name : G.p2.name;
+                return `${G.p1.name} vs ${G.p2.name}\n${winner} побеждает! ${Math.max(G.p1.roundsWon, G.p2.roundsWon)}:${Math.min(G.p1.roundsWon, G.p2.roundsWon)}.`;
             }
         }
     }
