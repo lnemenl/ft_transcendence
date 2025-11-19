@@ -1,19 +1,17 @@
 import { t } from "./useLanguage";
 
-export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }: {
+interface RequestProps {
   e: React.FormEvent<HTMLFormElement>;
   endpoint: string;
-  data: any;
+  data: Record<string, any>;
   onSuccess?: (result: any) => void;
-  setError?: (msg: string) => void; }) => {
-    
+  setError?: (msg: string) => void;
+}
+
+export const handleRequest = async ({ e, endpoint, data, onSuccess, setError }: RequestProps) => {
   e.preventDefault();
 
-  console.log("WHAT WAS SENT: ", data);
-
-  if (setError) {
-    setError("");
-  }
+  if (setError) setError("");
 
   try {
     const res = await fetch(`/api/${endpoint}`, {
@@ -22,17 +20,14 @@ export const handleRequest = async ({ e, endpoint, data, onSuccess, setError, }:
       body: JSON.stringify(data),
     });
 
+    const responseData = await res.json();
+
     if (res.ok) {
-      const response = await res.json();
-      console.log("SUCCESS!", response);
-      onSuccess?.(response);
+      onSuccess?.(responseData);
     } else {
-      const errorData = await res.json();
-      console.log("Request failed:", res.status, errorData);
-      setError?.(errorData.error);
+      setError?.(responseData.error || t().couldNotConnectToServer);
     }
   } catch (err) {
-    console.error("Network or parsing error:", err);
     setError?.(t().couldNotConnectToServer);
   }
 };

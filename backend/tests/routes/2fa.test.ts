@@ -518,13 +518,14 @@ describe('TOTPService unit checks (small)', () => {
     expect(totpVerify(secret, code)).toBe(true);
   });
 
-  it('window tolerance and malformed tokens', () => {
+  it('strict token validation with no window tolerance', () => {
     const secret = generateSecret();
     const totp = new TOTP({ secret });
     const now = totp.generate();
     expect(totpVerify(secret, now)).toBe(true);
+    // With window=0, tokens from previous time-steps are rejected
     const prev = totp.generate({ timestamp: Date.now() - 30000 });
-    expect(totpVerify(secret, prev)).toBe(true);
+    expect(totpVerify(secret, prev)).toBe(false);
     const old = totp.generate({ timestamp: Date.now() - 90000 });
     expect(totpVerify(secret, old)).toBe(false);
     expect(totpVerify(secret, 'abc123')).toBe(false);
