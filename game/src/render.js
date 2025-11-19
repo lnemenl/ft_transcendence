@@ -97,13 +97,23 @@ const createRenderer = Object.freeze(
             let r2 = G.p2.score / G.winningScore;
             if (G.p1.roundsWon < 1) {
                 S.scoreSpheres[0].material.emissiveColor = blue.scale(r1);
+                S.scoreSpheres[1].material.emissiveColor = blue.scale(0);
             } else if (G.p1.roundsWon < 2) {
+                S.scoreSpheres[0].material.emissiveColor = blue.scale(1);
                 S.scoreSpheres[1].material.emissiveColor = blue.scale(r1);
+            } else {
+                S.scoreSpheres[0].material.emissiveColor = blue.scale(1);
+                S.scoreSpheres[1].material.emissiveColor = blue.scale(1);
             }
             if (G.p2.roundsWon < 1) {
                 S.scoreSpheres[2].material.emissiveColor = pink.scale(r2);
+                S.scoreSpheres[3].material.emissiveColor = pink.scale(0);
             } else if (G.p2.roundsWon < 2) {
+                S.scoreSpheres[2].material.emissiveColor = pink.scale(1);
                 S.scoreSpheres[3].material.emissiveColor = pink.scale(r2);
+            } else {
+                S.scoreSpheres[2].material.emissiveColor = pink.scale(1);
+                S.scoreSpheres[3].material.emissiveColor = pink.scale(1);
             }
             S.scoreSpheres[0].position.set(10.5, Math.sin(now / 800) / 4, 0);
             S.scoreSpheres[1].position.set(10.5, Math.cos(now / 800) / 4, 1);
