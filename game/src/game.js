@@ -10,21 +10,6 @@ const canvas = document.getElementById("canvas");
 function getGameContext() {
     return window.gameContext || null;
 }
-const ctx = getGameContext();
-
-if (ctx) {
-    console.log('Game mode:', ctx.mode);  // 'tournament' or 'multiplayer'
-    console.log('Players:', ctx.players);  // Array of {id, name}
-    console.log('Total players:', ctx.totalPlayers);
-    console.log('Current player index:', ctx.currentPlayerIndex);
-    console.log('Ready:', ctx.ready);
-
-    // For tournament mode, you could do:
-    if (ctx.mode === 'tournament' && ctx.players.length >= 2) {
-        G.p1.name = ctx.players[0].name || t().player1;
-        G.p2.name = ctx.players[1].name || t().player2;
-    }
-}
 
 const STATES = Object.freeze({
     GAME_OVER: Symbol("game_over"),
@@ -234,6 +219,18 @@ function loop(current_time_ms) {
     updateUI(G);
     render(G);
     requestAnimationFrame(loop);
+}
+
+const ctx = getGameContext();
+
+if (ctx) {
+    console.log('Game mode:', ctx.mode);  // 'tournament' or 'multiplayer'
+    console.log('Players:', ctx.players);  // Array of {id, name}
+    console.log('Total players:', ctx.totalPlayers);
+    console.log('Current player index:', ctx.currentPlayerIndex);
+    console.log('Ready:', ctx.ready);
+    G.p1.name = ctx.players[0].name || t().player1;
+    G.p2.name = ctx.players[1].name || t().player2;
 }
 
 requestAnimationFrame(loop);
