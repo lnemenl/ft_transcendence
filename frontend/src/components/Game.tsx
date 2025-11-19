@@ -1,6 +1,13 @@
 import { useEffect } from 'react';
+import { useGame } from './GameContext';
 
 export function Game() {
+  const gameContext = useGame();
+
+  useEffect(() => {
+    (window as any).gameContext = gameContext;
+  }, [gameContext]);
+
   useEffect(() => {
     const script = document.createElement('script');
     script.type = 'module';

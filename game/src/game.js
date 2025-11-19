@@ -1,6 +1,3 @@
-/*jslint browser */
-/*global requestAnimationFrame */
-
 import {createRenderer} from "./render.js";
 import {createUI} from "./ui.js";
 import {t} from "./lang.js";
@@ -8,6 +5,27 @@ import {t} from "./lang.js";
 let g_LAST_TIME_MS = 0;
 
 const canvas = document.getElementById("canvas");
+
+// Access React GameContext from window
+function getGameContext() {
+    return window.gameContext || null;
+}
+const ctx = getGameContext();
+
+if (ctx) {
+    console.log('Game mode:', ctx.mode);  // 'tournament' or 'multiplayer'
+    console.log('Players:', ctx.players);  // Array of {id, name}
+    console.log('Total players:', ctx.totalPlayers);
+    console.log('Current player index:', ctx.currentPlayerIndex);
+    console.log('Ready:', ctx.ready);
+
+    // For tournament mode, you could do:
+    if (ctx.mode === 'tournament' && ctx.players.length >= 2) {
+        G.p1.name = ctx.players[0].name || t().player1;
+        G.p2.name = ctx.players[1].name || t().player2;
+    }
+}
+
 const STATES = Object.freeze({
     GAME_OVER: Symbol("game_over"),
     PLAYING: Symbol("playing"),
@@ -115,72 +133,72 @@ function movePlayers(G, delta_ms, keys_down) {
 
 function update(G, delta_ms, keys_down) {
     switch (G.state) {
-    case STATES.START:
-        if (keys_down.has("Space")) {
-            onThree(G);
-        }
-        break;
-    case STATES.WAITING:
-        G.p1.roundsWon = 0;
-        G.p2.roundsWon = 0;
-        G.p1.score = 0;
-        G.p2.score = 0;
-        movePlayers(G, delta_ms, keys_down);
-        break;
-    case STATES.PLAYING:
-        movePlayers(G, delta_ms, keys_down);
-        if (G.ball.dir.x > 0) {
-            collide(G.ball, G.p1);
-        }
-        if (G.ball.dir.x < 0) {
-            collide(G.ball, G.p2);
-        }
-        if (G.ball.speed < G.ball.topSpeed) {
-            G.ball.speed += G.ball.acceleration;
-        }
-        move(G.ball, G.ball.dir, G.ball.speed, delta_ms);
-        if (Math.abs(G.ball.z) > 6.3) {
-            if (G.ball.dir.z < 0 && G.ball.z < 0) {
-                G.ball.dir.z *= -1;
+        case STATES.START:
+            if (keys_down.has("Space")) {
+                onThree(G);
             }
-            if (G.ball.dir.z > 0 && G.ball.z > 0) {
-                G.ball.dir.z *= -1;
-            }
-        }
-        if (Math.abs(G.ball.x) > G.width / 2) {
-            if (G.ball.x < 0) {
-                G.p1.score += 1;
-            }
-            if (G.ball.x > 0) {
-                G.p2.score += 1;
-            }
-            G.ball.speed = 0;
-            G.ball.z = 0;
-            G.ball.x = 0;
-            G.ball.dir.x = (-1) ** (G.p1.score + G.p2.score);
-            G.ball.dir.z = 0;
-        }
-        if (Math.max(G.p1.score, G.p2.score) >= G.winningScore) {
-            if (G.p1.score > G.p2.score) {
-                G.p1.roundsWon += 1;
-            } else {
-                G.p2.roundsWon += 1;
-            }
+            break;
+        case STATES.WAITING:
+            G.p1.roundsWon = 0;
+            G.p2.roundsWon = 0;
             G.p1.score = 0;
             G.p2.score = 0;
-        }
-        // This logic needs to move to a transition state
-        if (Math.max(G.p1.roundsWon, G.p2.roundsWon) >= G.bestOf / 2) {
-            G.state = STATES.GAME_OVER;
-            // setTimeout(() => G.state = STATES.START, 3000);
-            xhrPost("https://echo.free.beeceptor.com", {
-                P1: G.p1.roundsWon,
-                P2: G.p2.roundsWon
-            });
-        }
-        break;
-    case STATES.GAME_OVER:
-        break;
+            movePlayers(G, delta_ms, keys_down);
+            break;
+        case STATES.PLAYING:
+            movePlayers(G, delta_ms, keys_down);
+            if (G.ball.dir.x > 0) {
+                collide(G.ball, G.p1);
+            }
+            if (G.ball.dir.x < 0) {
+                collide(G.ball, G.p2);
+            }
+            if (G.ball.speed < G.ball.topSpeed) {
+                G.ball.speed += G.ball.acceleration;
+            }
+            move(G.ball, G.ball.dir, G.ball.speed, delta_ms);
+            if (Math.abs(G.ball.z) > 6.3) {
+                if (G.ball.dir.z < 0 && G.ball.z < 0) {
+                    G.ball.dir.z *= -1;
+                }
+                if (G.ball.dir.z > 0 && G.ball.z > 0) {
+                    G.ball.dir.z *= -1;
+                }
+            }
+            if (Math.abs(G.ball.x) > G.width / 2) {
+                if (G.ball.x < 0) {
+                    G.p1.score += 1;
+                }
+                if (G.ball.x > 0) {
+                    G.p2.score += 1;
+                }
+                G.ball.speed = 0;
+                G.ball.z = 0;
+                G.ball.x = 0;
+                G.ball.dir.x = (-1) ** (G.p1.score + G.p2.score);
+                G.ball.dir.z = 0;
+            }
+            if (Math.max(G.p1.score, G.p2.score) >= G.winningScore) {
+                if (G.p1.score > G.p2.score) {
+                    G.p1.roundsWon += 1;
+                } else {
+                    G.p2.roundsWon += 1;
+                }
+                G.p1.score = 0;
+                G.p2.score = 0;
+            }
+            // This logic needs to move to a transition state
+            if (Math.max(G.p1.roundsWon, G.p2.roundsWon) >= G.bestOf / 2) {
+                G.state = STATES.GAME_OVER;
+                // setTimeout(() => G.state = STATES.START, 3000);
+                xhrPost("https://echo.free.beeceptor.com", {
+                    P1: G.p1.roundsWon,
+                    P2: G.p2.roundsWon
+                });
+            }
+            break;
+        case STATES.GAME_OVER:
+            break;
     }
 }
 
