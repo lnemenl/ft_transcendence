@@ -1,5 +1,5 @@
 import React from "react";
-import { LoginForm } from "./LoginForm";
+import { LoginFormP2 } from "./LoginFormP2";
 import { useGame } from "./GameContext";
 
 type Form = "unknown" | "signup" | "login"
@@ -17,7 +17,7 @@ export const LoginP2: React.FC<Props> = ({ getBack, onSelectMode }) => {
       <h2 className="text-3xl font-extrabold text-[#6688cc] dark:text-[#cad3f5] mb-6">
         Log In Player { currentPlayerIndex + 1 }
       </h2>
-      <LoginForm getBack={ getBack } onSelectMode={ onSelectMode }/>
+      <LoginFormP2 getBack={ getBack } onSelectMode={ onSelectMode }/>
     </div>
   );
 };

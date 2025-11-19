@@ -1,5 +1,4 @@
 import { useGame } from "./GameContext";
-import { t } from "./lang";
 import { useLanguage } from "./useLanguage";
 
 type View = "multiplayer" | "choice" | "tournament";
@@ -9,7 +8,7 @@ type Props = {
 };
 
 export const GameMode: React.FC<Props> = ({ onSelectMode }) => {
-  useLanguage();
+  const t = useLanguage();
   const { setMode } = useGame();
 
   const handleModeChange = (newMode: "multiplayer" | "tournament") => {
@@ -19,13 +18,13 @@ export const GameMode: React.FC<Props> = ({ onSelectMode }) => {
   return (
     <div className="h-full flex flex-col items-center justify-center m-10">
       <h2 className="text-6xl font-bold mt-20 text-[#2c3781] dark:text-[#cad3f5]">
-        {t().howDoYouWantToPlay}
+        {t.howDoYouWantToPlay}
       </h2>
       <div className="h-full flex justify-center mt-15">
         <div className="flex-col items-center justify-center">
           <button onClick={() => handleModeChange("multiplayer") } className="mr-10 min-w-50 bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-6 py-4">
             <p className="text-2xl md:text-4xl text-white">
-              {t().oneVsOne}
+              {t.oneVsOne}
             </p>
           </button>
         </div>
@@ -33,7 +32,7 @@ export const GameMode: React.FC<Props> = ({ onSelectMode }) => {
         <div className="flex-col items-center justify-center">
           <button onClick={() => handleModeChange("tournament")} className="ml-10 min-w-50 bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-6 py-4">
             <p className="text-2xl md:text-4xl text-white">
-              {t().tournament}
+              {t.tournament}
             </p>
           </button>
         </div>
