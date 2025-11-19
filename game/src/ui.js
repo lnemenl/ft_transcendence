@@ -40,7 +40,7 @@ const createUI = Object.freeze(
             case STATES.START:
                 return t().controls;
             case STATES.PLAYING:
-                return `${G.p1.score} | ${G.p2.score}`;
+                return `${G.p1.name} ${G.p1.score} | ${G.p2.score} ${G.p2.name}`;
             case STATES.WAITING:
                 return (
                     G.countdown > 0
