@@ -4,6 +4,16 @@ import {t} from "./lang.js";
 
 let g_LAST_TIME_MS = 0;
 
+const ctx = getGameContext();
+
+if (ctx) {
+    console.log('Game mode:', ctx.mode);  // 'tournament' or 'multiplayer'
+    console.log('Players:', ctx.players);  // Array of {id, name}
+    console.log('Total players:', ctx.totalPlayers);
+    console.log('Current player index:', ctx.currentPlayerIndex);
+    console.log('Ready:', ctx.ready);
+}
+
 const canvas = document.getElementById("canvas");
 
 // Access React GameContext from window
@@ -36,7 +46,7 @@ const G = {
     height: 15,
     p1: {
         height: 2.6,
-        name: t().player1,
+        name: ctx.players[0].name,
         roundsWon: 0,
         score: 0,
         speed: 20,
@@ -46,7 +56,7 @@ const G = {
     },
     p2: {
         height: 2.6,
-        name: t().player2,
+        name: ctx.players[1].name,
         roundsWon: 0,
         score: 0,
         speed: 20,
@@ -56,8 +66,10 @@ const G = {
     },
     state: STATES.START,
     width: 20,
-    winningScore: 11
+    winningScore: 7
 };
+
+console.log(G);
 
 function move(v, u, speed, dt) {
     if (u.x === undefined) {
@@ -221,17 +233,6 @@ function loop(current_time_ms) {
     requestAnimationFrame(loop);
 }
 
-const ctx = getGameContext();
-
-if (ctx) {
-    console.log('Game mode:', ctx.mode);  // 'tournament' or 'multiplayer'
-    console.log('Players:', ctx.players);  // Array of {id, name}
-    console.log('Total players:', ctx.totalPlayers);
-    console.log('Current player index:', ctx.currentPlayerIndex);
-    console.log('Ready:', ctx.ready);
-    G.p1.name = ctx.players[0].name || t().player1;
-    G.p2.name = ctx.players[1].name || t().player2;
-}
 
 requestAnimationFrame(loop);
 
