@@ -18,7 +18,7 @@ interface GoogleLoginButtonProps {
 }
 
 export function GoogleLoginButton({ type, onSuccess, onError, label = "Sign in with Google" }: GoogleLoginButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleGoogleLogin = () => {
     setIsLoading(true);

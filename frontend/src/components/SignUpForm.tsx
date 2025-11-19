@@ -15,10 +15,10 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
   const t = useLanguage();
   const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers, players } = useGame();
   
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   const googleType = loginEndpoint.includes("player2") ? "player2" : 
                      loginEndpoint.includes("tournament") ? "tournament" : "main";

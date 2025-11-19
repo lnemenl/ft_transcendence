@@ -11,19 +11,36 @@ type LoginFormProps = {
   loginEndpoint: string;
 };
 
+type LoginResponse = {
+  id: string;
+  username: string;
+  email?: string;
+  avatarUrl?: string;
+  twoFactorRequired?: boolean;
+  twoFactorToken?: string;
+  isTwoFactorEnabled?: boolean;
+  createdAt?: string;
+  friends?: Array<{
+    id: string;
+    username: string;
+    avatarUrl: string;
+    isOnline: boolean;
+  }>;
+};
+
 export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginFormProps) {
   const t = useLanguage();
   const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers, players } = useGame();
 
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   // 2FA State
-  const [requires2FA, setRequires2FA] = useState(false);
-  const [twoFactorToken, setTwoFactorToken] = useState("");
-  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [requires2FA, setRequires2FA] = useState<boolean>(false);
+  const [twoFactorToken, setTwoFactorToken] = useState<string>("");
+  const [twoFactorCode, setTwoFactorCode] = useState<string>("");
   const [tempUserId, setTempUserId] = useState<string | null>(null);
 
   const googleType = loginEndpoint.includes("player2") ? "player2" : 
@@ -47,7 +64,7 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
     setPassword("");
   };
 
-  const handleLoginResponse = (response: any) => {
+  const handleLoginResponse = (response: LoginResponse) => {
     // Handle both login endpoint response AND Google response
     if (response.twoFactorRequired && response.twoFactorToken) {
       setRequires2FA(true);
@@ -105,7 +122,7 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
         const errData = await res.json();
         setError(errData.error || t.invalidCode);
       }
-    } catch (err) {
+    } catch {
       setError(t.couldNotConnectToServer);
     }
   };
