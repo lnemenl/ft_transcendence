@@ -1,8 +1,13 @@
 import { SlControlPlay } from "react-icons/sl";
+import { useGame } from "./GameContext";
 
 export function Header() {
+  const { ready } = useGame();
+
 	const handleScroll = () => {
-		document.getElementById("login")?.scrollIntoView({
+    let view: string = "login";
+    if (ready) { view = "game" }
+		document.getElementById(view)?.scrollIntoView({
 			behavior: "smooth",
 		});
 	};
