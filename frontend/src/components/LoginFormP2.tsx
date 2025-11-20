@@ -22,8 +22,8 @@ export function LoginFormP2({ getBack, onSelectMode }: LoginFormProps) {
       e,
       endpoint: "login/player2",
       data: { username, email, password },
-      onSuccess: () => {
-        saveCurrentPlayer(username);
+      onSuccess: (response) => {
+        saveCurrentPlayer(response.username, response.id);
         setReady(true);
         onSelectMode("choice");
         setUsername("");

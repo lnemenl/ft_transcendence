@@ -21,7 +21,7 @@ type GameContextType = {
   currentPlayerIndex: number;
   setCurrentPlayerIndex: React.Dispatch<React.SetStateAction<number>>;
 
-  saveCurrentPlayer: (name: string, playeId: string) => void;
+  saveCurrentPlayer: (name: string, playerId: string) => void;
 
   resetGame: () => void;
 
