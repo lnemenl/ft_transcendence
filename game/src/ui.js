@@ -65,7 +65,7 @@ const createUI = Object.freeze(
 
         let lastNextMatchText = "";
 
-        function showScore(G, tournament) {
+        function showScore(G, tournament, ctx) {
             switch (G.state) {
             case STATES.GAME_OVER:
                 return t().gameOver(G);
@@ -76,6 +76,12 @@ const createUI = Object.freeze(
                 return t().controls;
             case STATES.PLAYING:
                 return `${G.p1.name} ${G.p1.score} | ${G.p2.score} ${G.p2.name}`;
+            case STATES.TOURNAMENT_OVER:
+                if (tournament && tournament.active) {
+                    const championName = ctx.players[tournament.matches[2].winner].name;
+                    return t().tournamentOver(championName);
+                }
+                return t().gameOver(G);
             case STATES.WAITING:
                 return (
                     G.countdown > 0
@@ -86,7 +92,7 @@ const createUI = Object.freeze(
         }
 
         return function updateUI(G, tournament, ctx) {
-            scoreDisplay.textContent = showScore(G, tournament);
+            scoreDisplay.textContent = showScore(G, tournament, ctx);
 
             if (tournament && tournament.active && tournament.currentMatch < 2) {
                 const nextMatchIdx = tournament.currentMatch + 1;
@@ -108,7 +114,7 @@ const createUI = Object.freeze(
                         p2Name = ctx.players[tournament.matches[1].winner].name;
                     }
 
-                    const nextMatchText = `Next: ${p1Name} vs ${p2Name}`;
+                    const nextMatchText = `${t().next} ${p1Name} vs ${p2Name}`;
                     if (lastNextMatchText !== nextMatchText) {
                         nextMatchDisplay.style.display = "block";
                         nextMatchDisplay.textContent = nextMatchText;

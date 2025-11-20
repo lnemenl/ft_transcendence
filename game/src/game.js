@@ -13,6 +13,7 @@ const STATES = Object.freeze({
     GAME_OVER: Symbol("game_over"),
     PLAYING: Symbol("playing"),
     START: Symbol("start"),
+    TOURNAMENT_OVER: Symbol("tournament_over"),
     WAITING: Symbol("waiting")
 });
 
@@ -207,6 +208,7 @@ function update(G, delta_ms, keys_down) {
                 if (TOURNAMENT.currentMatch > 2) {
                     const tournamentWinnerId = ctx.players[TOURNAMENT.matches[2].winner].id;
                     finalizeTournament(tournamentWinnerId);
+                    G.state = STATES.TOURNAMENT_OVER;
                     console.log("Tournament over!");
                     break;
                 }
@@ -224,6 +226,8 @@ function update(G, delta_ms, keys_down) {
                 G.ball.dir.z = 0;
                 G.state = STATES.START;
             }
+            break;
+        case STATES.TOURNAMENT_OVER:
             break;
     }
 }
