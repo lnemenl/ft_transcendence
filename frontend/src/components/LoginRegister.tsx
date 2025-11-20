@@ -83,7 +83,7 @@ export function LoginRegister() {
 
   return (
   <div id="login" className="h-screen w-screen flex justify-center items-center">
-    <div className="w-full max-w-4xl h-[550px] bg-blue-50/50 dark:bg-[#24273a]/50 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="w-full max-w-4xl h-[700px] bg-blue-50/50 dark:bg-[#24273a]/50 rounded-2xl shadow-2xl overflow-hidden">
       {!isLoggedIn ? (
         <>
         <div className="flex w-[300%] h-full transition-transform duration-500 ease-in-out" style={{ transform: transformPage }}>
@@ -103,7 +103,7 @@ export function LoginRegister() {
           <div className="w-[33.3333%] flex-shrink-0">
             <LoginOrRegisterP2 onBack={handleBack} onSelectMode={handleSelectMode}/>
           </div>
-          <div className="w-[33.3333%] flex-shrink-0">
+          <div className="w-[33.3333%] flex-shrink-0 h-full">
             <GameMode onSelectMode={handleSelectMode} />
           </div>
           <div className="w-[33.3333%] flex-shrink-0">

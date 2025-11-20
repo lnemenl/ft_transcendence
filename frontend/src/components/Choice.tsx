@@ -9,12 +9,12 @@ type Props = {
 export const Choice: React.FC<Props> = ({ onSelectMode }) => {
   const t = useLanguage();
   return (
-    <div className="h-full flex flex-col items-center justify-center m-10">
-      <h2 className="text-6xl font-bold mt-20 text-[#2c3781] dark:text-[#cad3f5]">
-      {t.intro}
+    <div className="min-h-full flex flex-col items-center justify-center">
+      <h2 className="text-6xl font-bold text-[#2c3781] dark:text-[#cad3f5]">
+        {t.intro}
       </h2>
       <div className="h-full flex justify-center mt-15">
-        <div className="flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center">
           <h1 className="mb-5 pr-10 text-[#2c3781] dark:text-[#cad3f5]">
             {t.notRegisteredYet}
           </h1>
@@ -25,7 +25,7 @@ export const Choice: React.FC<Props> = ({ onSelectMode }) => {
           </button>
         </div>
         <div className="h-20 w-px bg-[#2c3781] dark:bg-[#cad3f5] mt-8" />
-        <div className="flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center">
           <h1 className="mb-5 pl-10 text-[#2c3781] dark:text-[#cad3f5]">
             {t.alreadyRegistered}
           </h1>
