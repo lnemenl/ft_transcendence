@@ -181,7 +181,7 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
           </div>
         </form>
 
-        <div className="flex py-1 items-center">
+        <div className="relative flex py-1 items-center">
             <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
             <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">OR</span>
             <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
