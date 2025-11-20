@@ -172,6 +172,19 @@ describe('User Profile Management', () => {
         .expect(400);
     });
 
+    it('rejects already existing username', async () => {
+      await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      const res = await request(app.server)
+        .patch('/api/users/me')
+        .set('Cookie', cookies)
+        .send({ username: 'bob' });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('error', 'User with this name already exists');
+    });
+
     it('returns 500 when database fails during PATCH /me', async () => {
       const { cookies } = await createAuthenticatedUser(testUsers.alice);
       const updateSpy = jest.spyOn(prisma.user, 'update').mockRejectedValueOnce(new Error('Database error'));
