@@ -717,6 +717,13 @@ At least one field required:
 }
 ```
 
+`400 Bad Request`
+```json
+{
+  "error": "User with this name already exitsts"
+}
+```
+
 `401 Unauthorized`
 ```json
 {

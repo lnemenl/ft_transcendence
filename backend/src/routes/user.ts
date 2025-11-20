@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../utils/prisma';
+import { Prisma } from '@prisma/client';
 import { updateUserSchema, getAllUsersSchema, getUserSchema, getMeSchema } from './schema.json';
 import { deleteFriend } from '../services/friendRequest.service';
 
@@ -69,6 +70,10 @@ const userRoutes = async (fastify: FastifyInstance) => {
         return reply.status(200).send(updatedUser);
       } catch (err) {
         fastify.log.error(err);
+
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
+          return reply.status(400).send({ error: 'User with this name already exists' });
+        }
         return reply.status(500).send({ error: 'Internal server error' });
       }
     },
