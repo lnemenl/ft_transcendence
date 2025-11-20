@@ -39,7 +39,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const [mode, setMode] = useState<GameMode>("unknown");
   const [totalPlayers, setTotalPlayersState] = useState<number>(2);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(0);
   const [ready, setReadyState] = useState<boolean>(false);
 
   const setReady = (r: boolean) => {

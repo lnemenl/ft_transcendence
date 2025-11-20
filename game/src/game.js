@@ -1,17 +1,19 @@
-/*jslint browser */
-/*global requestAnimationFrame */
-
 import {createRenderer} from "./render.js";
+import {getGameContext,initTournament,reportGameResult,finalizeTournament} from "./api.js";
 import {createUI} from "./ui.js";
 import {t} from "./lang.js";
 
 let g_LAST_TIME_MS = 0;
 
+const ctx = getGameContext();
+
 const canvas = document.getElementById("canvas");
+
 const STATES = Object.freeze({
     GAME_OVER: Symbol("game_over"),
     PLAYING: Symbol("playing"),
     START: Symbol("start"),
+    TOURNAMENT_OVER: Symbol("tournament_over"),
     WAITING: Symbol("waiting")
 });
 
@@ -33,7 +35,7 @@ const G = {
     height: 15,
     p1: {
         height: 2.6,
-        name: t().player1,
+        name: ctx.players[0].name,
         roundsWon: 0,
         score: 0,
         speed: 20,
@@ -43,7 +45,7 @@ const G = {
     },
     p2: {
         height: 2.6,
-        name: t().player2,
+        name: ctx.players[1].name,
         roundsWon: 0,
         score: 0,
         speed: 20,
@@ -53,8 +55,22 @@ const G = {
     },
     state: STATES.START,
     width: 20,
-    winningScore: 11
+    winningScore: 7
 };
+
+const TOURNAMENT = {
+    active: ctx.mode === "tournament",
+    currentMatch: 0,
+    matches: [
+        { p1Idx: 0, p2Idx: 1, winner: null },
+        { p1Idx: 2, p2Idx: 3, winner: null },
+        { p1Idx: null, p2Idx: null, winner: null }
+    ]
+};
+
+if (ctx && ctx.mode === "tournament") {
+    initTournament(ctx);
+}
 
 function move(v, u, speed, dt) {
     if (u.x === undefined) {
@@ -115,72 +131,104 @@ function movePlayers(G, delta_ms, keys_down) {
 
 function update(G, delta_ms, keys_down) {
     switch (G.state) {
-    case STATES.START:
-        if (keys_down.has("Space")) {
-            onThree(G);
-        }
-        break;
-    case STATES.WAITING:
-        G.p1.roundsWon = 0;
-        G.p2.roundsWon = 0;
-        G.p1.score = 0;
-        G.p2.score = 0;
-        movePlayers(G, delta_ms, keys_down);
-        break;
-    case STATES.PLAYING:
-        movePlayers(G, delta_ms, keys_down);
-        if (G.ball.dir.x > 0) {
-            collide(G.ball, G.p1);
-        }
-        if (G.ball.dir.x < 0) {
-            collide(G.ball, G.p2);
-        }
-        if (G.ball.speed < G.ball.topSpeed) {
-            G.ball.speed += G.ball.acceleration;
-        }
-        move(G.ball, G.ball.dir, G.ball.speed, delta_ms);
-        if (Math.abs(G.ball.z) > 6.3) {
-            if (G.ball.dir.z < 0 && G.ball.z < 0) {
-                G.ball.dir.z *= -1;
+        case STATES.START:
+            if (keys_down.has("Space")) {
+                onThree(G);
             }
-            if (G.ball.dir.z > 0 && G.ball.z > 0) {
-                G.ball.dir.z *= -1;
-            }
-        }
-        if (Math.abs(G.ball.x) > G.width / 2) {
-            if (G.ball.x < 0) {
-                G.p1.score += 1;
-            }
-            if (G.ball.x > 0) {
-                G.p2.score += 1;
-            }
-            G.ball.speed = 0;
-            G.ball.z = 0;
-            G.ball.x = 0;
-            G.ball.dir.x = (-1) ** (G.p1.score + G.p2.score);
-            G.ball.dir.z = 0;
-        }
-        if (Math.max(G.p1.score, G.p2.score) >= G.winningScore) {
-            if (G.p1.score > G.p2.score) {
-                G.p1.roundsWon += 1;
-            } else {
-                G.p2.roundsWon += 1;
-            }
+            break;
+        case STATES.WAITING:
+            G.p1.roundsWon = 0;
+            G.p2.roundsWon = 0;
             G.p1.score = 0;
             G.p2.score = 0;
-        }
-        // This logic needs to move to a transition state
-        if (Math.max(G.p1.roundsWon, G.p2.roundsWon) >= G.bestOf / 2) {
-            G.state = STATES.GAME_OVER;
-            // setTimeout(() => G.state = STATES.START, 3000);
-            xhrPost("https://echo.free.beeceptor.com", {
-                P1: G.p1.roundsWon,
-                P2: G.p2.roundsWon
-            });
-        }
-        break;
-    case STATES.GAME_OVER:
-        break;
+            movePlayers(G, delta_ms, keys_down);
+            break;
+        case STATES.PLAYING:
+            movePlayers(G, delta_ms, keys_down);
+            if (G.ball.dir.x > 0) {
+                collide(G.ball, G.p1);
+            }
+            if (G.ball.dir.x < 0) {
+                collide(G.ball, G.p2);
+            }
+            if (G.ball.speed < G.ball.topSpeed) {
+                G.ball.speed += G.ball.acceleration;
+            }
+            move(G.ball, G.ball.dir, G.ball.speed, delta_ms);
+            if (Math.abs(G.ball.z) > 6.3) {
+                if (G.ball.dir.z < 0 && G.ball.z < 0) {
+                    G.ball.dir.z *= -1;
+                }
+                if (G.ball.dir.z > 0 && G.ball.z > 0) {
+                    G.ball.dir.z *= -1;
+                }
+            }
+            if (Math.abs(G.ball.x) > G.width / 2) {
+                if (G.ball.x < 0) {
+                    G.p1.score += 1;
+                }
+                if (G.ball.x > 0) {
+                    G.p2.score += 1;
+                }
+                G.ball.speed = 0;
+                G.ball.z = 0;
+                G.ball.x = 0;
+                G.ball.dir.x = (-1) ** (G.p1.score + G.p2.score);
+                G.ball.dir.z = 0;
+            }
+            if (Math.max(G.p1.score, G.p2.score) >= G.winningScore) {
+                if (G.p1.score > G.p2.score) {
+                    G.p1.roundsWon += 1;
+                } else {
+                    G.p2.roundsWon += 1;
+                }
+                G.p1.score = 0;
+                G.p2.score = 0;
+            }
+            if (Math.max(G.p1.roundsWon, G.p2.roundsWon) >= G.bestOf / 2) {
+                G.state = STATES.GAME_OVER;
+                const winner = G.p1.roundsWon > G.p2.roundsWon ? 1 : 2;
+
+                if (TOURNAMENT.active) {
+                    const match = TOURNAMENT.matches[TOURNAMENT.currentMatch];
+                    match.winner = winner === 1 ? match.p1Idx : match.p2Idx;
+
+                    if (TOURNAMENT.currentMatch === 1) {
+                        TOURNAMENT.matches[2].p1Idx = TOURNAMENT.matches[0].winner;
+                        TOURNAMENT.matches[2].p2Idx = TOURNAMENT.matches[1].winner;
+                    }
+                }
+
+                reportGameResult(winner, TOURNAMENT);
+            }
+            break;
+        case STATES.GAME_OVER:
+            if (TOURNAMENT.active && TOURNAMENT.currentMatch <= 2) {
+                TOURNAMENT.currentMatch += 1;
+                if (TOURNAMENT.currentMatch > 2) {
+                    const tournamentWinnerId = ctx.players[TOURNAMENT.matches[2].winner].id;
+                    finalizeTournament(tournamentWinnerId);
+                    G.state = STATES.TOURNAMENT_OVER;
+                    console.log("Tournament over!");
+                    break;
+                }
+                G.p1.name = ctx.players[TOURNAMENT.matches[TOURNAMENT.currentMatch].p1Idx].name;
+                G.p2.name = ctx.players[TOURNAMENT.matches[TOURNAMENT.currentMatch].p2Idx].name;
+                console.log(`Next game! ${G.p1.name} vs ${G.p2.name}`);
+                G.p1.score = 0;
+                G.p2.score = 0;
+                G.p1.roundsWon = 0;
+                G.p2.roundsWon = 0;
+                G.ball.x = 0;
+                G.ball.z = 0;
+                G.ball.speed = 0;
+                G.ball.dir.x = 1;
+                G.ball.dir.z = 0;
+                G.state = STATES.START;
+            }
+            break;
+        case STATES.TOURNAMENT_OVER:
+            break;
     }
 }
 
@@ -213,10 +261,11 @@ function loop(current_time_ms) {
     const delta_ms = (current_time_ms - g_LAST_TIME_MS) / 1000;
     g_LAST_TIME_MS = current_time_ms;
     update(G, delta_ms, keys_down);
-    updateUI(G);
+    updateUI(G, TOURNAMENT, ctx);
     render(G);
     requestAnimationFrame(loop);
 }
+
 
 requestAnimationFrame(loop);
 

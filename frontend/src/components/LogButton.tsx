@@ -6,7 +6,7 @@ import { LogOut } from "./LogOut";
 export function LogButton() {
   const { isLoggedIn, logout } = useAuth();
   const { resetGame, setReady } = useGame();
-  const [showLogoutScreen, setShowLogoutScreen] = useState(false);
+  const [showLogoutScreen, setShowLogoutScreen] = useState<boolean>(false);
 
   const handleScroll = () => {
     document.getElementById("login")?.scrollIntoView({

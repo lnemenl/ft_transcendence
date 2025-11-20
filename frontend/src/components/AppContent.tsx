@@ -23,11 +23,11 @@ export function AppContent() {
     <>
       <Menu />
       <Routes>
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             <>
-              <Blobs />
+              <Blobs gameActive={ready} />
               <Header />
               {!ready && <LoginRegister />}
               {ready && <Game />}

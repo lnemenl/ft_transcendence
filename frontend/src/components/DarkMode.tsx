@@ -2,7 +2,7 @@ import { GiMoon } from "react-icons/gi";
 import { useState } from "react";
 
 export function DarkMode() {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState<boolean>(false);
 
 	const handleDark = () => {
 		document.documentElement.classList.toggle('dark');
