@@ -103,7 +103,7 @@ export function LoginRegister() {
           <div className="w-[33.3333%] flex-shrink-0">
             <LoginOrRegisterP2 onBack={handleBack} onSelectMode={handleSelectMode}/>
           </div>
-          <div className="w-[33.3333%] flex-shrink-0 h-full">
+          <div className="w-[33.3333%] flex-shrink-0">
             <GameMode onSelectMode={handleSelectMode} />
           </div>
           <div className="w-[33.3333%] flex-shrink-0">

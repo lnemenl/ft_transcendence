@@ -77,7 +77,7 @@ export function GoogleLoginButton({ type, label = "Sign in with Google", onSucce
       type="button"
       onClick={handleGoogleLogin}
       disabled={isLoading}
-      className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-2xl px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium shadow-sm"
+      className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-2xl px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium shadow-sm"
     >
       <FcGoogle size="1.5em" />
       <span>{isLoading ? "Connecting..." : label}</span>
