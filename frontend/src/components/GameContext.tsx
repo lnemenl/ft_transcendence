@@ -23,6 +23,8 @@ type GameContextType = {
 
   saveCurrentPlayer: (name: string, playerId: string) => void;
 
+  updateUsername: (newName: string) => void;
+
   resetGame: () => void;
 
   ready: boolean;
@@ -81,6 +83,18 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     setCurrentPlayerIndex((prev => prev + 1));
   };
 
+  const updateUsername = (newName: string) => {
+  setPlayers(prev => {
+    if (prev.length === 0) return prev;
+
+    const copy = [...prev];
+    copy[0] = { ...copy[0], name: newName };
+
+    return copy;
+  });
+};
+
+
   const resetGame = () => {
     setPlayers([]);
     setCurrentPlayerIndex(0);
@@ -102,6 +116,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         currentPlayerIndex,
         setCurrentPlayerIndex,
         saveCurrentPlayer,
+        updateUsername,
         resetGame,
         ready,
         setReady,
