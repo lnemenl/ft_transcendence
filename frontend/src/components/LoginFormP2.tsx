@@ -11,10 +11,10 @@ type LoginFormProps = {
 };
 
 export function LoginFormP2({ getBack, onSelectMode }: LoginFormProps) {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const { saveCurrentPlayer, setReady } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

@@ -344,44 +344,76 @@ describe('Authentication System', () => {
       }
     });
 
-    it('handles database errors', async () => {
+    it('Main User: Redirects to frontend on success', async () => {
+      const spy1 = jest.spyOn(authService, 'handleGoogleUser').mockResolvedValue(mockUser);
+      const spy2 = jest.spyOn(authService, 'createRefreshToken').mockResolvedValue('token');
+      const spy3 = jest.spyOn(prisma.user, 'update').mockResolvedValue(mockUser);
+
+      // Main callback should REDIRECT (302)
+      await request(app.server)
+        .get('/api/google/callback?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(302)
+        .expect('Location', /login=success/);
+
+      spy1.mockRestore();
+      spy2.mockRestore();
+      spy3.mockRestore();
+    });
+
+    it('Player 2 / Tournament: Returns HTML script on success', async () => {
+      const spy1 = jest.spyOn(authService, 'handleGoogleUser').mockResolvedValue(mockUser);
+      const spy2 = jest.spyOn(authService, 'createRefreshToken').mockResolvedValue('token');
+      // Player 2 callback should return HTML (200)
+      const p2Res = await request(app.server)
+        .get('/api/google/callback/player2?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200)
+        .expect('Content-Type', /text\/html/);
+      // Verify the HTML contains the magic script
+      expect(p2Res.text).toContain('window.opener.postMessage');
+      expect(p2Res.text).toContain('accessToken');
+
+      // Tournament callback should return HTML (200)
+      const tourRes = await request(app.server)
+        .get('/api/google/callback/tournament?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200)
+        .expect('Content-Type', /text\/html/);
+
+      expect(tourRes.text).toContain('window.opener.postMessage');
+
+      spy1.mockRestore();
+      spy2.mockRestore();
+    });
+
+    it('handles database errors by returning HTML error script (Popup Flow)', async () => {
+      const spy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('DB'));
+      // For Popup flows, we return 200 OK with an error script so the popup closes gracefully
+      const resP2 = await request(app.server)
+        .get('/api/google/callback/player2?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200); // Expect 200 because we are sending a script
+      expect(resP2.text).toContain('postMessage({error: "Internal server error"}');
+
+      const resTour = await request(app.server)
+        .get('/api/google/callback/tournament?code=test&state=test')
+        .set('Cookie', 'oauth_state=test')
+        .expect(200);
+
+      expect(resTour.text).toContain('postMessage({error: "Internal server error"}');
+
+      spy.mockRestore();
+    });
+
+    it('handles database errors for Main flow with 500', async () => {
+      // Main flow is not a popup, so standard 500 is expected
       const spy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('DB'));
       await request(app.server)
         .get('/api/google/callback?code=test&state=test')
         .set('Cookie', 'oauth_state=test')
         .expect(500);
-      await request(app.server)
-        .get('/api/google/callback/player2?code=test&state=test')
-        .set('Cookie', 'oauth_state=test')
-        .expect(500);
-      await request(app.server)
-        .get('/api/google/callback/tournament?code=test&state=test')
-        .set('Cookie', 'oauth_state=test')
-        .expect(500);
       spy.mockRestore();
-    });
-
-    it('authenticates users', async () => {
-      const spy1 = jest.spyOn(authService, 'handleGoogleUser').mockResolvedValue(mockUser);
-      const spy2 = jest.spyOn(authService, 'createRefreshToken').mockResolvedValue('token');
-      const spy3 = jest.spyOn(prisma.user, 'update').mockResolvedValue(mockUser);
-
-      await request(app.server)
-        .get('/api/google/callback?code=test&state=test')
-        .set('Cookie', 'oauth_state=test')
-        .expect(200);
-      await request(app.server)
-        .get('/api/google/callback/player2?code=test&state=test')
-        .set('Cookie', 'oauth_state=test')
-        .expect(200);
-      await request(app.server)
-        .get('/api/google/callback/tournament?code=test&state=test')
-        .set('Cookie', 'oauth_state=test')
-        .expect(200);
-
-      spy1.mockRestore();
-      spy2.mockRestore();
-      spy3.mockRestore();
     });
   });
 });

@@ -23,6 +23,15 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
   const googleType = loginEndpoint.includes("player2") ? "player2" : 
                      loginEndpoint.includes("tournament") ? "tournament" : "main";
 
+  const handleGoogleResponse = (res: { id: string; username: string }) => {
+    const isDuplicate = players.some((p) => p.id === res.id);
+    if (isDuplicate) {
+      setError(t.duplicateUser);
+      return;
+    }
+    handleSuccess(res.id, res.username);
+  };
+
   const handleSuccess = (id: string, name: string) => {
     if (currentPlayerIndex === 0) onLogin();
     
@@ -98,7 +107,7 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
         <GoogleLoginButton 
             type={googleType}
             label={t.signUp + " with Google"}
-            onSuccess={(res) => handleSuccess(res.id, res.username)}
+            onSuccess={handleGoogleResponse}
             onError={setError}
         />
 

@@ -199,6 +199,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
         scope: scopes,
         include_granted_scopes: true,
         state: state,
+        prompt: 'select_account',
       });
 
       return reply.redirect(authorizationUrl);
@@ -256,15 +257,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
 
       await prisma.user.update({ where: { id: user.id }, data: { isOnline: true } });
 
-      // Return user info with tokens
-      return reply.send({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        avatarUrl: user.avatarUrl,
-        accessToken,
-        refreshToken,
-      });
+      return reply.redirect('https://localhost:4430/?login=success');
     } catch (_error) {
       fastify.log.error(_error);
       return reply.code(500).send({ error: 'Internal server error' });
@@ -307,15 +300,27 @@ const authRoutes = async (fastify: FastifyInstance) => {
       });
 
       // Return user info with tokens
-      return reply.send({
+      const userData = {
         id: user.id,
         username: user.username,
         avatarUrl: user.avatarUrl,
         accessToken,
-      });
+      };
+
+      reply.type('text/html');
+      return reply.send(`
+        <script>
+          window.opener.postMessage(${JSON.stringify(userData)}, "*");
+          window.close();
+        </script>
+      `);
     } catch (_error) {
       fastify.log.error(_error);
-      return reply.code(500).send({ error: 'Internal server error' });
+      // Send error to main window too
+      reply.type('text/html');
+      return reply.send(
+        `<script>window.opener.postMessage({error: "Internal server error"}, "*"); window.close();</script>`,
+      );
     }
   });
 
@@ -343,15 +348,25 @@ const authRoutes = async (fastify: FastifyInstance) => {
       // Get or create the user in our database
       const user = await handleGoogleUser(code, oauth2TournamentClient);
 
-      // Return user info with tokens
-      return reply.send({
+      const userData = {
         id: user.id,
         username: user.username,
         avatarUrl: user.avatarUrl,
-      });
+      };
+
+      reply.type('text/html');
+      return reply.send(`
+        <script>
+          window.opener.postMessage(${JSON.stringify(userData)}, "*");
+          window.close();
+        </script>
+      `);
     } catch (_error) {
       fastify.log.error(_error);
-      return reply.code(500).send({ error: 'Internal server error' });
+      reply.type('text/html');
+      return reply.send(
+        `<script>window.opener.postMessage({error: "Internal server error"}, "*"); window.close();</script>`,
+      );
     }
   });
 };

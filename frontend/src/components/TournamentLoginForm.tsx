@@ -10,10 +10,10 @@ type LoginFormProps = {
 
 export function TournamentLoginForm({ getBack, setMode }: LoginFormProps) {
   const t = useLanguage();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const { saveCurrentPlayer, currentPlayerIndex, totalPlayers, setReady } = useGame();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

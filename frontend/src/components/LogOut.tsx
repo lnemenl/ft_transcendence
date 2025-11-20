@@ -9,7 +9,7 @@ type Props = {
 
 export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
   const t = useLanguage();
-  const [showSettings, setShowSettings] = useState(false);
+  const [showSettings, setShowSettings] = useState<boolean>(false);
 
   const handleLogOut = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -33,7 +33,15 @@ export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
   if (showSettings) {
     return (
       <div className="h-full overflow-y-auto flex flex-col justify-center items-center p-10 bg-blue-50/50 dark:bg-[#24273a]/50">
-        <TwoFactorSettings onClose={() => setShowSettings(false)} />
+        <div className="w-full max-w-md">
+          <TwoFactorSettings />
+          <button
+            onClick={() => setShowSettings(false)}
+            className="mt-4 w-full text-sm text-center text-gray-500 dark:text-[#cad3f5] hover:text-gray-700"
+          >
+            {t.back}
+          </button>
+        </div>
       </div>
     );
   }
