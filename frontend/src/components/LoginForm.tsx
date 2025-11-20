@@ -65,6 +65,11 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
   };
 
   const handleLoginResponse = (response: LoginResponse) => {
+    const isDuplicate = players.some((p) => p.id === response.id);
+    if (isDuplicate) {
+      setError(t.duplicateUser); // "This user is already logged in..."
+      return;
+    }
     // Handle both login endpoint response AND Google response
     if (response.twoFactorRequired && response.twoFactorToken) {
       setRequires2FA(true);

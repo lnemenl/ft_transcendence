@@ -1,5 +1,5 @@
 import { FcGoogle } from "react-icons/fc";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type GoogleLoginType = "main" | "player2" | "tournament";
 
@@ -12,59 +12,64 @@ interface GoogleLoginData {
 
 interface GoogleLoginButtonProps {
   type: GoogleLoginType;
-  onSuccess: (data: GoogleLoginData) => void;
-  onError: (error: string) => void;
   label?: string;
+  onSuccess?: (data: GoogleLoginData) => void;
+  onError?: (error: string) => void;
 }
 
-export function GoogleLoginButton({ type, onSuccess, onError, label = "Sign in with Google" }: GoogleLoginButtonProps) {
+export function GoogleLoginButton({ type, label = "Sign in with Google", onSuccess, onError }: GoogleLoginButtonProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // This effect cleans up the event listener when the component unmounts
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Ensure we are processing our own login events
+      // You can add checks here like: if (event.origin !== "https://localhost:3011") return;
+      
+      const data = event.data;
+      
+      if (data && (data.username || data.error)) {
+        setIsLoading(false);
+        
+        if (data.error) {
+          onError?.(data.error);
+        } else {
+          onSuccess?.(data);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [onSuccess, onError]);
 
   const handleGoogleLogin = () => {
     setIsLoading(true);
 
+    // CASE 1: Main Login (Full Redirect)
+    // Keeps the user logged in via session cookies
+    if (type === "main") {
+      window.location.href = `/api/google/init?type=${type}`;
+      return;
+    }
+
+    // CASE 2: Player 2 / Tournament (Popup)
+    // Keeps the current page state (doesn't refresh)
+    const width = 500;
+    const height = 600;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+
     const popup = window.open(
       `/api/google/init?type=${type}`,
       "google_login",
-      `width=500,height=600,left=${window.screen.width / 2 - 250},top=${window.screen.height / 2 - 300}`
+      `width=${width},height=${height},left=${left},top=${top}`
     );
 
     if (!popup) {
       setIsLoading(false);
-      onError("Popup blocked. Please allow popups.");
-      return;
+      onError?.("Popup blocked. Please allow popups.");
     }
-
-    const checkCallback = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(checkCallback);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const url = popup.location.href;
-        if (url.includes("/google/callback")) {
-          clearInterval(checkCallback);
-          
-          // Fetch user data while keeping popup open with loading state
-          fetch("/api/users/me", { credentials: "include" })
-            .then(res => res.json())
-            .then(data => {
-              popup.close();
-              setIsLoading(false);
-              onSuccess(data);
-            })
-            .catch(err => {
-              popup.close();
-              setIsLoading(false);
-              onError(err.message);
-            });
-        }
-      } catch {
-        // Cross-origin error (expected while on Google)
-      }
-    }, 100);
   };
 
   return (
