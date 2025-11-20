@@ -23,8 +23,7 @@ const createUI = Object.freeze(
         });
         const scoreDisplay = document.createElement("h1");
         Object.assign(scoreDisplay.style, {
-            background: "rgba(36, 39, 58, 0.85)",
-            backdropFilter: "blur(10px)",
+            background: "rgba(36, 39, 58, 0.95)",
             border: "2px solid rgba(255, 255, 255, 0.1)",
             borderRadius: "20px",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
@@ -42,8 +41,7 @@ const createUI = Object.freeze(
 
         const nextMatchDisplay = document.createElement("div");
         Object.assign(nextMatchDisplay.style, {
-            background: "rgba(36, 39, 58, 0.85)",
-            backdropFilter: "blur(10px)",
+            background: "rgba(36, 39, 58, 0.95)",
             border: "2px solid rgba(255, 255, 255, 0.1)",
             borderRadius: "16px",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
@@ -64,6 +62,9 @@ const createUI = Object.freeze(
         container.append(canvas, overlay);
         overlay.appendChild(scoreDisplay);
         overlay.appendChild(nextMatchDisplay);
+
+        let lastNextMatchText = "";
+
         function showScore(G, tournament) {
             switch (G.state) {
             case STATES.GAME_OVER:
@@ -92,8 +93,6 @@ const createUI = Object.freeze(
                 const nextMatch = tournament.matches[nextMatchIdx];
 
                 if (nextMatch) {
-                    nextMatchDisplay.style.display = "block";
-
                     let p1Name = "?";
                     let p2Name = "?";
 
@@ -109,12 +108,23 @@ const createUI = Object.freeze(
                         p2Name = ctx.players[tournament.matches[1].winner].name;
                     }
 
-                    nextMatchDisplay.textContent = `Next: ${p1Name} vs ${p2Name}`;
+                    const nextMatchText = `Next: ${p1Name} vs ${p2Name}`;
+                    if (lastNextMatchText !== nextMatchText) {
+                        nextMatchDisplay.style.display = "block";
+                        nextMatchDisplay.textContent = nextMatchText;
+                        lastNextMatchText = nextMatchText;
+                    }
                 } else {
-                    nextMatchDisplay.style.display = "none";
+                    if (lastNextMatchText !== "") {
+                        nextMatchDisplay.style.display = "none";
+                        lastNextMatchText = "";
+                    }
                 }
             } else {
-                nextMatchDisplay.style.display = "none";
+                if (lastNextMatchText !== "") {
+                    nextMatchDisplay.style.display = "none";
+                    lastNextMatchText = "";
+                }
             }
         };
     }
