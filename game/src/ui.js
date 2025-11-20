@@ -45,19 +45,19 @@ const createUI = Object.freeze(
             background: "rgba(36, 39, 58, 0.85)",
             backdropFilter: "blur(10px)",
             border: "2px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "20px",
+            borderRadius: "16px",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
             color: "#cad3f5",
             display: "none",
+            fontSize: "18px",
             fontWeight: "bold",
-            left: "50%",
             letterSpacing: "0.05em",
-            padding: "12px 24px",
+            padding: "8px 16px",
             position: "absolute",
-            textAlign: "center",
+            right: "20px",
+            textAlign: "left",
             textShadow: "0 2px 8px rgba(0, 0, 0, 0.5)",
-            top: "100px",
-            transform: "translateX(-50%)"
+            top: "20px"
         });
 
         canvas.parentNode.insertBefore(container, canvas);
@@ -84,12 +84,35 @@ const createUI = Object.freeze(
             }
         }
 
-        return function updateUI(G, tournament) {
+        return function updateUI(G, tournament, ctx) {
             scoreDisplay.textContent = showScore(G, tournament);
 
-            if (tournament && tournament.active && tournament.nextMatch) {
-                nextMatchDisplay.style.display = "block";
-                nextMatchDisplay.textContent = `Next match: ${tournament.nextMatch.p1} vs ${tournament.nextMatch.p2}`;
+            if (tournament && tournament.active && tournament.currentMatch < 2) {
+                const nextMatchIdx = tournament.currentMatch + 1;
+                const nextMatch = tournament.matches[nextMatchIdx];
+
+                if (nextMatch) {
+                    nextMatchDisplay.style.display = "block";
+
+                    let p1Name = "?";
+                    let p2Name = "?";
+
+                    if (nextMatch.p1Idx !== null) {
+                        p1Name = ctx.players[nextMatch.p1Idx].name;
+                    } else if (nextMatchIdx === 2 && tournament.matches[0].winner !== null) {
+                        p1Name = ctx.players[tournament.matches[0].winner].name;
+                    }
+
+                    if (nextMatch.p2Idx !== null) {
+                        p2Name = ctx.players[nextMatch.p2Idx].name;
+                    } else if (nextMatchIdx === 2 && tournament.matches[1].winner !== null) {
+                        p2Name = ctx.players[tournament.matches[1].winner].name;
+                    }
+
+                    nextMatchDisplay.textContent = `Next: ${p1Name} vs ${p2Name}`;
+                } else {
+                    nextMatchDisplay.style.display = "none";
+                }
             } else {
                 nextMatchDisplay.style.display = "none";
             }

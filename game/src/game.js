@@ -257,7 +257,7 @@ function loop(current_time_ms) {
     const delta_ms = (current_time_ms - g_LAST_TIME_MS) / 1000;
     g_LAST_TIME_MS = current_time_ms;
     update(G, delta_ms, keys_down);
-    updateUI(G, TOURNAMENT);
+    updateUI(G, TOURNAMENT, ctx);
     render(G);
     requestAnimationFrame(loop);
 }
