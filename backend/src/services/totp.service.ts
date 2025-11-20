@@ -12,7 +12,7 @@ const TOTP_CONFIG = {
   digits: 6, // RFC 6238 default number of digits
   issuer: 'ft_transcendence', // Shown in authenticator app; appears in otpauth URL
   period: 30, // RFC 6238 default period: 30 seconds
-  window: 1, // Validate current token plus ±1 time-step (±30s) during verification
+  window: 0, // No time-step drift tolerance; must match current 30-second window exactly
 } as const;
 
 export const generateSecret = () => {

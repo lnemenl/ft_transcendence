@@ -2,6 +2,7 @@ import { useState } from "react";
 import { handleRequest } from "./AuthRequest";
 import { useLanguage } from "./useLanguage";
 import { useGame } from "./GameContext";
+import { GoogleLoginButton } from "./GoogleLoginButton";
 
 type LoginFormProps = {
   onBack: () => void;
@@ -10,48 +11,76 @@ type LoginFormProps = {
   loginEndpoint: string;
 };
 
+type LoginResponse = {
+  id: string;
+  username: string;
+  email?: string;
+  avatarUrl?: string;
+  twoFactorRequired?: boolean;
+  twoFactorToken?: string;
+  isTwoFactorEnabled?: boolean;
+  createdAt?: string;
+  friends?: Array<{
+    id: string;
+    username: string;
+    avatarUrl: string;
+    isOnline: boolean;
+  }>;
+};
+
 export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginFormProps) {
   const t = useLanguage();
+  const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers, players } = useGame();
+
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const { setReady, saveCurrentPlayer, currentPlayerIndex, totalPlayers, players } = useGame();
 
-  // 2FA state
-  const [requires2FA, setRequires2FA] = useState(false);
-  const [twoFactorToken, setTwoFactorToken] = useState("");
-  const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
+  // 2FA State
+  const [requires2FA, setRequires2FA] = useState<boolean>(false);
+  const [twoFactorToken, setTwoFactorToken] = useState<string>("");
+  const [twoFactorCode, setTwoFactorCode] = useState<string>("");
+  const [tempUserId, setTempUserId] = useState<string | null>(null);
 
-  const handleScroll = () => {
-    document.getElementById("game")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const googleType = loginEndpoint.includes("player2") ? "player2" : 
+                     loginEndpoint.includes("tournament") ? "tournament" : "main";
 
-  const handleGameContextAfterLogin = (id: string) => {
-    if (currentPlayerIndex === 0) {
-      onLogin();
-    }
-    saveCurrentPlayer(username, id);
+  const handleSuccess = (id: string, name: string) => {
+    if (currentPlayerIndex === 0) onLogin();
+    
+    saveCurrentPlayer(name, id);
+
     if (currentPlayerIndex === totalPlayers - 1) {
       setReady(true);
       setMode();
     } else {
       onBack();
     }
+    
+    // Reset form
     setUsername("");
     setEmail("");
     setPassword("");
   };
 
+  const handleLoginResponse = (response: LoginResponse) => {
+    // Handle both login endpoint response AND Google response
+    if (response.twoFactorRequired && response.twoFactorToken) {
+      setRequires2FA(true);
+      setTwoFactorToken(response.twoFactorToken);
+      setTempUserId(response.id);
+      setError("");
+    } else {
+      // Google response comes with id and username already set
+      handleSuccess(response.id, response.username);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Check if username is already used by another player (case-sensitive to match backend)
-    const isDuplicate = players.some((player, index) =>
-      index < currentPlayerIndex && player.name === username
-    );
-
+    
+    const isDuplicate = players.some((p, i) => i < currentPlayerIndex && p.name === username);
     if (isDuplicate) {
       setError(t.duplicateUser);
       return;
@@ -61,142 +90,108 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
       e,
       endpoint: loginEndpoint,
       data: { username, email, password },
-      onSuccess: (result) => {
-        // Check if 2FA is required
-        if (result.twoFactorRequired && result.twoFactorToken) {
-          setRequires2FA(true);
-          setTwoFactorToken(result.twoFactorToken);
-          setUserId(result.id);
-          setError("");
-        } else {
-          // Normal login without 2FA - handle game context
-          handleGameContextAfterLogin(result.id);
-        }
-      },
+      onSuccess: handleLoginResponse,
       setError,
     });
   };
 
-  const handleTwoFactorSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handle2FASubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    
+    const endpointMap: Record<string, string> = {
+      "main": "/api/2fa/verify",
+      "player2": "/api/2fa/verify/player2",
+      "tournament": "/api/2fa/verify/tournament"
+    };
+    const verifyUrl = endpointMap[googleType];
 
     try {
-      const res = await fetch("/api/2fa/verify", {
+      const res = await fetch(verifyUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          twoFactorToken: twoFactorToken,
-          SixDigitCode: twoFactorCode,
-        }),
+        body: JSON.stringify({ twoFactorToken, SixDigitCode: twoFactorCode }),
       });
 
       if (res.ok) {
-        console.log("2FA verification successful!");
-        handleScroll();
-        // After 2FA succeeds, handle game context
-        if (userId !== null) {
-          handleGameContextAfterLogin(userId);
-        } else {
-          onLogin();
-        }
+        const data = await res.json();
+        // If 2FA response includes user data (tournament/p2), use it. Else use stored state.
+        handleSuccess(data.id || tempUserId, data.username || username);
       } else {
-        const errorData = await res.json();
-        setError(errorData.error || t.invalidCode);
+        const errData = await res.json();
+        setError(errData.error || t.invalidCode);
       }
-    } catch (err) {
-      console.error("2FA verification error:", err);
+    } catch {
       setError(t.couldNotConnectToServer);
     }
   };
 
-  const handleBackFrom2FA = () => {
-    setRequires2FA(false);
-    setTwoFactorToken("");
-    setTwoFactorCode("");
-    setUserId(null);
-    setError("");
-  };
-
-  // Show 2FA verification form
   if (requires2FA) {
     return (
       <div className="min-w-90 h-full">
-        <form onSubmit={handleTwoFactorSubmit} className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
-          <h3 className="text-xl font-bold text-[#6688cc] dark:text-[#cad3f5] mb-4">
-            {t.twoFactorAuth}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-[#cad3f5] mb-4">
-            {t.enterSixDigitCode}
-          </p>
+        <form onSubmit={handle2FASubmit} className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
+          <h3 className="text-xl font-bold text-[#6688cc] dark:text-[#cad3f5] mb-4">{t.twoFactorAuth}</h3>
+          <p className="text-sm text-gray-600 dark:text-[#cad3f5] mb-4">{t.enterSixDigitCode}</p>
+          
           <div className="mb-4">
-            <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="2fa-code">
-              {t.verificationCode}
-            </label>
+            <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">{t.verificationCode}</label>
             <input
               onChange={(e) => setTwoFactorCode(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline text-center text-2xl tracking-widest"
-              id="2fa-code"
-              type="text"
-              placeholder="000000"
-              maxLength={6}
-              pattern="\d{6}"
-              value={twoFactorCode}
-              autoComplete="off"
-              required
+              className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white text-center text-2xl tracking-widest"
+              type="text" maxLength={6} pattern="\d{6}" value={twoFactorCode} required autoFocus
             />
           </div>
-          <div className="flex flex-col items-center justify-center w-full max-w-sm">
-            <div className="min-h-1 flex items-center justify-center mb-3">
-              {error && (<p className="text-sm text-red-600 mt-2">{error}</p>)}
-            </div>
-            <button type="submit" className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-4 py-2 text-white mb-4 w-full">
-              {t.verify}
-            </button>
-            <button type="button" onClick={handleBackFrom2FA} className="text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700">
-              {t.back}
-            </button>
+
+          <div className="flex flex-col items-center w-full">
+            <div className="min-h-6 mb-2">{error && <p className="text-sm text-red-600">{error}</p>}</div>
+            <button type="submit" className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-4 py-2 text-white mb-4 w-full">{t.verify}</button>
+            <button type="button" onClick={() => setRequires2FA(false)} className="text-sm text-gray-500 hover:text-gray-700">{t.back}</button>
           </div>
         </form>
       </div>
     );
   }
 
-  // Show normal login form
   return (
-  <div className="min-w-90 h-full">
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
-        <div className="mb-4">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="username">
-            {t.username}
-          </label>
-          <input onChange={(e) => setUsername(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={username} type="text" placeholder={t.username} required/>
-        </div>
-        <div className="mb-4">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="email-p1">
-            {t.email}
-          </label>
-          <input onChange={(e) => setEmail(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={email} type="email" placeholder={t.email} required />
-        </div>
-        <div className="">
-          <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2" htmlFor="password">
-            {t.password}
-          </label>
-          <input onChange={(e) => setPassword(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 dark:text-white leading-tight focus:outline-none focus:shadow-outline" value={password} type="password" placeholder={t.password} required/>
-        </div>
-        <div className="flex flex-col items-center justify-center w-full max-w-sm">
-          <div className="min-h-1 flex items-center justify-center mb-3">
-            {error && (<p className="text-sm text-red-600 mt-2">{error}</p>)}
+    <div className="min-w-90 h-full">
+      <div className="bg-white dark:bg-[#24273a] shadow-xl rounded-xl p-8 w-full max-w-sm space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">{t.username}</label>
+            <input onChange={(e) => setUsername(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={username} type="text" placeholder={t.username} required />
           </div>
-          <button type="submit" className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-4 py-2 text-white mb-4">
-            {t.logIn}
-          </button>
-          <button type="button" onClick={onBack} className="text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700">
-            {t.back}
-          </button>
+          <div>
+            <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">{t.email}</label>
+            <input onChange={(e) => setEmail(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={email} type="email" placeholder={t.email} required />
+          </div>
+          <div>
+            <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">{t.password}</label>
+            <input onChange={(e) => setPassword(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={password} type="password" placeholder={t.password} required />
+          </div>
+
+          <div className="flex flex-col items-center w-full">
+            <div className="min-h-6 mb-2">{error && <p className="text-sm text-red-600">{error}</p>}</div>
+            <button type="submit" className="bg-[#6688cc] hover:bg-[#24273a] rounded-2xl px-4 py-2 text-white mb-4 w-full">{t.logIn}</button>
+          </div>
+        </form>
+
+        <div className="relative flex py-1 items-center">
+            <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+            <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">OR</span>
+            <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+        </div>
+
+        <GoogleLoginButton 
+            type={googleType} 
+            onSuccess={handleLoginResponse} 
+            onError={setError}
+        />
+
+        <div className="flex justify-center mt-4">
+            <button type="button" onClick={onBack} className="text-sm text-gray-500 dark:text-[#cad3f5] hover:text-gray-700">{t.back}</button>
+        </div>
       </div>
-      </form>
-  </div>
+    </div>
   );
 }
