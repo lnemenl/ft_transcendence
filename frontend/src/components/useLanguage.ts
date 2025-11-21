@@ -206,7 +206,7 @@ const table = Object.freeze(
             logOut: "Kirjaudu ulos",
             logout: "Kirjaudu ulos",
             loginOrSignupPlayer: "Kirjaudu tai rekisteröidy pelaaja",
-            losses: "Tappiot",
+            losses: "Tappiota",
             manualEntry: "Tai syötä tämä salaisuus manuaalisesti:",
             matchHistory: "Otteluhistoria",
             memberSince: "Jäsen alkaen",
@@ -249,7 +249,7 @@ const table = Object.freeze(
             verifyAndEnable: "Vahvista ja ota käyttöön",
             victory: "Voitto",
             wantToLogOut: "Haluatko kirjautua ulos?",
-            wins: "Voitot",
+            wins: "Voittoa",
         },
         "ru": {
             add: "Добавить",
