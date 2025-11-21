@@ -140,6 +140,23 @@ export const Profile: React.FC = () => {
     }
   };
 
+  const handleSelectAvatarUrl = async (url: string) => {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+
+    const res = await fetch("/api/users/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ avatarUrl: trimmed }),
+    });
+
+    if (res.ok) {
+      await fetchData();
+      updateAvatar(trimmed);
+      setShowAvatarPicker(false);
+    }
+  };
+
   // Render states
   if (!isLoggedIn) {
     return (
@@ -230,6 +247,7 @@ export const Profile: React.FC = () => {
         seeds={AVATAR_SEEDS}
         onClose={() => setShowAvatarPicker(false)}
         onSelectSeed={handleSelectAvatarStyle}
+        onSelectUrl={handleSelectAvatarUrl}
       />
     </div>
   );
