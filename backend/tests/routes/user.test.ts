@@ -176,10 +176,7 @@ describe('User Profile Management', () => {
       await request(app.server).post('/api/register').send(testUsers.bob).expect(201);
       const { cookies } = await createAuthenticatedUser(testUsers.alice);
 
-      const res = await request(app.server)
-        .patch('/api/users/me')
-        .set('Cookie', cookies)
-        .send({ username: 'bob' });
+      const res = await request(app.server).patch('/api/users/me').set('Cookie', cookies).send({ username: 'bob' });
 
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error', 'User with this name already exists');
