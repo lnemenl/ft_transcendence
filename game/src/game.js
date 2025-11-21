@@ -53,7 +53,7 @@ const G = {
         x: -8.5,
         z: 0
     },
-    state: STATES.GAME_OVER, // TODO: revert back to STATES.START
+    state: STATES.START,
     width: 20,
     winningScore: 7
 };
