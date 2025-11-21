@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import { TwoFactorSettings } from "./TwoFactorSettings";
 import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
-import { type FriendRequestData, type PublicUser, type UserProfile } from "./profileTypes"
+import { type FriendRequestData, type PublicUser, type UserProfile, type Game } from "./profileTypes";
 import { ProfileHeader } from "./ProfileHeader";
 import { DisplayNameCard } from "./DisplayNameCard";
 import { PeopleCard } from "./PeopleCard";
 import { AddFriendModal } from "./AddFriendModal";
 import { AvatarPickerModal } from "./AvatarPickerModal";
+import { GameHistoryCard } from "./GameHistoryCard";
 import { generateAvatarUrl, AVATAR_SEEDS } from "./AvatarUtils";
 import { useLanguage } from "./useLanguage";
 
@@ -21,17 +22,19 @@ export const Profile: React.FC = () => {
     sentFriendRequests: [],
     receivedFriendRequests: [],
   });
+  const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [addableUsers, setAddableUsers] = useState<PublicUser[]>([]);
   const [showAvatarPicker, setShowAvatarPicker] = useState<boolean>(false);
 
-  // Fetch user + friend-requests
+  // Fetch user + friend-requests + games in parallel
   const fetchData = useCallback(async () => {
     try {
-      const [userRes, reqRes] = await Promise.all([
+      const [userRes, reqRes, gameRes] = await Promise.all([
         fetch("/api/users/me"),
         fetch("/api/friend-request/me"),
+        fetch("/api/games/me"),
       ]);
 
       if (userRes.ok) {
@@ -42,6 +45,11 @@ export const Profile: React.FC = () => {
       if (reqRes.ok) {
         const reqData = await reqRes.json();
         setRequests(reqData);
+      }
+
+      if (gameRes.ok) {
+        const gameData = await gameRes.json();
+        setGames(gameData);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -54,7 +62,7 @@ export const Profile: React.FC = () => {
     if (isLoggedIn) fetchData();
   }, [isLoggedIn, fetchData]);
 
-  // Friend actions
+  // --- Friend Actions ---
   const openAddModal = async () => {
     setShowAddModal(true);
     try {
@@ -62,6 +70,7 @@ export const Profile: React.FC = () => {
       if (res.ok) {
         const allUsers: PublicUser[] = await res.json();
 
+        // Filter out existing friends, self, and pending requests
         const excludeIds = new Set<string | undefined>([
           user?.id,
           ...(user?.friends.map((f) => f.id) || []),
@@ -197,6 +206,12 @@ export const Profile: React.FC = () => {
             username={user.username}
             onSave={handleSaveUsername}
           />
+          
+          {/* Game History - Passes the fetched games and current user ID */}
+          <GameHistoryCard 
+            games={games} 
+            currentUserId={user.id} 
+          />
 
           {/* People (friends + requests) */}
           <PeopleCard
@@ -220,7 +235,11 @@ export const Profile: React.FC = () => {
           <div className="text-center pt-2">
             <p className="text-xs text-[#444746] dark:text-[#C4C7C5]">
               {t.memberSince}{" "}
-              {new Date(user.createdAt).toISOString().split('T')[0]}
+              {new Date(user.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </p>
             <div className="mt-6">
               <Link

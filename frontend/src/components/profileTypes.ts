@@ -37,3 +37,16 @@ export interface PublicUser {
   username: string;
   avatarUrl: string | null;
 }
+
+export interface GameUser {
+  id: string;
+  username: string;
+  avatarUrl: string | null;
+}
+
+export interface Game {
+  id: string;
+  createdAt: string;
+  winner: GameUser | null;
+  players: GameUser[];
+}
