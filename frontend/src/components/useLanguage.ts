@@ -40,6 +40,7 @@ const table = Object.freeze(
             logOut: "Log Out",
             logout: "Logout",
             loginOrSignupPlayer: "Login or Signup Player",
+            loss: "Loss",
             losses: "Losses",
             manualEntry: "Or enter this secret manually:",
             matchHistory: "Match History",
@@ -83,6 +84,7 @@ const table = Object.freeze(
             verifyAndEnable: "Verify & Enable",
             victory: "Victory",
             wantToLogOut: "Want to log out?",
+            win: "Win",
             wins: "Wins",
         },
         "fr": {
@@ -123,6 +125,7 @@ const table = Object.freeze(
             logOut: "Se déconnecter",
             logout: "Se déconnecter",
             loginOrSignupPlayer: "Connexion ou Inscription Joueur",
+            loss: "Défaite",
             losses: "Défaites",
             manualEntry: "Ou entrez ce secret manuellement :",
             matchHistory: "Historique des matchs",
@@ -166,6 +169,7 @@ const table = Object.freeze(
             verifyAndEnable: "Vérifier et activer",
             victory: "Victoire",
             wantToLogOut: "Voulez-vous vous déconnecter ?",
+            win: "Victoire",
             wins: "Victoires",
         },
         "fi": {
@@ -206,6 +210,7 @@ const table = Object.freeze(
             logOut: "Kirjaudu ulos",
             logout: "Kirjaudu ulos",
             loginOrSignupPlayer: "Kirjaudu tai rekisteröidy pelaaja",
+            loss: "Tappio",
             losses: "Tappiota",
             manualEntry: "Tai syötä tämä salaisuus manuaalisesti:",
             matchHistory: "Otteluhistoria",
@@ -249,6 +254,7 @@ const table = Object.freeze(
             verifyAndEnable: "Vahvista ja ota käyttöön",
             victory: "Voitto",
             wantToLogOut: "Haluatko kirjautua ulos?",
+            win: "Voitto",
             wins: "Voittoa",
         },
         "ru": {
@@ -289,6 +295,7 @@ const table = Object.freeze(
             logOut: "Выйти",
             logout: "Выйти",
             loginOrSignupPlayer: "Войти или зарегистрировать игрока",
+            loss: "Поражение",
             losses: "Поражения",
             manualEntry: "Или введите этот секрет вручную:",
             matchHistory: "История матчей",
@@ -332,6 +339,7 @@ const table = Object.freeze(
             verifyAndEnable: "Проверить и включить",
             victory: "Победа",
             wantToLogOut: "Хотите выйти?",
+            win: "Победа",
             wins: "Победы",
         }
     }
