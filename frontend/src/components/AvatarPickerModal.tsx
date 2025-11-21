@@ -1,6 +1,7 @@
 import React from "react";
 import { useState } from "react";
 import { generateAvatarUrl } from "./AvatarUtils";
+import { useLanguage } from "./useLanguage";
 
 interface AvatarPickerModalProps {
   isOpen: boolean;
@@ -17,8 +18,8 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   onSelectSeed,
   onSelectUrl,
 }) => {
+  const t = useLanguage();
   const [customUrl, setCustomUrl] = useState("");
-  
   if (!isOpen) return null;
 
   const handleUrlSubmit = () => {
@@ -31,7 +32,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
       <div className="bg-white dark:bg-[#1E1E1E] rounded-[2rem] p-6 max-w-md max-h-[70vh] overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center mb-6 pl-2">
           <h3 className="text-lg font-medium text-[#1F1F1F] dark:text-[#E2E2E2]">
-            Choose Avatar
+            {t.chooseAvatar}
           </h3>
           <button
             onClick={onClose}
@@ -43,18 +44,18 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
         <div className="mb-6">
           <label className="block text-sm font-medium text-[#444746] dark:text-[#C4C7C5] mb-2">
-            Enter an Image URL
+            {t.enterImageUrl}
           </label>
           <div className="flex gap-2">
             <input
               type="url"
-              placeholder="https://example.com/my-avatar.png"
+              placeholder={t.enterImageUrlPlaceholder}
               className="flex-1 px-3 py-2 text-sm border border-[#E0E2E7] dark:border-[#49454F] rounded-xl bg-transparent text-[#1F1F1F] dark:text-[#E2E2E2] focus:outline-none"
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
             />
             <button onClick={handleUrlSubmit} disabled={!customUrl.trim()} className="px-4 py-2 bg-[#6688cc] hover:bg-[#5577bb] text-white rounded-xl text-sm disabled:opacity-50">
-              Use
+              {t.use}
             </button>
           </div>
         </div>

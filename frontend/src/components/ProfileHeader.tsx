@@ -1,5 +1,6 @@
 import React from "react";
 import {type UserProfile } from "./profileTypes";
+import { useLanguage } from "./useLanguage";
 //import { generateAvatarUrl } from "./AvatarUtils";
 
 interface ProfileHeaderProps {
@@ -11,12 +12,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   user,
   onAvatarClick,
 }) => {
+  const t = useLanguage();
   return (
     <div className="flex flex-col items-center gap-2">
       <button
         onClick={onAvatarClick}
         className="relative group flex-shrink-0 focus:outline-none"
-        title="Change Avatar"
+        title={t.changeAvatar}
       >
         <img
           src={user.avatarUrl || "?"}

@@ -5,8 +5,10 @@ import { DarkMode } from "./DarkMode";
 import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
 import { Link } from "react-router-dom";
+import { useLanguage } from "./useLanguage";
 
 export const Menu: React.FC = () => {
+  const t = useLanguage();
   const [open, setOpen] = useState<boolean>(false);
   const { isLoggedIn } = useAuth();
   const { players } = useGame();
@@ -49,7 +51,7 @@ export const Menu: React.FC = () => {
                   )}
                 </div>
                 <span>
-                  Profile
+                  {t.profile}
                 </span>
               </Link>
             )}

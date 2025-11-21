@@ -1,5 +1,6 @@
 import { FcGoogle } from "react-icons/fc";
 import { useState, useEffect } from "react";
+import { useLanguage } from "./useLanguage";
 
 type GoogleLoginType = "main" | "player2" | "tournament";
 
@@ -17,8 +18,10 @@ interface GoogleLoginButtonProps {
   onError?: (error: string) => void;
 }
 
-export function GoogleLoginButton({ type, label = "Sign in with Google", onSuccess, onError }: GoogleLoginButtonProps) {
+export function GoogleLoginButton({ type, label, onSuccess, onError }: GoogleLoginButtonProps) {
+  const t = useLanguage();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const defaultLabel = label || t.signInWithGoogle;
 
   // This effect cleans up the event listener when the component unmounts
   useEffect(() => {
@@ -68,7 +71,7 @@ export function GoogleLoginButton({ type, label = "Sign in with Google", onSucce
 
     if (!popup) {
       setIsLoading(false);
-      onError?.("Popup blocked. Please allow popups.");
+      onError?.(t.popupBlocked);
     }
   };
 
@@ -80,7 +83,7 @@ export function GoogleLoginButton({ type, label = "Sign in with Google", onSucce
       className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-2xl px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium shadow-sm"
     >
       <FcGoogle size="1.5em" />
-      <span>{isLoading ? "Connecting..." : label}</span>
+      <span>{isLoading ? t.connecting : defaultLabel}</span>
     </button>
   );
 }

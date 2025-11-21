@@ -3,8 +3,10 @@ import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
 import { LogOut } from "./LogOut";
 import { Link } from "react-router-dom";
+import { useLanguage } from "./useLanguage";
 
 export function LogButton() {
+  const t = useLanguage();
   const { isLoggedIn, logout } = useAuth();
   const { resetGame, setReady } = useGame();
   const [showLogoutScreen, setShowLogoutScreen] = useState<boolean>(false);
@@ -38,13 +40,13 @@ export function LogButton() {
       {isLoggedIn ? (
         <Link to="/" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="flex items-center justify-center w-full">
           <span className="p-1 rounded-2xl w-full h-full">
-            Logout
+            {t.logout}
           </span>
         </Link>
       ) : (
         <Link to="/login" onClick={handleScroll} className="flex items-center justify-center w-full">
           <span className="p-1 rounded-2xl w-full h-full">
-            Login
+            {t.login}
           </span>
         </Link>
       )}
