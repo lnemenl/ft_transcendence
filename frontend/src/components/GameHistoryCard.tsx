@@ -32,10 +32,10 @@ export const GameHistoryCard: React.FC<GameHistoryCardProps> = ({
         </h3>
         <div className="flex gap-2">
           <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold">
-            {wins} {t.wins}
+            {wins} {wins === 1 ? t.win : t.wins}
           </span>
           <span className="px-3 py-1 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold">
-            {losses} {t.losses}
+            {losses} {losses === 1 ? t.loss : t.losses}
           </span>
         </div>
       </div>
@@ -88,10 +88,7 @@ export const GameHistoryCard: React.FC<GameHistoryCardProps> = ({
                     {isWinner ? t.victory : t.defeat}
                   </span>
                   <span className="text-[10px] text-[#444746] dark:text-[#C4C7C5]">
-                    {new Date(game.createdAt).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {new Date(game.createdAt).toISOString().split('T')[0]}
                   </span>
                 </div>
               </div>
