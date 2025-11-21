@@ -1,6 +1,6 @@
 import React from "react";
 import {type UserProfile } from "./profileTypes";
-import { generateAvatarUrl } from "./AvatarUtils";
+//import { generateAvatarUrl } from "./AvatarUtils";
 
 interface ProfileHeaderProps {
   user: UserProfile;
@@ -19,7 +19,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         title="Change Avatar"
       >
         <img
-          src={user.avatarUrl || generateAvatarUrl(user.username)}
+          src={user.avatarUrl || "?"}
           alt={user.username}
           className="w-24 h-24 rounded-full border-4 border-[#E0E2E7] dark:border-[#49454F] bg-white cursor-pointer transition-opacity hover:opacity-80"
         />

@@ -46,10 +46,10 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
   const googleType = loginEndpoint.includes("player2") ? "player2" : 
                      loginEndpoint.includes("tournament") ? "tournament" : "main";
 
-  const handleSuccess = (id: string, name: string) => {
+  const handleSuccess = (id: string, name: string, avatar: string) => {
     if (currentPlayerIndex === 0) onLogin();
     
-    saveCurrentPlayer(name, id);
+    saveCurrentPlayer(name, id, avatar);
 
     if (currentPlayerIndex === totalPlayers - 1) {
       setReady(true);
@@ -78,7 +78,8 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
       setError("");
     } else {
       // Google response comes with id and username already set
-      handleSuccess(response.id, response.username);
+      const avatar = response.avatarUrl || "?"
+      handleSuccess(response.id, response.username, avatar);
     }
   };
 
@@ -121,8 +122,9 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
 
       if (res.ok) {
         const data = await res.json();
+        const avatar = data.avatarUrl ?? "?";
         // If 2FA response includes user data (tournament/p2), use it. Else use stored state.
-        handleSuccess(data.id || tempUserId, data.username || username);
+        handleSuccess(data.id || tempUserId, data.username || username, avatar);
       } else {
         const errData = await res.json();
         setError(errData.error || t.invalidCode);

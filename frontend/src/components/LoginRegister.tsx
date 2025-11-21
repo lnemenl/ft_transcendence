@@ -37,9 +37,10 @@ export function LoginRegister() {
 
         if (res.ok) {
           const data = await res.json();
+          const avatar = data.avatarUrl ?? "?";
           console.log("Auth check - profile data:", data);
           if (players.length === 0) {
-            saveCurrentPlayer(data.username, data.id);
+            saveCurrentPlayer(data.username, data.id, avatar);
           }
           login();
         }
