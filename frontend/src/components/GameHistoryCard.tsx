@@ -88,10 +88,7 @@ export const GameHistoryCard: React.FC<GameHistoryCardProps> = ({
                     {isWinner ? t.victory : t.defeat}
                   </span>
                   <span className="text-[10px] text-[#444746] dark:text-[#C4C7C5]">
-                    {new Date(game.createdAt).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {new Date(game.createdAt).toISOString().split('T')[0]}
                   </span>
                 </div>
               </div>
