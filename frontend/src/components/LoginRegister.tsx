@@ -7,10 +7,12 @@ import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
 import { Tournament } from "./Tournament";
 import { LoginOrRegisterP2 } from "./LoginOrRegisterP2";
+import { useLanguage } from "./useLanguage";
 
 type View = "register" | "choice" | "login" | "multiplayer" | "gamemode" |"tournament";
 
 export function LoginRegister() {
+  const t = useLanguage();
   const [currentView, setCurrentView] = useState<View>("choice");
   const handleSelectMode = (view: View) => setCurrentView(view);
   const { isLoggedIn, login } = useAuth();
@@ -76,7 +78,7 @@ export function LoginRegister() {
     return (
       <div id="login" className="h-screen w-screen flex justify-center items-center">
         <div className="w-full max-w-4xl h-[550px] bg-blue-50/50 dark:bg-[#24273a]/50 rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center">
-          <p className="text-gray-500 dark:text-[#cad3f5]">Loading...</p>
+          <p className="text-gray-500 dark:text-[#cad3f5]">{t.loading}</p>
         </div>
       </div>
     );

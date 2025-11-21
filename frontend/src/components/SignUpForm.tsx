@@ -103,13 +103,13 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
 
         <div className="relative flex py-1 items-center">
             <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
-            <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">OR</span>
+            <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">{t.or}</span>
             <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
         </div>
 
-        <GoogleLoginButton 
+        <GoogleLoginButton
             type={googleType}
-            label={t.signUp + " with Google"}
+            label={t.signUpWithGoogle}
             onSuccess={handleGoogleResponse}
             onError={setError}
         />

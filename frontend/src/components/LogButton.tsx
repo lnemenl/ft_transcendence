@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
 import { LogOut } from "./LogOut";
+import { useLanguage } from "./useLanguage";
 
 export function LogButton() {
+  const t = useLanguage();
   const { isLoggedIn, logout } = useAuth();
   const { resetGame, setReady } = useGame();
   const [showLogoutScreen, setShowLogoutScreen] = useState<boolean>(false);
@@ -36,11 +38,11 @@ export function LogButton() {
     <div>
       {isLoggedIn ? (
         <button type="button" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="p-1 w-full rounded-2xl">
-          Logout
+          {t.logout}
         </button>
       ) : (
         <button type="button" onClick={handleScroll} className="p-1 w-full rounded-2xl">
-          Login
+          {t.login}
         </button>
       )}
     </div>
