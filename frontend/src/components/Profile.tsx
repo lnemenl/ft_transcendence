@@ -14,17 +14,14 @@ import { generateAvatarUrl, AVATAR_SEEDS } from "./AvatarUtils";
 export const Profile: React.FC = () => {
   const { isLoggedIn } = useAuth();
   const { updateUsername } = useGame();
-
   const [user, setUser] = useState<UserProfile | null>(null);
   const [requests, setRequests] = useState<FriendRequestData>({
     sentFriendRequests: [],
     receivedFriendRequests: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
-
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [addableUsers, setAddableUsers] = useState<PublicUser[]>([]);
-
   const [showAvatarPicker, setShowAvatarPicker] = useState<boolean>(false);
 
   // Fetch user + friend-requests
