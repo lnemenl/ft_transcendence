@@ -167,6 +167,7 @@ export const handleGoogleUser = async (code: string, oauth2Client: OAuth2Client)
   const googleId = userProfile.data.resourceName?.split('/')?.pop() || '';
   const email = userProfile.data.emailAddresses?.[0]?.value || '';
   const name = userProfile.data.names?.[0]?.displayName || '';
+  const avatarUrl = userProfile.data.photos?.[0]?.url || null;
 
   let user = await prisma.user.findUnique({
     where: { googleId },
@@ -200,6 +201,7 @@ export const handleGoogleUser = async (code: string, oauth2Client: OAuth2Client)
       username,
       password: hashedPassword,
       googleId,
+      avatarUrl,
     },
   });
 
