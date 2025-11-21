@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FaUserPlus, FaCheck, FaTimes, FaTrash, FaCircle } from "react-icons/fa";
 import { type FriendRequestData, type UserProfile } from "./profileTypes";
 import { generateAvatarUrl } from "./AvatarUtils";
+import { useLanguage } from "./useLanguage";
 
 interface PeopleCardProps {
   user: UserProfile;
@@ -20,6 +21,7 @@ export const PeopleCard: React.FC<PeopleCardProps> = ({
   onAcceptRequest,
   onRemoveRequest,
 }) => {
+  const t = useLanguage();
   const [activeTab, setActiveTab] = useState<"friends" | "requests">("friends");
 
   const totalRequests =
@@ -39,7 +41,7 @@ export const PeopleCard: React.FC<PeopleCardProps> = ({
                 : "text-[#444746] dark:text-[#C4C7C5] hover:text-black dark:hover:text-white"
             }`}
           >
-            Friends ({user.friends.length})
+            {t.friends} ({user.friends.length})
           </button>
           <button
             onClick={() => setActiveTab("requests")}
@@ -49,14 +51,14 @@ export const PeopleCard: React.FC<PeopleCardProps> = ({
                 : "text-[#444746] dark:text-[#C4C7C5] hover:text-black dark:hover:text-white"
             }`}
           >
-            Requests ({totalRequests})
+            {t.requests} ({totalRequests})
           </button>
         </div>
         <button
           onClick={onOpenAddModal}
           className="flex items-center gap-2 px-3 py-1.5 bg-[#6688cc] hover:bg-[#5577bb] text-white text-xs font-medium rounded-full transition-colors"
         >
-          <FaUserPlus /> Add
+          <FaUserPlus /> {t.add}
         </button>
       </div>
 
@@ -65,7 +67,7 @@ export const PeopleCard: React.FC<PeopleCardProps> = ({
         {activeTab === "friends" ? (
           user.friends.length === 0 ? (
             <p className="text-center text-sm text-[#444746] py-6">
-              No friends yet
+              {t.noFriendsYet}
             </p>
           ) : (
             user.friends.map((f) => (
@@ -105,7 +107,7 @@ export const PeopleCard: React.FC<PeopleCardProps> = ({
             {requests.receivedFriendRequests.length === 0 &&
               requests.sentFriendRequests.length === 0 && (
                 <p className="text-center text-sm text-[#444746] py-6">
-                  No requests
+                  {t.noRequests}
                 </p>
               )}
 
@@ -126,7 +128,7 @@ export const PeopleCard: React.FC<PeopleCardProps> = ({
                   />
                   <div className="flex flex-col">
                     <span className="text-xs text-[#6688cc] font-bold">
-                      Incoming
+                      {t.incoming}
                     </span>
                     <span className="text-sm font-medium text-[#1F1F1F] dark:text-[#E2E2E2]">
                       {req.sender?.username}
@@ -167,7 +169,7 @@ export const PeopleCard: React.FC<PeopleCardProps> = ({
                   />
                   <div className="flex flex-col">
                     <span className="text-xs text-gray-400 font-bold">
-                      Outgoing
+                      {t.outgoing}
                     </span>
                     <span className="text-sm font-medium text-[#1F1F1F] dark:text-[#E2E2E2]">
                       {req.receiver?.username}
@@ -178,7 +180,7 @@ export const PeopleCard: React.FC<PeopleCardProps> = ({
                   onClick={() => onRemoveRequest(req.id)}
                   className="text-xs text-[#444746] hover:text-red-500 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 hover:border-red-200"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
               </div>
             ))}

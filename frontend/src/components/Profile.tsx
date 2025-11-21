@@ -10,10 +10,12 @@ import { PeopleCard } from "./PeopleCard";
 import { AddFriendModal } from "./AddFriendModal";
 import { AvatarPickerModal } from "./AvatarPickerModal";
 import { generateAvatarUrl, AVATAR_SEEDS } from "./AvatarUtils";
+import { useLanguage } from "./useLanguage";
 
 export const Profile: React.FC = () => {
   const { isLoggedIn } = useAuth();
   const { updateUsername, updateAvatar } = useGame();
+  const t = useLanguage();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [requests, setRequests] = useState<FriendRequestData>({
     sentFriendRequests: [],
@@ -99,7 +101,7 @@ export const Profile: React.FC = () => {
   };
 
   const removeFriend = async (friendId: string) => {
-    if (!confirm("Remove this friend?")) return;
+    if (!confirm(t.removeFriendConfirm)) return;
     const res = await fetch(`/api/users/me/friends/${friendId}`, {
       method: "DELETE",
     });
@@ -143,13 +145,13 @@ export const Profile: React.FC = () => {
     return (
       <div className="w-full min-h-screen bg-[#fafbfc] dark:bg-[#121212] flex flex-col items-center justify-center gap-4 font-inter">
         <p className="text-[#5f6368] dark:text-[#e8eaed]">
-          Please log in to view your profile
+          {t.pleaseLoginToViewProfile}
         </p>
         <Link
           to="/"
           className="text-[#1f2937] dark:text-[#8ab4f8] text-sm hover:underline"
         >
-          Back to Home
+          {t.backToHome}
         </Link>
       </div>
     );
@@ -158,7 +160,7 @@ export const Profile: React.FC = () => {
   if (loading || !user) {
     return (
       <div className="w-full min-h-screen bg-[#F8F9FA] dark:bg-[#121212] flex items-center justify-center font-inter">
-        <p className="text-[#444746] dark:text-[#C4C7C5] text-sm">Loading...</p>
+        <p className="text-[#444746] dark:text-[#C4C7C5] text-sm">{t.loading}</p>
       </div>
     );
   }
@@ -192,7 +194,7 @@ export const Profile: React.FC = () => {
           {/* 2FA Section */}
           <div className="bg-white dark:bg-[#1E1E1E] border border-[#E0E2E7] dark:border-[#49454F] rounded-3xl p-6">
             <h2 className="text-xs font-bold text-[#444746] dark:text-[#C4C7C5] uppercase tracking-wider mb-4">
-              Security (2FA)
+              {t.security2FA}
             </h2>
             <TwoFactorSettings />
           </div>
@@ -200,19 +202,15 @@ export const Profile: React.FC = () => {
           {/* Footer */}
           <div className="text-center pt-2">
             <p className="text-xs text-[#444746] dark:text-[#C4C7C5]">
-              Member since{" "}
-              {new Date(user.createdAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {t.memberSince}{" "}
+              {new Date(user.createdAt).toISOString().split('T')[0]}
             </p>
             <div className="mt-6">
               <Link
                 to="/"
                 className="text-sm font-medium text-[#6688cc] hover:underline px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#2A2A2A] transition-colors"
               >
-                Back to Home
+                {t.backToHome}
               </Link>
             </div>
           </div>

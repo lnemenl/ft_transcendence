@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useLanguage } from "./useLanguage";
 
 interface DisplayNameCardProps {
   username: string;
@@ -9,6 +10,7 @@ export const DisplayNameCard: React.FC<DisplayNameCardProps> = ({
   username,
   onSave,
 }) => {
+  const t = useLanguage();
   const [editMode, setEditMode] = useState(false);
   const [value, setValue] = useState(username);
   const [saving, setSaving] = useState(false);
@@ -40,7 +42,7 @@ export const DisplayNameCard: React.FC<DisplayNameCardProps> = ({
     <div className="bg-white dark:bg-[#1E1E1E] border border-[#E0E2E7] dark:border-[#49454F] rounded-3xl p-6">
       <div className="space-y-4">
         <label className="text-xs font-bold text-[#444746] dark:text-[#C4C7C5] uppercase tracking-wider block">
-          Display Name
+          {t.displayName}
         </label>
         {editMode ? (
           <div className="flex gap-2">
@@ -57,13 +59,13 @@ export const DisplayNameCard: React.FC<DisplayNameCardProps> = ({
               disabled={saving}
               className="px-5 py-2 text-sm font-medium text-white bg-[#6688cc] rounded-full hover:bg-[#5577bb]"
             >
-              {saving ? "..." : "Save"}
+              {saving ? "..." : t.save}
             </button>
             <button
               onClick={handleCancel}
               className="px-4 py-2 text-sm font-medium text-[#444746] dark:text-[#C4C7C5] hover:bg-gray-100 dark:hover:bg-[#2A2A2A] rounded-full"
             >
-              Cancel
+              {t.cancel}
             </button>
           </div>
         ) : (
@@ -75,7 +77,7 @@ export const DisplayNameCard: React.FC<DisplayNameCardProps> = ({
               onClick={() => setEditMode(true)}
               className="text-sm font-medium text-[#6688cc] hover:underline px-2"
             >
-              Edit
+              {t.edit}
             </button>
           </div>
         )}

@@ -1,5 +1,6 @@
 import React from "react";
 import { generateAvatarUrl } from "./AvatarUtils";
+import { useLanguage } from "./useLanguage";
 
 interface AvatarPickerModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   onClose,
   onSelectSeed,
 }) => {
+  const t = useLanguage();
   if (!isOpen) return null;
 
   return (
@@ -21,7 +23,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
       <div className="bg-white dark:bg-[#1E1E1E] rounded-[2rem] p-6 max-w-md max-h-[70vh] overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center mb-6 pl-2">
           <h3 className="text-lg font-medium text-[#1F1F1F] dark:text-[#E2E2E2]">
-            Choose Avatar
+            {t.chooseAvatar}
           </h3>
           <button
             onClick={onClose}
