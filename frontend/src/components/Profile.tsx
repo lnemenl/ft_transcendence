@@ -13,7 +13,7 @@ import { generateAvatarUrl, AVATAR_SEEDS } from "./AvatarUtils";
 
 export const Profile: React.FC = () => {
   const { isLoggedIn } = useAuth();
-  const { updateUsername } = useGame();
+  const { updateUsername, updateAvatar } = useGame();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [requests, setRequests] = useState<FriendRequestData>({
     sentFriendRequests: [],
@@ -133,6 +133,7 @@ export const Profile: React.FC = () => {
     });
     if (res.ok) {
       await fetchData();
+      updateAvatar(newUrl);
       setShowAvatarPicker(false);
     }
   };
