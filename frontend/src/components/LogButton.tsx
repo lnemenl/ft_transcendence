@@ -44,7 +44,7 @@ export function LogButton() {
           </span>
         </Link>
       ) : (
-        <Link to="/login" onClick={handleScroll} className="flex items-center justify-center w-full">
+        <Link to="/section/login" onClick={handleScroll} className="flex items-center justify-center w-full">
           <span className="p-1 rounded-2xl w-full h-full">
             {t.login}
           </span>

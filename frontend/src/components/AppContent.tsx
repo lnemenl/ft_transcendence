@@ -24,13 +24,13 @@ export function AppContent() {
 
 
   useEffect(() => {
-    if (window.location.pathname === "/login") {
+    if (window.location.pathname === "/section/login") {
       document.getElementById("login")?.scrollIntoView({
         behavior: "smooth",
       });
     }
 
-    else if (window.location.pathname === "/game") {
+    else if (window.location.pathname === "/section/game") {
       document.getElementById("game")?.scrollIntoView({
         behavior: "smooth",
       });
@@ -42,7 +42,7 @@ export function AppContent() {
       document.getElementById("game")?.scrollIntoView({
         behavior: "smooth",
       });
-      window.history.pushState({ section: "game" }, "", "/game");
+      window.history.pushState({ section: "game" }, "", "/section/game");
     }
   }, [ready]);
 
@@ -51,8 +51,8 @@ export function AppContent() {
       <Menu />
       <Routes>
         <Route path="/" element={<Content ready={ready} />} />
-        <Route path="/login" element={<Content ready={ready} />} />
-        <Route path="/game" element={<Content ready={ready} />} />
+        <Route path="/section/login" element={<Content ready={ready} />} />
+        <Route path="/section/game" element={<Content ready={ready} />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
     </>
