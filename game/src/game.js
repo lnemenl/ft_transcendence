@@ -40,7 +40,7 @@ const G = {
         score: 0,
         speed: 20,
         width: 0.2,
-        x: 8.5,
+        x: -8.5,
         z: 0
     },
     p2: {
@@ -50,7 +50,7 @@ const G = {
         score: 0,
         speed: 20,
         width: 0.2,
-        x: -8.5,
+        x: 8.5,
         z: 0
     },
     state: STATES.START,
