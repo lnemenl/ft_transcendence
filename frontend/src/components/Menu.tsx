@@ -37,20 +37,22 @@ export const Menu: React.FC = () => {
         </button>
         {open && (
           <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#6688cc] text-white shadow-xl border border-white/10 py-2 flex flex-col">
-            <Link to="/profile" onClick={() => setOpen(false)} className="flex items-center gap-3 w-full px-4 py-2 text-sm hover:bg-white/10">
-              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-white/20 overflow-hidden">
-                {playerAvatar ? (
-                  <img src={playerAvatar} alt="avatar" className="h-full w-full object-cover rounded-full"/>
-                ) : (
-                  <span className="font-bold">
-                    {playerName ? playerName.charAt(0).toUpperCase() : "?"}
-                  </span>
-                )}
-              </div>
-              <span>
-                Profile
-              </span>
-            </Link>
+            {isLoggedIn && (
+              <Link to="/profile" onClick={() => setOpen(false)} className="flex items-center gap-3 w-full px-4 py-2 text-sm hover:bg-white/10">
+                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-white/20 overflow-hidden">
+                  {playerAvatar ? (
+                    <img src={playerAvatar} alt="avatar" className="h-full w-full object-cover rounded-full"/>
+                  ) : (
+                    <span className="font-bold">
+                      {playerName ? playerName.charAt(0).toUpperCase() : "?"}
+                    </span>
+                  )}
+                </div>
+                <span>
+                  Profile
+                </span>
+              </Link>
+            )}
             <div className="w-full px-4 py-2 text-sm hover:bg-white/10">
               <div className="flex w-full gap-2">
                 <LanguageSelect />
