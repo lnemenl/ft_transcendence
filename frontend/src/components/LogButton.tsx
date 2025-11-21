@@ -36,14 +36,14 @@ export function LogButton() {
   return (
     <div>
       {isLoggedIn ? (
-        <Link to="/" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="p-1 w-full rounded-2xl">
-          <span>
+        <Link to="/" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="flex items-center justify-center w-full">
+          <span className="p-1 rounded-2xl w-full h-full">
             Logout
           </span>
         </Link>
       ) : (
-        <Link to="/" onClick={handleScroll} className="p-1 w-full rounded-2xl">
-          <span>
+        <Link to="/login" onClick={handleScroll} className="flex items-center justify-center w-full">
+          <span className="p-1 rounded-2xl w-full h-full">
             Login
           </span>
         </Link>

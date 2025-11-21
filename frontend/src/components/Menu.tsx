@@ -49,9 +49,9 @@ export const Menu: React.FC = () => {
               <DarkMode />
             </div>
             <div className="my-1 border-t border-white/10" />
-            <div className="w-full px-4 py-2 text-sm hover:bg-white/10">
+            <button onClick={() => setOpen(false)} className="w-full px-4 py-2 text-sm hover:bg-white/10">
               <LogButton />
-            </div>
+            </button>
           </div>
         )}
       </div>

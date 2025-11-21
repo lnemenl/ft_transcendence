@@ -10,6 +10,8 @@ export function Header() {
 		document.getElementById(view)?.scrollIntoView({
 			behavior: "smooth",
 		});
+
+    window.history.pushState({ section: view }, "", `/${view}`);
 	};
 	return <div className="relative z-10 flex h-screen justify-center items-center inset-0">
 		<div className="text-8xl m-8 text-[#24273a] dark:text-[#cad3f5]">
