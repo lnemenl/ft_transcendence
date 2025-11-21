@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
 import { LogOut } from "./LogOut";
+import { Link } from "react-router-dom";
 import { useLanguage } from "./useLanguage";
 
 export function LogButton() {
@@ -37,13 +38,17 @@ export function LogButton() {
   return (
     <div>
       {isLoggedIn ? (
-        <button type="button" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="p-1 w-full rounded-2xl">
-          {t.logout}
-        </button>
+        <Link to="/" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="flex items-center justify-center w-full">
+          <span className="p-1 rounded-2xl w-full h-full">
+            {t.logout}
+          </span>
+        </Link>
       ) : (
-        <button type="button" onClick={handleScroll} className="p-1 w-full rounded-2xl">
-          {t.login}
-        </button>
+        <Link to="/section/login" onClick={handleScroll} className="flex items-center justify-center w-full">
+          <span className="p-1 rounded-2xl w-full h-full">
+            {t.login}
+          </span>
+        </Link>
       )}
     </div>
   );
