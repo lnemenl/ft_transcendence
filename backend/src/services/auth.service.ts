@@ -43,7 +43,7 @@ export const verifyRefreshToken = async (raw: string) => {
   return rec;
 };
 
-export const registerUser = async (email: string, password: string, username: string) => {
+export const registerUser = async (email: string, password: string, username: string, avatar: string) => {
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedUsername = username.trim();
 
@@ -69,6 +69,7 @@ export const registerUser = async (email: string, password: string, username: st
       email: normalizedEmail,
       password: hashedPassword,
       username: normalizedUsername,
+      avatarUrl: avatar,
     },
   });
 

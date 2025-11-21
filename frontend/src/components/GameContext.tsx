@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from "react";
 export type Player = {
   id: string;
   name: string;
-  //avatar etc here
+  avatar: string;
 };
 
 export type GameMode = "unknown" | "multiplayer" | "tournament";
@@ -21,9 +21,11 @@ type GameContextType = {
   currentPlayerIndex: number;
   setCurrentPlayerIndex: React.Dispatch<React.SetStateAction<number>>;
 
-  saveCurrentPlayer: (name: string, playerId: string) => void;
+  saveCurrentPlayer: (name: string, playerId: string, avatar: string) => void;
 
   updateUsername: (newName: string) => void;
+
+  updateAvatar: (newAvatar: string) => void;
 
   resetGame: () => void;
 
@@ -56,7 +58,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
       if (copy.length < n) {
         for (let i = copy.length; i < n; i++) {
-          copy.push({ id: "", name: "" });
+          copy.push({ id: "", name: "", avatar: "" });
         }
       } else if (copy.length > n) {
         copy.length = n;
@@ -66,17 +68,18 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     });
   };
 
-  const saveCurrentPlayer = (name: string, playerId: string) => {
+  const saveCurrentPlayer = (name: string, playerId: string, avatar: string) => {
     setPlayers((prev) => {
       const updated = [...prev];
       if (updated.length <= currentPlayerIndex) {
         for (let i = updated.length; i <= currentPlayerIndex; i++) {
-          updated.push({ id: "", name: "" });
+          updated.push({ id: "", name: "", avatar: "" });
         }
       }
       updated[currentPlayerIndex] = {
         id: playerId,
         name,
+        avatar,
       };
       return updated;
     });
@@ -89,6 +92,17 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
     const copy = [...prev];
     copy[0] = { ...copy[0], name: newName };
+
+    return copy;
+  });
+};
+
+const updateAvatar = (newAvatar: string) => {
+  setPlayers(prev => {
+    if (prev.length === 0) return prev;
+
+    const copy = [...prev];
+    copy[0] = { ...copy[0], avatar: newAvatar };
 
     return copy;
   });
@@ -117,6 +131,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         setCurrentPlayerIndex,
         saveCurrentPlayer,
         updateUsername,
+        updateAvatar,
         resetGame,
         ready,
         setReady,
