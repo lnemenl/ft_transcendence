@@ -77,7 +77,7 @@ const createUI = Object.freeze(
             top: "20px",
         });
         playAgainButton.textContent = "Play Again";
-        playAgainButton.href = "https://localhost:4430";
+        playAgainButton.href = "/";
 
         canvas.parentNode.insertBefore(container, canvas);
         container.append(canvas, overlay);
