@@ -76,7 +76,6 @@ const createUI = Object.freeze(
             transform: "translate(-50%,500%)",
             top: "20px",
         });
-        playAgainButton.textContent = "Play Again";
         playAgainButton.href = "/";
 
         canvas.parentNode.insertBefore(container, canvas);
@@ -115,6 +114,7 @@ const createUI = Object.freeze(
 
         return function updateUI(G, tournament, ctx) {
             scoreDisplay.textContent = showScore(G, tournament, ctx);
+            playAgainButton.textContent = t().playAgain;
 
             if (G.state === STATES.TOURNAMENT_OVER) {
                 playAgainButton.style.display = "block";
