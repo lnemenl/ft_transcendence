@@ -57,10 +57,6 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
               Use
             </button>
           </div>
-
-          <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
-            Paste any direct image link (.jpg, .png, .svg, .gif)
-          </p>
         </div>
         <hr className="my-4 border-[#E0E2E7] dark:border-[#49454F]" />
         <div className="grid grid-cols-3 gap-3">
