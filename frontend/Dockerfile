@@ -26,6 +26,8 @@ RUN mkdir -p game
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
+COPY 404.html /usr/share/nginx/html/
+
 RUN mkdir -p /etc/nginx/certs
 
 RUN openssl req -x509 -new -nodes \
