@@ -10,6 +10,11 @@
             console.log("Unsupported language. Defaulting to English.");
         }
         document.documentElement.lang = locale;
+
+        const darkMode = localStorage.getItem("ft_transcendence:darkMode");
+        if (darkMode === "true") {
+            document.documentElement.classList.add("dark");
+        }
     </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
