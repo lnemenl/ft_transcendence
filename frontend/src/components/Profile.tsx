@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { TwoFactorSettings } from "./TwoFactorSettings";
 import { useAuth } from "./GetAuth";
+import { useGame } from "./GameContext";
 import { useState, useEffect, useCallback } from "react";
 // We use 'react-icons' (FontAwesome variant) for the Google-style minimal icons
 import { FaUserPlus, FaCheck, FaTimes, FaTrash, FaCircle } from "react-icons/fa";
@@ -59,6 +60,7 @@ const generateAvatarUrl = (seed: string): string => {
 
 export const Profile: React.FC = () => {
   const { isLoggedIn } = useAuth();
+  const { updateUsername } = useGame();
 
   // State Management
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -179,6 +181,7 @@ export const Profile: React.FC = () => {
     if (res.ok) {
       // Optimistic update or full refresh? Full refresh is safer
       await fetchData();
+      updateUsername(newUsername);
       setEditMode(false);
     }
     setSaving(false);
