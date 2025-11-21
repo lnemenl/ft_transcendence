@@ -2,7 +2,8 @@ import { useState } from "react";
 import { handleRequest } from "./AuthRequest";
 import { useLanguage } from "./useLanguage";
 import { useGame } from "./GameContext";
-import { GoogleLoginButton } from "./GoogleLoginButton";
+import { GoogleLoginButton, type GoogleLoginData } from "./GoogleLoginButton";
+import { generateAvatarUrl } from "./AvatarUtils";
 
 type SignUpFormProps = {
   onBack: () => void;
@@ -23,19 +24,20 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
   const googleType = loginEndpoint.includes("player2") ? "player2" : 
                      loginEndpoint.includes("tournament") ? "tournament" : "main";
 
-  const handleGoogleResponse = (res: { id: string; username: string }) => {
+  const handleGoogleResponse = (res: GoogleLoginData) => {
     const isDuplicate = players.some((p) => p.id === res.id);
     if (isDuplicate) {
       setError(t.duplicateUser);
       return;
     }
-    handleSuccess(res.id, res.username);
+    const avatar = res.avatarUrl ?? "?";
+    handleSuccess(res.id, res.username, avatar);
   };
 
-  const handleSuccess = (id: string, name: string) => {
+  const handleSuccess = (id: string, name: string, avatar: string) => {
     if (currentPlayerIndex === 0) onLogin();
     
-    saveCurrentPlayer(name, id);
+    saveCurrentPlayer(name, id, avatar);
     
     if (currentPlayerIndex === totalPlayers - 1) {
       setReady(true);
@@ -57,17 +59,18 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
     }
 
     // 1. Register
+    const avatar = generateAvatarUrl(username);
     handleRequest({
       e,
       endpoint: "register",
-      data: { username, email, password },
+      data: { username, email, password, avatar },
       onSuccess: () => {
         // 2. Auto-Login to get tokens
         handleRequest({
           e,
           endpoint: loginEndpoint,
           data: { username, email, password },
-          onSuccess: (res) => handleSuccess(res.id, username),
+          onSuccess: (res) => handleSuccess(res.id, username, res.avatarUrl),
           setError,
         });
       },

@@ -16,12 +16,13 @@ import { getAccessTokenExpiresIn } from '../config';
 const authRoutes = async (fastify: FastifyInstance) => {
   fastify.post('/register', { schema: registerSchema }, async (request, reply) => {
     try {
-      const { email, password, username } = request.body as {
+      const { email, password, username, avatar } = request.body as {
         email: string;
         password: string;
         username: string;
+        avatar: string;
       };
-      const user = await registerUser(email, password, username);
+      const user = await registerUser(email, password, username, avatar);
       return reply.status(201).send(user);
     } catch (err) {
       fastify.log.error(err);

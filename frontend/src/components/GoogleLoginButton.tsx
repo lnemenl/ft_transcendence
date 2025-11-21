@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 type GoogleLoginType = "main" | "player2" | "tournament";
 
-interface GoogleLoginData {
+export interface GoogleLoginData {
   id: string;
   username: string;
   email?: string;
