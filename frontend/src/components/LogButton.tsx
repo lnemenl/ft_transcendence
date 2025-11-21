@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "./GetAuth";
 import { useGame } from "./GameContext";
 import { LogOut } from "./LogOut";
+import { Link } from "react-router-dom";
 
 export function LogButton() {
   const { isLoggedIn, logout } = useAuth();
@@ -35,13 +36,17 @@ export function LogButton() {
   return (
     <div>
       {isLoggedIn ? (
-        <button type="button" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="p-1 w-full rounded-2xl">
-          Logout
-        </button>
+        <Link to="/" onClick={() => { logout(); resetGame(); handleScroll(); setReady(false) }} className="p-1 w-full rounded-2xl">
+          <span>
+            Logout
+          </span>
+        </Link>
       ) : (
-        <button type="button" onClick={handleScroll} className="p-1 w-full rounded-2xl">
-          Login
-        </button>
+        <Link to="/" onClick={handleScroll} className="p-1 w-full rounded-2xl">
+          <span>
+            Login
+          </span>
+        </Link>
       )}
     </div>
   );
