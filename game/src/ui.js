@@ -57,11 +57,32 @@ const createUI = Object.freeze(
             textShadow: "0 2px 8px rgba(0, 0, 0, 0.5)",
             top: "20px"
         });
+        const playAgainButton = document.createElement("a");
+        Object.assign(playAgainButton.style, {
+            display: "none",
+            background: "rgba(36, 39, 58, 0.95)",
+            border: "2px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: "20px",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+            color: "#cad3f5",
+            fontWeight: "bold",
+            left: "50%",
+            letterSpacing: "0.05em",
+            padding: "8px 16px",
+            pointerEvents: "auto",
+            position: "absolute",
+            textAlign: "center",
+            textShadow: "0 2px 8px rgba(0, 0, 0, 0.5)",
+            transform: "translate(-50%,500%)",
+            top: "20px",
+        });
+        playAgainButton.href = "/";
 
         canvas.parentNode.insertBefore(container, canvas);
         container.append(canvas, overlay);
         overlay.appendChild(scoreDisplay);
         overlay.appendChild(nextMatchDisplay);
+        overlay.appendChild(playAgainButton);
 
         let lastNextMatchText = "";
 
@@ -93,7 +114,14 @@ const createUI = Object.freeze(
 
         return function updateUI(G, tournament, ctx) {
             scoreDisplay.textContent = showScore(G, tournament, ctx);
+            playAgainButton.textContent = t().playAgain;
 
+            if (G.state === STATES.TOURNAMENT_OVER) {
+                playAgainButton.style.display = "block";
+            } else if (G.state === STATES.GAME_OVER
+                && ctx.mode !== "tournament") {
+                playAgainButton.style.display = "block";
+            }
             if (tournament && tournament.active && tournament.currentMatch < 2) {
                 const nextMatchIdx = tournament.currentMatch + 1;
                 const nextMatch = tournament.matches[nextMatchIdx];

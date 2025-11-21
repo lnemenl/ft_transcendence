@@ -28,7 +28,8 @@ const table = Object.freeze(
                 const winner = G.p1.roundsWon > G.p2.roundsWon ? G.p1.name : G.p2.name;
                 return `${winner} wins! ${Math.max(G.p1.roundsWon, G.p2.roundsWon)} to ${Math.min(G.p1.roundsWon, G.p2.roundsWon)}.`;
             },
-            tournamentOver: (championName) => `${championName} wins the tournament!`
+            tournamentOver: (championName) => `${championName} wins the tournament!`,
+            playAgain: "Play Again"
         },
         "fr": {
             controls: "WS et IK pour bouger, espace lance le jeu.",
@@ -47,7 +48,8 @@ const table = Object.freeze(
                 const winner = G.p1.roundsWon > G.p2.roundsWon ? G.p1.name : G.p2.name;
                 return `${winner} l'emporte! ${Math.max(G.p1.roundsWon, G.p2.roundsWon)} à ${Math.min(G.p1.roundsWon, G.p2.roundsWon)}.`;
             },
-            tournamentOver: (championName) => `${championName} remporte le tournoi !`
+            tournamentOver: (championName) => `${championName} remporte le tournoi !`,
+            playAgain: "Rejouer"
         },
         "fi": {
             controls: "Ohjaimet: WS, IK. Välilyönti aloittaa.",
@@ -66,7 +68,8 @@ const table = Object.freeze(
                 const winner = G.p1.roundsWon > G.p2.roundsWon ? G.p1.name : G.p2.name;
                 return `${winner} voittaa! ${Math.max(G.p1.roundsWon, G.p2.roundsWon)}–${Math.min(G.p1.roundsWon, G.p2.roundsWon)}.`;
             },
-            tournamentOver: (championName) => `${championName} voittaa turnauksen!`
+            tournamentOver: (championName) => `${championName} voittaa turnauksen!`,
+            playAgain: "Pelaa uudelleen"
         },
         "ru": {
             controls: "Управление: WS, IK. Пробел для начала.",
@@ -85,7 +88,8 @@ const table = Object.freeze(
                 const winner = G.p1.roundsWon > G.p2.roundsWon ? G.p1.name : G.p2.name;
                 return `${winner} побеждает! ${Math.max(G.p1.roundsWon, G.p2.roundsWon)}:${Math.min(G.p1.roundsWon, G.p2.roundsWon)}.`;
             },
-            tournamentOver: (championName) => `${championName} выигрывает турнир!`
+            tournamentOver: (championName) => `${championName} выигрывает турнир!`,
+            playAgain: "Играть снова"
         }
     }
 );
