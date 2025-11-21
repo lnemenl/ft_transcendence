@@ -152,7 +152,11 @@ const twoFARoutes = async (fastify: FastifyInstance) => {
 
       await prisma.user.update({ where: { id: user.id }, data: { isOnline: true } });
 
-      return reply.status(200).send({ ok: true });
+      return reply.status(200).send({
+        id: user.id,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+      });
     } catch (err) {
       fastify.log.error(err);
       return reply.status(500).send({ error: 'Internal server error' });
@@ -191,7 +195,7 @@ const twoFARoutes = async (fastify: FastifyInstance) => {
       // Issue short-lived access token for player2 (no refresh token persisted)
       const accessToken = await reply.jwtSign({ id: user.id }, { expiresIn: getAccessTokenExpiresIn() });
 
-      reply.setCookie('Player2Token', accessToken, {
+      reply.setCookie('player2_token', accessToken, {
         httpOnly: true,
         path: '/',
         secure: getSecureCookies(),
@@ -199,7 +203,11 @@ const twoFARoutes = async (fastify: FastifyInstance) => {
         maxAge: 15 * 60,
       });
 
-      return reply.status(200).send({ ok: true });
+      return reply.status(200).send({
+        id: user.id,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+      });
     } catch (err) {
       fastify.log.error(err);
       return reply.status(500).send({ error: 'Internal server error' });
