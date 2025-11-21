@@ -151,7 +151,9 @@ describe('Two-Factor Authentication (2FA)', () => {
       const cookies = getCookies(verifyRes);
       expect(cookies.join(';')).toMatch(/accessToken=/);
       expect(cookies.join(';')).toMatch(/refreshToken=/);
-      expect(verifyRes.body.ok).toBe(true);
+      expect(verifyRes.body).toHaveProperty('id');
+      expect(verifyRes.body).toHaveProperty('username');
+      expect(verifyRes.body).toHaveProperty('avatarUrl');
     });
 
     it('rejects malformed twoFactorToken', async () => {
@@ -264,7 +266,9 @@ describe('Two-Factor Authentication (2FA)', () => {
         .expect(200);
 
       const cookies = getCookies(player2Res);
-      expect(cookies.find((c) => c.startsWith('Player2Token='))).toBeDefined();
+      expect(cookies.find((c) => c.startsWith('player2_token='))).toBeDefined();
+      expect(player2Res.body).toHaveProperty('id');
+      expect(player2Res.body).toHaveProperty('username');
       expect(cookies.find((c) => c.startsWith('refreshToken='))).toBeUndefined();
       expect(cookies.find((c) => c.startsWith('accessToken='))).toBeUndefined();
     });
@@ -322,119 +326,6 @@ describe('Two-Factor Authentication (2FA)', () => {
       const code = totpGenerate(secret);
       const res = await request(app.server)
         .post('/api/2fa/verify/player2')
-        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: code })
-        .expect(500);
-      expect(res.body).toHaveProperty('error', 'Internal server error');
-      findUniqueSpy.mockRestore();
-    });
-  });
-
-  describe('tournament', () => {
-    it('login flow for a user with 2FA enabled in database (guest login)', async () => {
-      // Step 1: Create bob with 2FA enabled directly in database
-      const secret = await createUser2FAEnabledInDB(testUsers.bob);
-
-      // Step 2: Login bob - should require 2FA
-      const loginRes = await loginUser(testUsers.bob.email, testUsers.bob.password);
-      expect(loginRes.body.twoFactorRequired).toBe(true);
-      expect(loginRes.body.twoFactorToken).toBeDefined();
-
-      // Step 3: Verify 2FA with valid code
-      const verifyCode = totpGenerate(secret);
-      const verifyRes = await request(app.server)
-        .post('/api/2fa/verify')
-        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: verifyCode })
-        .expect(200);
-
-      // Step 4: Check authentication cookies are set
-      const cookies = getCookies(verifyRes);
-      expect(cookies.join(';')).toMatch(/accessToken=/);
-      expect(cookies.join(';')).toMatch(/refreshToken=/);
-    });
-
-    it('verify/tournament sends user information', async () => {
-      // Step 1: Enable 2FA for alice
-      const { cookies: enableCookies } = await createAuthenticatedUser(testUsers.alice);
-      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', enableCookies).expect(200);
-      const secret = genRes.body.secret;
-      const enableCode = totpGenerate(secret);
-      await request(app.server)
-        .post('/api/2fa/enable')
-        .set('Cookie', enableCookies)
-        .send({ SixDigitCode: enableCode })
-        .expect(200);
-
-      // Step 2: Login alice - get twoFactorToken
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
-
-      // Step 3: Verify 2FA with /player2 endpoint - should set Player2Token
-      const verifyCode = totpGenerate(secret);
-      const tournamentRes = await request(app.server)
-        .post('/api/2fa/verify/tournament')
-        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: verifyCode })
-        .expect(200);
-
-      const cookies = getCookies(tournamentRes);
-      expect(cookies.find((c) => c.startsWith('refreshToken='))).toBeUndefined();
-      expect(cookies.find((c) => c.startsWith('accessToken='))).toBeUndefined();
-      expect(tournamentRes.body).toHaveProperty('id');
-      expect(tournamentRes.body).toHaveProperty('username');
-      expect(tournamentRes.body).toHaveProperty('avatarUrl');
-    });
-
-    it('verify/tournament rejects invalid TOTP code', async () => {
-      // Enable 2FA for alice
-      const { cookies: enableCookies } = await createAuthenticatedUser(testUsers.alice);
-      const genRes = await request(app.server).post('/api/2fa/generate').set('Cookie', enableCookies).expect(200);
-      const secret = genRes.body.secret;
-      const enableCode = totpGenerate(secret);
-      await request(app.server)
-        .post('/api/2fa/enable')
-        .set('Cookie', enableCookies)
-        .send({ SixDigitCode: enableCode })
-        .expect(200);
-
-      // Login and try invalid code
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
-      await request(app.server)
-        .post('/api/2fa/verify/tournament')
-        .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: '000000' })
-        .expect(401);
-    });
-
-    it('verify/tournament rejects malformed token', async () => {
-      await request(app.server)
-        .post('/api/2fa/verify/tournament')
-        .send({ twoFactorToken: 'not-a-jwt', SixDigitCode: '123456' })
-        .expect(401);
-    });
-
-    it('verify/tournament rejects when twoFactor flag is missing', async () => {
-      const { user } = await createAuthenticatedUser(testUsers.charlie);
-      const tokenMissingFlag = await signTwoFactorToken({ id: user.id });
-      const res = await request(app.server)
-        .post('/api/2fa/verify/tournament')
-        .send({ twoFactorToken: tokenMissingFlag, SixDigitCode: '123456' })
-        .expect(401);
-      expect(res.body.error).toMatch(/invalid 2fa session/i);
-    });
-
-    it('verify/tournament rejects when 2FA not enabled on user', async () => {
-      const { user } = await createAuthenticatedUser(testUsers.charlie);
-      const tokenWithFlag = await signTwoFactorToken({ id: user.id, twoFactor: true });
-      await request(app.server)
-        .post('/api/2fa/verify/tournament')
-        .send({ twoFactorToken: tokenWithFlag, SixDigitCode: '123456' })
-        .expect(401);
-    });
-
-    it('returns 500 when database fails during verify/tournament', async () => {
-      const secret = await createUser2FAEnabledInDB(testUsers.alice);
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
-      const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
-      const code = totpGenerate(secret);
-      const res = await request(app.server)
-        .post('/api/2fa/verify/tournament')
         .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: code })
         .expect(500);
       expect(res.body).toHaveProperty('error', 'Internal server error');

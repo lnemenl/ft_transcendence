@@ -795,7 +795,15 @@
       }
     },
     "response": {
-      "200": { "type": "object", "properties": { "ok": { "type": "boolean" } } },
+      "200": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "username": { "type": "string" },
+          "avatarUrl": { "type": ["string", "null"], "format": "uri" }
+        },
+        "required": ["id", "username"]
+      },
       "401": { "type": "object", "properties": { "error": { "type": "string" } } },
       "500": { "type": "object", "properties": { "error": { "type": "string" } } }
     }
