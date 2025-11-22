@@ -136,7 +136,7 @@ describe('Two-Factor Authentication (2FA)', () => {
         .expect(200);
 
       // Step 2: Login alice - should require 2FA
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.username, testUsers.alice.password);
       expect(loginRes.body.twoFactorRequired).toBe(true);
       expect(loginRes.body.twoFactorToken).toBeDefined();
 
@@ -199,7 +199,7 @@ describe('Two-Factor Authentication (2FA)', () => {
         .expect(200);
 
       // Login and try invalid code
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.username, testUsers.alice.password);
       await request(app.server)
         .post('/api/2fa/verify')
         .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: '000000' })
@@ -208,7 +208,7 @@ describe('Two-Factor Authentication (2FA)', () => {
 
     it('returns 500 when database fails during verify', async () => {
       const secret = await createUser2FAEnabledInDB(testUsers.alice);
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.username, testUsers.alice.password);
       const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
       const code = totpGenerate(secret);
       const res = await request(app.server)
@@ -226,7 +226,7 @@ describe('Two-Factor Authentication (2FA)', () => {
       const secret = await createUser2FAEnabledInDB(testUsers.bob);
 
       // Step 2: Login bob - should require 2FA
-      const loginRes = await loginUser(testUsers.bob.email, testUsers.bob.password);
+      const loginRes = await loginUser(testUsers.bob.email, testUsers.bob.username, testUsers.bob.password);
       expect(loginRes.body.twoFactorRequired).toBe(true);
       expect(loginRes.body.twoFactorToken).toBeDefined();
 
@@ -256,7 +256,7 @@ describe('Two-Factor Authentication (2FA)', () => {
         .expect(200);
 
       // Step 2: Login alice - get twoFactorToken
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.username, testUsers.alice.password);
 
       // Step 3: Verify 2FA with /player2 endpoint - should set Player2Token
       const verifyCode = totpGenerate(secret);
@@ -286,7 +286,7 @@ describe('Two-Factor Authentication (2FA)', () => {
         .expect(200);
 
       // Login and try invalid code
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.username, testUsers.alice.password);
       await request(app.server)
         .post('/api/2fa/verify/player2')
         .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: '000000' })
@@ -321,7 +321,7 @@ describe('Two-Factor Authentication (2FA)', () => {
 
     it('returns 500 when database fails during verify/player2', async () => {
       const secret = await createUser2FAEnabledInDB(testUsers.alice);
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.username, testUsers.alice.password);
       const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
       const code = totpGenerate(secret);
       const res = await request(app.server)
@@ -339,7 +339,7 @@ describe('Two-Factor Authentication (2FA)', () => {
       const secret = await createUser2FAEnabledInDB(testUsers.bob);
 
       // Step 2: Login bob - should require 2FA
-      const loginRes = await loginUser(testUsers.bob.email, testUsers.bob.password);
+      const loginRes = await loginUser(testUsers.bob.email, testUsers.bob.username, testUsers.bob.password);
       expect(loginRes.body.twoFactorRequired).toBe(true);
       expect(loginRes.body.twoFactorToken).toBeDefined();
 
@@ -369,7 +369,7 @@ describe('Two-Factor Authentication (2FA)', () => {
         .expect(200);
 
       // Step 2: Login alice - get twoFactorToken
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.username, testUsers.alice.password);
 
       // Step 3: Verify 2FA with /player2 endpoint - should set Player2Token
       const verifyCode = totpGenerate(secret);
@@ -399,7 +399,7 @@ describe('Two-Factor Authentication (2FA)', () => {
         .expect(200);
 
       // Login and try invalid code
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.username, testUsers.alice.password);
       await request(app.server)
         .post('/api/2fa/verify/tournament')
         .send({ twoFactorToken: loginRes.body.twoFactorToken, SixDigitCode: '000000' })
@@ -434,7 +434,7 @@ describe('Two-Factor Authentication (2FA)', () => {
 
     it('returns 500 when database fails during verify/tournament', async () => {
       const secret = await createUser2FAEnabledInDB(testUsers.alice);
-      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.password);
+      const loginRes = await loginUser(testUsers.alice.email, testUsers.alice.username, testUsers.alice.password);
       const findUniqueSpy = jest.spyOn(prisma.user, 'findUnique').mockRejectedValueOnce(new Error('Database error'));
       const code = totpGenerate(secret);
       const res = await request(app.server)
