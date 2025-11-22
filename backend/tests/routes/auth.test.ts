@@ -77,10 +77,10 @@ describe('Authentication System', () => {
       await request(app.server).post('/api/register').send(testUsers.alice).expect(201);
     });
 
-    it('succeeds with valid email and password', async () => {
+    it('succeeds with valid email, username and password', async () => {
       const res = await request(app.server)
         .post('/api/login')
-        .send({ email: testUsers.alice.email, password: testUsers.alice.password })
+        .send(testUsers.alice)
         .expect(200);
 
       expect(res.body).toHaveProperty('accessToken');
@@ -91,18 +91,22 @@ describe('Authentication System', () => {
       expect(hasCookie(res, 'refreshToken')).toBe(true);
     });
 
-    it('succeeds with valid username and password', async () => {
+    it('rejects if email is missing', async () => {
       const res = await request(app.server)
         .post('/api/login')
         .send({ username: testUsers.alice.username, password: testUsers.alice.password })
-        .expect(200);
+        .expect(400);
 
-      expect(res.body).toHaveProperty('accessToken');
-      expect(res.body).toHaveProperty('id');
-      expect(res.body).toHaveProperty('username');
-      expect(res.body).toHaveProperty('avatarUrl');
-      expect(hasCookie(res, 'accessToken')).toBe(true);
-      expect(hasCookie(res, 'refreshToken')).toBe(true);
+      expect(res.body).toHaveProperty('error', 'Bad Request');
+    });
+
+    it('rejects if username is missing', async () => {
+      const res = await request(app.server)
+        .post('/api/login')
+        .send({ email: testUsers.alice.email, password: testUsers.alice.password })
+        .expect(400);
+
+      expect(res.body).toHaveProperty('error', 'Bad Request');
     });
 
     it('rejects wrong password', async () => {
@@ -133,16 +137,16 @@ describe('Authentication System', () => {
       expect(res.body.error).toBe('Invalid email or password');
     });
 
-    it('rejects login without email or username', async () => {
-      const res = await request(app.server).post('/api/login').send({ password: testUsers.alice.password }).expect(401);
-      expect(res.body.error).toMatch(/provide username or email/i);
-    });
+    // it('rejects login without email or username', async () => {
+    //   const res = await request(app.server).post('/api/login').send({ password: testUsers.alice.password }).expect(401);
+    //   expect(res.body.error).toMatch(/provide username or email/i);
+    // });
 
     it('returns 401 when database fails during login', async () => {
       const findFirstSpy = jest.spyOn(prisma.user, 'findFirst').mockRejectedValueOnce(new Error('Database error'));
       const res = await request(app.server)
         .post('/api/login')
-        .send({ email: testUsers.alice.email, password: testUsers.alice.password })
+        .send(testUsers.alice)
         .expect(401);
       expect(res.body).toHaveProperty('error');
       findFirstSpy.mockRestore();

@@ -40,8 +40,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
     async (request, reply) => {
       try {
         const loginBody = request.body as {
-          email?: string;
-          username?: string;
+          email: string;
+          username: string;
           password: string;
         };
         const returnUser = await loginUser(loginBody, reply);
@@ -78,8 +78,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
     async (request, reply) => {
       try {
         const loginBody = request.body as {
-          email?: string;
-          username?: string;
+          email: string;
+          username: string;
           password: string;
         };
         const returnUser = await loginUser(loginBody, reply);
@@ -103,8 +103,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
   fastify.post('/login', { schema: loginSchema }, async (request, reply) => {
     try {
       const body = request.body as {
-        email?: string;
-        username?: string;
+        email: string;
+        username: string;
         password: string;
       };
 
