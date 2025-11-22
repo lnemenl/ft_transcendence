@@ -54,15 +54,15 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
     e.preventDefault();
     const isDuplicate = players.some((p, i) => i < currentPlayerIndex && p.name === username);
     if (username.length < 2 || username.length > 15) {
-      setError("Username must be min 2 characters and max 15 characters");
+      setError(t.usernameLengthError);
       return;
     }
     if (password.length < 8 || password.length > 50) {
-      setError("Password must be min 8 characters and max 50 characters");
+      setError(t.passwordLengthError);
       return;
     }
     if (email.length > 30) {
-      setError("Email can't be over 30 characters");
+      setError(t.emailLengthError);
       return;
     }
     if (isDuplicate) {
