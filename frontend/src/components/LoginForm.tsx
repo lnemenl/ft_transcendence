@@ -166,15 +166,15 @@ export function LoginForm({ onBack, onLogin, setMode, loginEndpoint }: LoginForm
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">{t.username}</label>
-            <input onChange={(e) => setUsername(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={username} type="text" placeholder={t.username} required />
+            <input onChange={(e) => setUsername(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={username} type="text" maxLength={15} minLength={2} placeholder={t.username} required />
           </div>
           <div>
             <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">{t.email}</label>
-            <input onChange={(e) => setEmail(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={email} type="email" placeholder={t.email} required />
+            <input onChange={(e) => setEmail(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={email} type="email" maxLength={30} placeholder={t.email} required />
           </div>
           <div>
             <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">{t.password}</label>
-            <input onChange={(e) => setPassword(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={password} type="password" placeholder={t.password} required />
+            <input onChange={(e) => setPassword(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={password} type="password" minLength={2} maxLength={50} placeholder={t.password} required />
           </div>
 
           <div className="flex flex-col items-center w-full">
