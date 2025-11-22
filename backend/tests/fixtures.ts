@@ -38,9 +38,24 @@ export const invalidUsers = {
     password: '123',
     username: 'test',
   },
+  longEmail: {
+    email: 'not-an-email-at-all-lol@not-a-valid-email.not',
+    password: 'ValidPass123!',
+    username: 'validuser',
+  },
+   longPassword: {
+    email: 'test@example.com',
+    password: '123thisisaveryveryveryveryveryveryveryveryveryverylongpassword',
+    username: 'test',
+  },
   shortUsername: {
     email: 'test@example.com',
     password: 'ValidPass123!',
     username: 'a',
+  },
+  longUsername: {
+    email: 'test@example.com',
+    password: 'ValidPass123!',
+    username: 'abcdefghijklmnopqrstuvwxyz',
   },
 };

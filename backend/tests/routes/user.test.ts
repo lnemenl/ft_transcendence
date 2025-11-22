@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { app, prisma } from '../setup';
-import { testUsers } from '../fixtures';
+import { testUsers, invalidUsers } from '../fixtures';
 import { cleanDatabase, createAuthenticatedUser, getCookies } from '../helpers';
 
 beforeEach(cleanDatabase);
@@ -159,16 +159,32 @@ describe('User Profile Management', () => {
     it('rejects short username', async () => {
       const { cookies } = await createAuthenticatedUser(testUsers.alice);
 
-      await request(app.server).patch('/api/users/me').set('Cookie', cookies).send({ username: 'a' }).expect(400);
+      await request(app.server).patch('/api/users/me').set('Cookie', cookies).send({ username: invalidUsers.shortUsername.username }).expect(400);
     });
 
-    it('rejects invalid avatarUrl', async () => {
+    it('rejects long username', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      await request(app.server).patch('/api/users/me').set('Cookie', cookies).send({ username: invalidUsers.longUsername.username }).expect(400);
+    });
+
+    it('rejects invalid avatarUrl format', async () => {
       const { cookies } = await createAuthenticatedUser(testUsers.alice);
 
       await request(app.server)
         .patch('/api/users/me')
         .set('Cookie', cookies)
         .send({ avatarUrl: 'not-a-url' })
+        .expect(400);
+    });
+
+    it('rejects invalid avatarUrl URL', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      await request(app.server)
+        .patch('/api/users/me')
+        .set('Cookie', cookies)
+        .send({ avatarUrl: 'https://google.com' })
         .expect(400);
     });
 

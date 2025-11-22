@@ -3,6 +3,7 @@ import { prisma } from '../utils/prisma';
 import { Prisma } from '@prisma/client';
 import { updateUserSchema, getAllUsersSchema, getUserSchema, getMeSchema } from './schema.json';
 import { deleteFriend } from '../services/friendRequest.service';
+import { validateImageUrl } from '../services/validation.service';
 
 const userRoutes = async (fastify: FastifyInstance) => {
   fastify.get(
@@ -56,6 +57,11 @@ const userRoutes = async (fastify: FastifyInstance) => {
           username?: string;
           avatarUrl?: string;
         };
+
+        if (dataToUpdate.avatarUrl) {
+          const isValid = await validateImageUrl(dataToUpdate.avatarUrl);
+          if (!isValid) { return reply.status(400).send({ error: 'Invalid image' }); }
+        }
 
         const updatedUser = await prisma.user.update({
           where: { id: userId },
