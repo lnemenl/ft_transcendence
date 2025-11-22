@@ -27,6 +27,7 @@ export const Profile: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [addableUsers, setAddableUsers] = useState<PublicUser[]>([]);
   const [showAvatarPicker, setShowAvatarPicker] = useState<boolean>(false);
+  const [avatarError, setAvatarError] = useState<string>("");
 
   // Fetch user + friend-requests + games in parallel
   const fetchData = useCallback(async () => {
@@ -153,6 +154,7 @@ export const Profile: React.FC = () => {
     const trimmed = url.trim();
     if (!trimmed) return;
 
+    setAvatarError("");
     const res = await fetch("/api/users/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -163,6 +165,8 @@ export const Profile: React.FC = () => {
       await fetchData();
       updateAvatar(trimmed);
       setShowAvatarPicker(false);
+    } else {
+      setAvatarError(t.invalidAvatarUrl);
     }
   };
 
@@ -260,9 +264,13 @@ export const Profile: React.FC = () => {
       <AvatarPickerModal
         isOpen={showAvatarPicker}
         seeds={AVATAR_SEEDS}
-        onClose={() => setShowAvatarPicker(false)}
+        onClose={() => {
+          setShowAvatarPicker(false);
+          setAvatarError("");
+        }}
         onSelectSeed={handleSelectAvatarStyle}
         onSelectUrl={handleSelectAvatarUrl}
+        errorMessage={avatarError}
       />
     </div>
   );

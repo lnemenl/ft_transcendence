@@ -9,6 +9,7 @@ interface AvatarPickerModalProps {
   onClose: () => void;
   onSelectSeed: (seed: string) => void;
   onSelectUrl: (url: string) => void;
+  errorMessage?: string;
 }
 
 export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
@@ -17,6 +18,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   onClose,
   onSelectSeed,
   onSelectUrl,
+  errorMessage,
 }) => {
   const t = useLanguage();
   const [customUrl, setCustomUrl] = useState("");
@@ -58,6 +60,11 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
               {t.use}
             </button>
           </div>
+          {errorMessage && (
+            <p className="mt-2 text-sm text-red-500 dark:text-red-400">
+              {errorMessage}
+            </p>
+          )}
         </div>
         <hr className="my-4 border-[#E0E2E7] dark:border-[#49454F]" />
         <div className="grid grid-cols-3 gap-3">
