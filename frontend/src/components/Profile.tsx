@@ -235,11 +235,7 @@ export const Profile: React.FC = () => {
           <div className="text-center pt-2">
             <p className="text-xs text-[#444746] dark:text-[#C4C7C5]">
               {t.memberSince}{" "}
-              {new Date(user.createdAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {new Date(user.createdAt).toISOString().split('T')[0]}
             </p>
             <div className="mt-6">
               <Link
