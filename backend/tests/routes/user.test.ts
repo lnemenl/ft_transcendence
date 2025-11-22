@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { app, prisma } from '../setup';
-import { testUsers } from '../fixtures';
+import { testUsers, invalidUsers } from '../fixtures';
 import { cleanDatabase, createAuthenticatedUser, getCookies } from '../helpers';
 
 beforeEach(cleanDatabase);
@@ -124,10 +124,10 @@ describe('User Profile Management', () => {
       const res = await request(app.server)
         .patch('/api/users/me')
         .set('Cookie', cookies)
-        .send({ avatarUrl: 'https://example.com/avatar.png' })
+        .send({ avatarUrl: 'https://cdn.pixabay.com/photo/2025/10/23/05/43/bird-9910830_1280.jpg' })
         .expect(200);
 
-      expect(res.body.avatarUrl).toBe('https://example.com/avatar.png');
+      expect(res.body.avatarUrl).toBe('https://cdn.pixabay.com/photo/2025/10/23/05/43/bird-9910830_1280.jpg');
     });
 
     it('updates both username and avatarUrl', async () => {
@@ -138,12 +138,12 @@ describe('User Profile Management', () => {
         .set('Cookie', cookies)
         .send({
           username: 'alice_new',
-          avatarUrl: 'https://example.com/new.jpg',
+          avatarUrl: 'https://cdn.pixabay.com/photo/2025/10/23/05/43/bird-9910830_1280.jpg',
         })
         .expect(200);
 
       expect(res.body.username).toBe('alice_new');
-      expect(res.body.avatarUrl).toBe('https://example.com/new.jpg');
+      expect(res.body.avatarUrl).toBe('https://cdn.pixabay.com/photo/2025/10/23/05/43/bird-9910830_1280.jpg');
     });
 
     it('rejects request without authentication', async () => {
@@ -159,16 +159,32 @@ describe('User Profile Management', () => {
     it('rejects short username', async () => {
       const { cookies } = await createAuthenticatedUser(testUsers.alice);
 
-      await request(app.server).patch('/api/users/me').set('Cookie', cookies).send({ username: 'a' }).expect(400);
+      await request(app.server).patch('/api/users/me').set('Cookie', cookies).send({ username: invalidUsers.shortUsername.username }).expect(400);
     });
 
-    it('rejects invalid avatarUrl', async () => {
+    it('rejects long username', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      await request(app.server).patch('/api/users/me').set('Cookie', cookies).send({ username: invalidUsers.longUsername.username }).expect(400);
+    });
+
+    it('rejects invalid avatarUrl format', async () => {
       const { cookies } = await createAuthenticatedUser(testUsers.alice);
 
       await request(app.server)
         .patch('/api/users/me')
         .set('Cookie', cookies)
         .send({ avatarUrl: 'not-a-url' })
+        .expect(400);
+    });
+
+    it('rejects invalid avatarUrl URL', async () => {
+      const { cookies } = await createAuthenticatedUser(testUsers.alice);
+
+      await request(app.server)
+        .patch('/api/users/me')
+        .set('Cookie', cookies)
+        .send({ avatarUrl: 'https://google.com' })
         .expect(400);
     });
 

@@ -15,6 +15,7 @@ services:
       - pong
     ports:
       - "3011:3011"
+      - "5555:5555"
       
     # The default directory inside the container.
     working_dir: /app

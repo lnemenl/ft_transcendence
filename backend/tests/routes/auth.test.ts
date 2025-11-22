@@ -34,6 +34,11 @@ describe('Authentication System', () => {
       expect(res.body).toHaveProperty('error');
     });
 
+    it('rejects too long email address', async () => {
+      const res = await request(app.server).post('/api/register').send(invalidUsers.longEmail).expect(400);
+      expect(res.body).toHaveProperty('error');
+    });
+
     it('rejects missing password', async () => {
       const res = await request(app.server).post('/api/register').send(invalidUsers.noPassword).expect(400);
       expect(res.body).toHaveProperty('error');
@@ -41,6 +46,21 @@ describe('Authentication System', () => {
 
     it('rejects short password', async () => {
       const res = await request(app.server).post('/api/register').send(invalidUsers.shortPassword).expect(400);
+      expect(res.body.error).toMatch(/bad request/i);
+    });
+
+    it('rejects long password', async () => {
+      const res = await request(app.server).post('/api/register').send(invalidUsers.longPassword).expect(400);
+      expect(res.body.error).toMatch(/bad request/i);
+    });
+
+    it('rejects short username', async () => {
+      const res = await request(app.server).post('/api/register').send(invalidUsers.shortUsername).expect(400);
+      expect(res.body.error).toMatch(/bad request/i);
+    });
+
+    it('rejects long username', async () => {
+      const res = await request(app.server).post('/api/register').send(invalidUsers.longUsername).expect(400);
       expect(res.body.error).toMatch(/bad request/i);
     });
 
