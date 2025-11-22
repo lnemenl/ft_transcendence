@@ -48,6 +48,8 @@ export const DisplayNameCard: React.FC<DisplayNameCardProps> = ({
           <div className="flex gap-2">
             <input
               type="text"
+              maxLength={15}
+              minLength={2}
               value={value}
               onChange={(e) => setValue(e.target.value)}
               className="flex-1 px-4 py-2 text-sm border border-[#E0E2E7] dark:border-[#49454F] rounded-full bg-transparent text-[#1F1F1F] dark:text-[#E2E2E2] focus:outline-none focus:border-[#6688cc]"
