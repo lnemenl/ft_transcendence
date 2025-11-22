@@ -104,7 +104,7 @@ export function SignUpForm({ onBack, onLogin, setMode, loginEndpoint }: SignUpFo
             </div>
             <div>
                 <label className="block text-[#24273a] dark:text-white text-sm font-bold mb-2">{t.password}</label>
-                <input onChange={(e) => setPassword(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={password} type="password" minLength={2} maxLength={50} placeholder={t.password} required />
+                <input onChange={(e) => setPassword(e.target.value)} className="shadow border rounded w-full py-2 px-3 text-gray-900 dark:text-white" value={password} type="password" minLength={8} maxLength={50} placeholder={t.password} required />
             </div>
 
             <div className="flex flex-col items-center w-full">
