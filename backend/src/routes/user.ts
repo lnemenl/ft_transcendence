@@ -60,7 +60,9 @@ const userRoutes = async (fastify: FastifyInstance) => {
 
         if (dataToUpdate.avatarUrl) {
           const isValid = await validateImageUrl(dataToUpdate.avatarUrl);
-          if (!isValid) { return reply.status(400).send({ error: 'Invalid image' }); }
+          if (!isValid) {
+            return reply.status(400).send({ error: 'Invalid image' });
+          }
         }
 
         const updatedUser = await prisma.user.update({
