@@ -112,7 +112,7 @@ describe('Authentication System', () => {
     it('rejects wrong password', async () => {
       const res = await request(app.server)
         .post('/api/login')
-        .send({ email: testUsers.alice.email, password: 'WrongPassword!' })
+        .send({ email: testUsers.alice.email, username: testUsers.alice.username, password: 'WrongPassword!' })
         .expect(401);
 
       expect(res.body.error).toBe('Invalid email or password');
@@ -122,25 +122,11 @@ describe('Authentication System', () => {
     it('rejects non-existent email', async () => {
       const res = await request(app.server)
         .post('/api/login')
-        .send({ email: 'nobody@example.com', password: 'AnyPassword123!' })
+        .send({ email: 'nobody@example.com', username: 'nobody', password: 'AnyPassword123!' })
         .expect(401);
 
       expect(res.body.error).toBe('Invalid email or password');
     });
-
-    it('rejects non-existent username', async () => {
-      const res = await request(app.server)
-        .post('/api/login')
-        .send({ username: 'nobody', password: 'AnyPassword123!' })
-        .expect(401);
-
-      expect(res.body.error).toBe('Invalid email or password');
-    });
-
-    // it('rejects login without email or username', async () => {
-    //   const res = await request(app.server).post('/api/login').send({ password: testUsers.alice.password }).expect(401);
-    //   expect(res.body.error).toMatch(/provide username or email/i);
-    // });
 
     it('returns 401 when database fails during login', async () => {
       const findFirstSpy = jest.spyOn(prisma.user, 'findFirst').mockRejectedValueOnce(new Error('Database error'));
@@ -187,7 +173,7 @@ describe('Authentication System', () => {
       const res = await request(app.server)
         .post('/api/login/player2')
         .set('Cookie', aliceCookies)
-        .send({ email: testUsers.bob.email, password: testUsers.bob.password })
+        .send(testUsers.bob)
         .expect(200);
 
       expect(res.body.twoFactorRequired).toBe(true);
@@ -206,7 +192,7 @@ describe('Authentication System', () => {
       const res = await request(app.server)
         .post('/api/login/player2')
         .set('Cookie', cookies)
-        .send({ email: testUsers.bob.email, password: 'WrongPassword!' })
+        .send({ email: testUsers.bob.email, username: testUsers.bob.username, password: 'WrongPassword!' })
         .expect(401);
 
       expect(res.body.error).toBeDefined();
@@ -257,7 +243,7 @@ describe('Authentication System', () => {
       const res = await request(app.server)
         .post('/api/login/tournament')
         .set('Cookie', aliceCookies)
-        .send({ email: testUsers.bob.email, password: testUsers.bob.password })
+        .send(testUsers.bob)
         .expect(200);
 
       expect(res.body.twoFactorRequired).toBe(true);
@@ -276,7 +262,7 @@ describe('Authentication System', () => {
       const res = await request(app.server)
         .post('/api/login/tournament')
         .set('Cookie', cookies)
-        .send({ email: testUsers.bob.email, password: 'WrongPassword!' })
+        .send({ email: testUsers.bob.email, username: testUsers.bob.username, password: 'WrongPassword!' })
         .expect(401);
 
       expect(res.body.error).toBeDefined();
