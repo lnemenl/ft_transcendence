@@ -3,12 +3,6 @@ function getGameContext() {
 }
 
 function initTournament(ctx) {
-    console.log('Game mode:', ctx.mode);  // 'tournament' or 'multiplayer'
-    console.log('Players:', ctx.players);  // Array of {id, name}
-    console.log('Total players:', ctx.totalPlayers);
-    console.log('Current player index:', ctx.currentPlayerIndex);
-    console.log('Ready:', ctx.ready);
-
     const participantIds = ctx.players.map(p => p.id);
     fetch("/api/tournament", {
         method: "POST",
@@ -19,7 +13,6 @@ function initTournament(ctx) {
         .then(res => res.json())
         .then(data => {
             ctx.tournamentId = data.tournamentId;
-            console.log('Tournament created:', ctx.tournamentId);
         })
         .catch(err => console.error('Failed to create tournament:', err));
 }

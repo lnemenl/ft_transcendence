@@ -49,8 +49,6 @@ export function AppContent() {
           login();
         }
       } catch (err) {
-        // Silently fail - user just stays logged out
-        console.log("Auth check:", err);
       } finally {
         setIsChecking(false);
       }
