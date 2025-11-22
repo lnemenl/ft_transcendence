@@ -209,12 +209,10 @@ function update(G, delta_ms, keys_down) {
                     const tournamentWinnerId = ctx.players[TOURNAMENT.matches[2].winner].id;
                     finalizeTournament(tournamentWinnerId);
                     G.state = STATES.TOURNAMENT_OVER;
-                    console.log("Tournament over!");
                     break;
                 }
                 G.p1.name = ctx.players[TOURNAMENT.matches[TOURNAMENT.currentMatch].p1Idx].name;
                 G.p2.name = ctx.players[TOURNAMENT.matches[TOURNAMENT.currentMatch].p2Idx].name;
-                console.log(`Next game! ${G.p1.name} vs ${G.p2.name}`);
                 G.p1.score = 0;
                 G.p2.score = 0;
                 G.p1.roundsWon = 0;

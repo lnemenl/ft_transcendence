@@ -21,7 +21,6 @@ export const LogOut: React.FC<Props> = ({ onBack, onLogOut }) => {
       });
 
       if (res.ok) {
-        console.log("Succesfull logout!");
         onBack();
         onLogOut();
       }

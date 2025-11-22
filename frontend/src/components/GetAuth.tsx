@@ -21,7 +21,6 @@ export function GetAuth({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        console.log("Succesfull logout!");
         setIsLoggedIn(false);
       }
     } catch (err) {

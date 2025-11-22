@@ -28,7 +28,6 @@ export function TwoFactorSettings() {
 
         if (res.ok) {
           const data = await res.json();
-          console.log("Profile data:", data);
           setIsTwoFactorEnabled(data.isTwoFactorEnabled || false);
         } else {
           console.error("Failed to load profile, status:", res.status);
