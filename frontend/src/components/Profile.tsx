@@ -173,30 +173,29 @@ export const Profile: React.FC = () => {
   // Render states
   if (!isLoggedIn) {
     return (
-      <div className="w-full min-h-screen bg-[#fafbfc] dark:bg-[#121212] flex flex-col items-center justify-center gap-4 font-inter">
-        <p className="text-[#5f6368] dark:text-[#e8eaed]">
-          {t.pleaseLoginToViewProfile}
-        </p>
-        <Link
-          to="/"
-          className="text-[#1f2937] dark:text-[#8ab4f8] text-sm hover:underline"
-        >
-          {t.backToHome}
-        </Link>
+      <div className="w-screen h-screen flex justify-center items-center">
+        <div className="w-[400px] h-[300px] bg-blue-50/50 dark:bg-[#24273a]/50 shadow-2xl rounded-2xl flex flex-col items-center justify-center gap-4 font-inter">
+          <p className="text-[#5f6368] dark:text-[#e8eaed]">
+            {t.pleaseLoginToViewProfile}
+          </p>
+          <Link to="/" className="text-[#1f2937] dark:text-[#8ab4f8] text-sm hover:underline">
+            {t.backToHome}
+          </Link>
+        </div>
       </div>
     );
   }
 
   if (loading || !user) {
     return (
-      <div className="w-full min-h-screen bg-[#F8F9FA] dark:bg-[#121212] flex items-center justify-center font-inter">
+      <div className="w-full min-h-screen flex items-center justify-center font-inter">
         <p className="text-[#444746] dark:text-[#C4C7C5] text-sm">{t.loading}</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#F8F9FA] dark:bg-[#121212] font-inter">
+    <div className="w-full min-h-screen font-inter">
       <div className="flex items-center justify-center w-full min-h-screen px-6 py-12">
         <div className="w-full max-w-lg space-y-6">
           {/* Header */}

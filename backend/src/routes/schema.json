@@ -3,7 +3,7 @@
     "tags": ["Auth"],
     "body": {
       "type": "object",
-      "required": ["password"],
+      "required": ["email", "username", "password"],
       "properties": {
         "email": { "type": "string", "format": "email" },
         "username": { "type": "string" },

@@ -74,8 +74,8 @@ export const enableUser2FA = async (userData: { email: string; password: string;
   return { cookies, secret };
 };
 
-export const loginUser = async (email: string, password: string) => {
-  return request(app.server).post('/api/login').send({ email, password }).expect(200);
+export const loginUser = async (email: string, username: string, password: string) => {
+  return request(app.server).post('/api/login').send({ email, username, password }).expect(200);
 };
 
 /**

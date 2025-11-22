@@ -16,15 +16,6 @@ const registerTestUser2 = {
   username: 'TestUser2',
 };
 
-const testUser1 = {
-  email: 'ci_test_game@example.com',
-  password: 'Password123!',
-};
-const testUSer2 = {
-  email: 'ci_test1_game@example.com',
-  password: 'Password123!',
-};
-
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';
   await app.ready();
@@ -42,29 +33,29 @@ afterAll(async () => {
 describe('Game tests', () => {
   let cookie1: string[];
   let playerToken: string | undefined;
-  let testUser1Id: string;
-  let testUser2Id: string;
+  let registerUser1Id: string;
+  let registerUser2Id: string;
   let gameId: string;
 
   it('Registering both users', async () => {
     const res1 = await request(app.server).post('/api/register').send(registerTestUser1).expect(201);
     const res2 = await request(app.server).post('/api/register').send(registerTestUser2).expect(201);
 
-    testUser1Id = res1.body.id;
-    testUser2Id = res2.body.id;
-    expect(testUser1Id).toBeDefined();
-    expect(testUser2Id).toBeDefined();
+    registerUser1Id = res1.body.id;
+    registerUser2Id = res2.body.id;
+    expect(registerUser1Id).toBeDefined();
+    expect(registerUser2Id).toBeDefined();
   });
 
   it('Logging in the main user', async () => {
-    const res = await request(app.server).post('/api/login').send(testUser1);
+    const res = await request(app.server).post('/api/login').send(registerTestUser1);
 
     expect(res.status).toBe(200);
     cookie1 = getCookies(res);
   });
 
   it('Logging in the player', async () => {
-    const res = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const res = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(res.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(res)];
@@ -75,7 +66,7 @@ describe('Game tests', () => {
   });
 
   it('POST /games with valid credentials should pass', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -106,7 +97,7 @@ describe('Game tests', () => {
   });
 
   it('POST /games with no winnerId should fail', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -126,7 +117,7 @@ describe('Game tests', () => {
   });
 
   it('POST /games with an expired token for player 2 should fail', async () => {
-    const token = app.jwt.sign({ id: testUser2Id! }, { expiresIn: '1s' });
+    const token = app.jwt.sign({ id: registerUser2Id! }, { expiresIn: '1s' });
 
     await new Promise((resolve) => setTimeout(resolve, 1100));
 
@@ -139,7 +130,7 @@ describe('Game tests', () => {
   });
 
   it('POST /games with invalid winnerId should fail', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -161,7 +152,7 @@ describe('Game tests', () => {
   });
 
   it('GET /games/:id with a valid game id should pass', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -189,7 +180,7 @@ describe('Game tests', () => {
   });
 
   it('GET /games/:id with invalid game id should fail', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -200,7 +191,7 @@ describe('Game tests', () => {
   });
 
   it('POST /games Creating more games for the next test', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -227,7 +218,7 @@ describe('Game tests', () => {
   });
 
   it('GET /games should return all games', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -257,7 +248,7 @@ describe('Game tests', () => {
   });
 
   it('GET /games/me with a valid user should return all games the user has participated in', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -295,7 +286,7 @@ describe('Game tests', () => {
   });
 
   it('GET /games/me/won with a valid user should return all games the user has won', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -333,7 +324,7 @@ describe('Game tests', () => {
   });
 
   it('GET /games when there are no games stored should return an empty array', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];
@@ -347,7 +338,7 @@ describe('Game tests', () => {
 
   // The only way to test for a database call failure is to mock a test for that specifically
   it('Internal server error for creating a game', async () => {
-    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(testUSer2);
+    const loginRes = await request(app.server).post('/api/login/player2').set('Cookie', cookie1).send(registerTestUser2);
 
     expect(loginRes.status).toBe(200);
     const cookie = [...cookie1, ...getCookies(loginRes)];

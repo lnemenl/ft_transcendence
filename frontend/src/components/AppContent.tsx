@@ -93,7 +93,12 @@ export function AppContent() {
         <Route path="/" element={<Content ready={ready} />} />
         <Route path="/section/login" element={<Content ready={ready} />} />
         <Route path="/section/game" element={<Content ready={ready} />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile" element={
+          <>
+            <Blobs gameActive={ready} />
+            <Profile />
+          </>
+        } />
       </Routes>
     </>
   );
