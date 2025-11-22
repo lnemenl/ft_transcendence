@@ -124,10 +124,10 @@ describe('User Profile Management', () => {
       const res = await request(app.server)
         .patch('/api/users/me')
         .set('Cookie', cookies)
-        .send({ avatarUrl: 'https://example.com/avatar.png' })
+        .send({ avatarUrl: 'https://cdn.pixabay.com/photo/2025/10/23/05/43/bird-9910830_1280.jpg' })
         .expect(200);
 
-      expect(res.body.avatarUrl).toBe('https://example.com/avatar.png');
+      expect(res.body.avatarUrl).toBe('https://cdn.pixabay.com/photo/2025/10/23/05/43/bird-9910830_1280.jpg');
     });
 
     it('updates both username and avatarUrl', async () => {
@@ -138,12 +138,12 @@ describe('User Profile Management', () => {
         .set('Cookie', cookies)
         .send({
           username: 'alice_new',
-          avatarUrl: 'https://example.com/new.jpg',
+          avatarUrl: 'https://cdn.pixabay.com/photo/2025/10/23/05/43/bird-9910830_1280.jpg',
         })
         .expect(200);
 
       expect(res.body.username).toBe('alice_new');
-      expect(res.body.avatarUrl).toBe('https://example.com/new.jpg');
+      expect(res.body.avatarUrl).toBe('https://cdn.pixabay.com/photo/2025/10/23/05/43/bird-9910830_1280.jpg');
     });
 
     it('rejects request without authentication', async () => {
